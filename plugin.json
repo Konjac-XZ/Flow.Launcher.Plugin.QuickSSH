@@ -1,5 +1,5 @@
 {
-    "ID": "A1B2C3D4E5F6789012345678QUICKSSH",
+    "ID": "86AC23FE48BC45E5B7E0A94F5847FA83",
     "ActionKeyword": "ssh",
     "Name": "QuickSSH",
     "Description": "Enhanced SSH connection plugin with TAB auto-completion, SSH config support, and improved shell handling",
