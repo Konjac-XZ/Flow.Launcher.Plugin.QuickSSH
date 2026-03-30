@@ -20,7 +20,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
             string actionKeyword,
             string input,
             UserData userData,
-            string iconPath)
+            string iconPath,
+            IPublicAPI api = null)
         {
             var results = new List<Result>();
             var trimmed = input.Trim().ToLowerInvariant();
@@ -30,13 +31,18 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 // Show all available commands
                 foreach (var cmd in Commands)
                 {
+                    var autoText = actionKeyword + " " + cmd + " ";
                     results.Add(new Result
                     {
                         Title = cmd,
                         SubTitle = GetCommandDescription(cmd),
                         IcoPath = iconPath,
-                        Action = _ => false,
-                        AutoCompleteText = actionKeyword + " " + cmd + " "
+                        Action = _ =>
+                        {
+                            api?.ChangeQuery(autoText, true);
+                            return false;
+                        },
+                        AutoCompleteText = autoText
                     });
                 }
                 return results;
@@ -49,13 +55,18 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             foreach (var cmd in matchingCommands)
             {
+                var autoText = actionKeyword + " " + cmd + " ";
                 results.Add(new Result
                 {
                     Title = cmd,
                     SubTitle = GetCommandDescription(cmd),
                     IcoPath = iconPath,
-                    Action = _ => false,
-                    AutoCompleteText = actionKeyword + " " + cmd + " "
+                    Action = _ =>
+                    {
+                        api?.ChangeQuery(autoText, true);
+                        return false;
+                    },
+                    AutoCompleteText = autoText
                 });
             }
 
@@ -73,13 +84,18 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         if (string.IsNullOrEmpty(search) ||
                             entry.Key.ToLowerInvariant().Contains(search))
                         {
+                            var autoText = actionKeyword + " profiles " + entry.Key;
                             results.Add(new Result
                             {
                                 Title = entry.Key,
                                 SubTitle = entry.Value,
                                 IcoPath = iconPath,
-                                Action = _ => false,
-                                AutoCompleteText = actionKeyword + " profiles " + entry.Key
+                                Action = _ =>
+                                {
+                                    api?.ChangeQuery(autoText, true);
+                                    return false;
+                                },
+                                AutoCompleteText = autoText
                             });
                         }
                     }
