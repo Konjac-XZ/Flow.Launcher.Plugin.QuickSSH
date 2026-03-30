@@ -1,0 +1,45 @@
+## .NET / Visual Studio
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstats
+
+# NuGet
+project.lock.json
+**/[Pp]ackages/*
+*.nupkg
+*.snupkg
+**/packages/*
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+*.[Cc]ache
+*.log
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp

@@ -1,0 +1,52 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Plugin meta -->
+    <system:String x:Key="plugin_quickssh_plugin_name">QuickSSH</system:String>
+    <system:String x:Key="plugin_quickssh_plugin_description">Quickly save and launch SSH connections from Flow Launcher.</system:String>
+
+    <!-- Health / status messages -->
+    <system:String x:Key="plugin_quickssh_sshnotinstalled_title">QuickSSH</system:String>
+    <system:String x:Key="plugin_quickssh_sshnotinstalled_subtitle">OpenSSH client not found on this system.</system:String>
+
+    <system:String x:Key="plugin_quickssh_databasenotcreated_title">QuickSSH</system:String>
+    <system:String x:Key="plugin_quickssh_databasenotcreated_subtitle">Profiles database could not be created.</system:String>
+
+    <!-- Default / help -->
+    <system:String x:Key="plugin_quickssh_subtitle_default">Type: add ; remove ; profiles|p ; direct|d ; shell ; config ; docs</system:String>
+
+    <!-- ADD -->
+    <system:String x:Key="plugin_quickssh_title_commandadd">Add profile</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandadd">Usage: add &lt;name&gt; ssh user@host</system:String>
+
+    <!-- REMOVE -->
+    <system:String x:Key="plugin_quickssh_title_commandremove">Remove profile</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandremove">Select a profile to remove.</system:String>
+
+    <!-- PROFILES -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles">Saved profiles</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Select a profile to connect.</system:String>
+
+    <!-- DIRECT CONNECT -->
+    <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect">Direct connect:</system:String>
+
+    <!-- SHELL -->
+    <system:String x:Key="plugin_quickssh_title_commandshell_add">Add shell profile</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_add_usage">Usage: shell add &lt;exe&gt; or shell add &lt;name&gt; &lt;exe + args&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandshell_remove">Remove shell profile</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Select a shell profile to remove.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Use: shell add ; remove ; list</system:String>
+    <system:String x:Key="plugin_quickssh_shell_selected">(selected)</system:String>
+
+    <!-- CONFIG -->
+    <system:String x:Key="plugin_quickssh_title_commandconfig">Import SSH config</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandconfig">Import hosts from ~/.ssh/config file.</system:String>
+    <system:String x:Key="plugin_quickssh_config_imported">Imported {0} host(s) from SSH config.</system:String>
+    <system:String x:Key="plugin_quickssh_config_notfound">SSH config file not found at ~/.ssh/config.</system:String>
+
+    <!-- DOCS -->
+    <system:String x:Key="plugin_quickssh_title_commanddocs">Documentation</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Open plugin documentation on GitHub.</system:String>
+
+</ResourceDictionary>
