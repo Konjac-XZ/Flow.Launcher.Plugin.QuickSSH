@@ -86,7 +86,7 @@ Select a shell by clicking it in the list — all SSH commands will then launch 
 
 ## Building from Source
 
-Requires Windows with .NET 7.0 SDK installed.
+Requires Windows with .NET 9.0 SDK installed.
 
 ```powershell
 # Clone the repository
@@ -104,8 +104,8 @@ dotnet publish -c Release -r win-x64 --no-self-contained
 ## Requirements
 
 - Windows with OpenSSH client installed (`ssh` available in PATH)
-- [Flow Launcher](https://www.flowlauncher.com/) v1.8+
-- .NET 7.0 Runtime
+- [Flow Launcher](https://www.flowlauncher.com/) v1.19+
+- .NET 9.0 Runtime
 
 ## Data Storage
 
