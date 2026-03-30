@@ -87,7 +87,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 // Show all command suggestions for TAB auto-completion
                 results.AddRange(AutoCompleter.GetSuggestions(
                     query.ActionKeyword, "",
-                    _profileManager?.UserData, AppIconPath));
+                    _profileManager?.UserData, AppIconPath,
+                    _pluginContext?.API));
                 return results;
             }
 
@@ -123,7 +124,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     // Show auto-complete suggestions
                     results.AddRange(AutoCompleter.GetSuggestions(
                         query.ActionKeyword, input,
-                        _profileManager?.UserData, AppIconPath));
+                        _profileManager?.UserData, AppIconPath,
+                        _pluginContext?.API));
                     break;
             }
 
