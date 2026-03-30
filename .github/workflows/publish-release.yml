@@ -1,0 +1,41 @@
+name: Publish Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Get version from plugin.json
+        id: version
+        shell: pwsh
+        run: |
+          $version = (Get-Content "plugin.json" | ConvertFrom-Json).Version
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Build
+        run: |
+          dotnet publish Flow.Launcher.Plugin.QuickSSH.csproj -c Release -r win-x64 --no-self-contained -o "Flow.Launcher.Plugin.QuickSSH"
+          7z a -tzip "Flow.Launcher.Plugin.QuickSSH.zip" "./Flow.Launcher.Plugin.QuickSSH/*"
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "Flow.Launcher.Plugin.QuickSSH.zip"
+          tag_name: "v${{ steps.version.outputs.version }}"
+          name: "Release v${{ steps.version.outputs.version }}"
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

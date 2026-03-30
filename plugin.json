@@ -1,1 +1,12 @@
-{ "name": "Flow.Launcher.Plugin.QuickSSH", "description": "A SSH plugin for Flow Launcher", "version": "1.0.0" }
+{
+    "ID": "A1B2C3D4E5F6789012345678QUICKSSH",
+    "ActionKeyword": "ssh",
+    "Name": "QuickSSH",
+    "Description": "Enhanced SSH connection plugin with TAB auto-completion, SSH config support, and improved shell handling",
+    "Author": "Vaso73",
+    "Version": "1.0.0",
+    "Language": "csharp",
+    "Website": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
+    "IcoPath": "Images\\app.png",
+    "ExecuteFileName": "Flow.Launcher.Plugin.QuickSSH.dll"
+}
