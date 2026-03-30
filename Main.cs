@@ -84,13 +84,10 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             if (string.IsNullOrEmpty(input))
             {
-                results.Add(new Result
-                {
-                    Title = "QuickSSH",
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_default"),
-                    IcoPath = AppIconPath,
-                    AutoCompleteText = query.ActionKeyword + " "
-                });
+                // Show all command suggestions for TAB auto-completion
+                results.AddRange(AutoCompleter.GetSuggestions(
+                    query.ActionKeyword, "",
+                    _profileManager?.UserData, AppIconPath));
                 return results;
             }
 
@@ -209,6 +206,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Title = entry.Key,
                     SubTitle = entry.Value,
                     IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " remove " + entry.Key,
                     Action = _ =>
                     {
                         _profileManager.UserData.Entries.Remove(entry.Key);
@@ -383,6 +381,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                 Title = shell.Key,
                                 SubTitle = string.IsNullOrEmpty(shell.Value) ? shell.Key : shell.Value,
                                 IcoPath = AppIconPath,
+                                AutoCompleteText = query.ActionKeyword + " shell remove " + shell.Key,
                                 Action = _ =>
                                 {
                                     _profileManager.UserData.CustomShell.Remove(shell.Key);
@@ -415,6 +414,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                 Title = shell.Key + marker,
                                 SubTitle = string.IsNullOrEmpty(shell.Value) ? shell.Key : shell.Value,
                                 IcoPath = AppIconPath,
+                                AutoCompleteText = query.ActionKeyword + " shell " + shell.Key,
                                 Action = _ =>
                                 {
                                     _profileManager.UserData.SelectedCustomShell = shell.Key;
