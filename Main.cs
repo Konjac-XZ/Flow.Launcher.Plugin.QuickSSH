@@ -345,7 +345,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     }
                     else
                     {
-                        var (name, value) = ParseShellAddArgs(rest);
+                        var (name, value) = ParseShellAddArgs(subRest);
                         results.Add(new Result
                         {
                             Title = "Add shell: " + name,
@@ -494,7 +494,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     IcoPath = AppIconPath,
                     Action = _ =>
                     {
-                        Process.Start(new ProcessStartInfo
+                        using var process = Process.Start(new ProcessStartInfo
                         {
                             FileName = "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
                             UseShellExecute = true
@@ -551,7 +551,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             try
             {
-                Process.Start(new ProcessStartInfo
+                using var process = Process.Start(new ProcessStartInfo
                 {
                     FileName = fileName,
                     Arguments = arguments,
@@ -659,31 +659,28 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         private static (string name, string value) ParseShellAddArgs(string input)
         {
-            // Skip "add " prefix
-            var rest = input.Length > 4 ? input.Substring(4).Trim() : "";
-
-            if (string.IsNullOrEmpty(rest))
+            if (string.IsNullOrEmpty(input))
                 return ("", "");
 
             // Check for quoted strings
-            if (rest.StartsWith("\""))
+            if (input.StartsWith("\""))
             {
-                int endQuote = rest.IndexOf('"', 1);
+                int endQuote = input.IndexOf('"', 1);
                 if (endQuote > 0)
                 {
-                    var name = rest.Substring(1, endQuote - 1);
-                    var value = rest.Length > endQuote + 1
-                        ? rest.Substring(endQuote + 1).Trim()
+                    var name = input.Substring(1, endQuote - 1);
+                    var value = input.Length > endQuote + 1
+                        ? input.Substring(endQuote + 1).Trim()
                         : "";
                     return (name, value);
                 }
             }
 
-            var spaceIdx = rest.IndexOf(' ');
+            var spaceIdx = input.IndexOf(' ');
             if (spaceIdx < 0)
-                return (rest, "");
+                return (input, "");
 
-            return (rest.Substring(0, spaceIdx), rest.Substring(spaceIdx + 1).Trim());
+            return (input.Substring(0, spaceIdx), input.Substring(spaceIdx + 1).Trim());
         }
 
         #endregion

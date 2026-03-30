@@ -19,7 +19,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             try
             {
-                var p = new Process
+                using var p = new Process
                 {
                     StartInfo = new ProcessStartInfo
                     {
@@ -49,7 +49,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
         {
             try
             {
-                var process = new Process
+                using var process = new Process
                 {
                     StartInfo = new ProcessStartInfo
                     {
