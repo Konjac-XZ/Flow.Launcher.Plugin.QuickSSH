@@ -13,7 +13,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
     /// </summary>
     public class QuickSsh : IPlugin, IPluginI18n
     {
-        public static PluginInitContext _pluginContext;
+        private static PluginInitContext _pluginContext;
         private ProfileManager _profileManager;
 
         private const string CommandAdd = "add";

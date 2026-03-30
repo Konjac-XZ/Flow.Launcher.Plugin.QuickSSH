@@ -112,9 +112,16 @@ namespace Flow.Launcher.Plugin.QuickSSH
         {
             var json = JsonConvert.SerializeObject(UserData, Formatting.Indented);
             var tmp = _path + ".tmp";
-            File.WriteAllText(tmp, json);
-            File.Copy(tmp, _path, overwrite: true);
-            File.Delete(tmp);
+            try
+            {
+                File.WriteAllText(tmp, json);
+                File.Move(tmp, _path, overwrite: true);
+            }
+            finally
+            {
+                if (File.Exists(tmp))
+                    try { File.Delete(tmp); } catch { /* best effort cleanup */ }
+            }
         }
 
         public void LoadConfiguration()
