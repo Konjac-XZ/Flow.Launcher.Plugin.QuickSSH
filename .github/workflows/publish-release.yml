@@ -1,9 +1,8 @@
 name: Publish Release
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -25,7 +24,7 @@ jobs:
         shell: pwsh
         run: |
           $pluginVersion = (Get-Content "plugin.json" | ConvertFrom-Json).Version
-          $tag = "${{ github.ref_name }}"
+          $tag = "${{ github.event.release.tag_name }}"
           if ($tag -ne "v$pluginVersion") {
             throw "Tag $tag nesedi s plugin.json verziou $pluginVersion"
           }
@@ -41,8 +40,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: Flow.Launcher.Plugin.QuickSSH.zip
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.event.release.tag_name }}
+          name: Release ${{ github.event.release.tag_name }}
           generate_release_notes: true
           draft: false
           prerelease: false
