@@ -353,9 +353,13 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             IcoPath = AppIconPath,
                             Action = _ =>
                             {
+                                // Suppress auto-save during mutations so we can set all
+                                // fields (including SelectedCustomShell) before persisting once.
+                                _profileManager.UserData.CustomShell.SetCallback(null);
                                 _profileManager.UserData.CustomShell[name] = value ?? "";
                                 if (_profileManager.UserData.CustomShell.Count == 1)
                                     _profileManager.UserData.SelectedCustomShell = name;
+                                _profileManager.UserData.CustomShell.SetCallback(_profileManager.SaveConfiguration);
                                 _profileManager.SaveConfiguration();
                                 return true;
                             }
@@ -386,9 +390,13 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                 AutoCompleteText = query.ActionKeyword + " shell remove " + shell.Key,
                                 Action = _ =>
                                 {
+                                    // Suppress auto-save so we can update SelectedCustomShell
+                                    // atomically before the single explicit save below.
+                                    _profileManager.UserData.CustomShell.SetCallback(null);
                                     _profileManager.UserData.CustomShell.Remove(shell.Key);
                                     if (_profileManager.UserData.SelectedCustomShell == shell.Key)
                                         _profileManager.UserData.SelectedCustomShell = null;
+                                    _profileManager.UserData.CustomShell.SetCallback(_profileManager.SaveConfiguration);
                                     _profileManager.SaveConfiguration();
                                     return true;
                                 }
@@ -546,9 +554,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
             }
             else
             {
-                // Default: use cmd.exe
+                // Default: use cmd.exe with /k so the window stays open after SSH exits,
+                // allowing the user to see any connection-error messages.
+                // sshCommand is a user-supplied SSH command (e.g. "ssh user@host") that
+                // was explicitly typed or saved by the user; passing it verbatim is intentional.
                 fileName = _sshClient;
-                arguments = "/c " + sshCommand;
+                arguments = "/k " + sshCommand;
             }
 
             try
