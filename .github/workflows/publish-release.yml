@@ -1,6 +1,9 @@
 name: Publish Release
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -17,14 +20,19 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Get version from plugin.json
+      - name: Verify version matches tag
         id: version
         shell: pwsh
         run: |
-          $version = (Get-Content "plugin.json" | ConvertFrom-Json).Version
-          echo "version=$version" >> $env:GITHUB_OUTPUT
+          $pluginVersion = (Get-Content "plugin.json" | ConvertFrom-Json).Version
+          $tag = "${{ github.ref_name }}"
+          if ($tag -ne "v$pluginVersion") {
+            throw "Tag $tag nesedi s plugin.json verziou $pluginVersion"
+          }
+          echo "version=$pluginVersion" >> $env:GITHUB_OUTPUT
 
       - name: Build
+        shell: pwsh
         run: |
           dotnet publish Flow.Launcher.Plugin.QuickSSH.csproj -c Release -r win-x64 --no-self-contained -o "Flow.Launcher.Plugin.QuickSSH"
           7z a -tzip "Flow.Launcher.Plugin.QuickSSH.zip" "./Flow.Launcher.Plugin.QuickSSH/*"
@@ -32,9 +40,10 @@ jobs:
       - name: Publish
         uses: softprops/action-gh-release@v2
         with:
-          files: "Flow.Launcher.Plugin.QuickSSH.zip"
-          tag_name: "v${{ steps.version.outputs.version }}"
-          name: "Release v${{ steps.version.outputs.version }}"
+          files: Flow.Launcher.Plugin.QuickSSH.zip
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          generate_release_notes: true
           draft: false
           prerelease: false
         env:
