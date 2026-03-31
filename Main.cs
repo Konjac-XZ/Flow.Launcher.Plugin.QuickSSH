@@ -26,6 +26,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private const string CommandDocs = "docs";
 
         private const string AppIconPath = "Images\\app.png";
+        private const string AppIconGreenPath = "Images\\app-green.png";
+        private const string AppIconRedPath = "Images\\app-red.png";
 
         private string _databasePath;
         private bool _isSshInstalled = true;
@@ -173,7 +175,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 {
                     Title = "Save: " + profileName,
                     SubTitle = sshCommand,
-                    IcoPath = AppIconPath,
+                    IcoPath = AppIconGreenPath,
                     Action = _ =>
                     {
                         _profileManager.UserData.Entries[profileName] = sshCommand;
@@ -211,7 +213,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 {
                     Title = entry.Key,
                     SubTitle = entry.Value,
-                    IcoPath = AppIconPath,
+                    IcoPath = AppIconRedPath,
                     AutoCompleteText = query.ActionKeyword + " remove " + entry.Key,
                     Action = _ =>
                     {
@@ -274,7 +276,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 {
                     Title = name,
                     SubTitle = command,
-                    IcoPath = AppIconPath,
+                    IcoPath = AppIconGreenPath,
                     Action = _ =>
                     {
                         RunSshCommand(command);
@@ -332,7 +334,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             {
                 Title = "Connect: " + rest,
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddirectconnect") + " " + sshCmd,
-                IcoPath = AppIconPath,
+                IcoPath = AppIconGreenPath,
                 Action = _ =>
                 {
                     RunSshCommand(sshCmd);
@@ -369,7 +371,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         {
                             Title = "Add shell: " + name,
                             SubTitle = string.IsNullOrEmpty(value) ? name : value,
-                            IcoPath = AppIconPath,
+                            IcoPath = AppIconGreenPath,
                             Action = _ =>
                             {
                                 // Suppress auto-save during mutations so we can set all
@@ -405,7 +407,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             {
                                 Title = shell.Key,
                                 SubTitle = string.IsNullOrEmpty(shell.Value) ? shell.Key : shell.Value,
-                                IcoPath = AppIconPath,
+                                IcoPath = AppIconRedPath,
                                 AutoCompleteText = query.ActionKeyword + " shell remove " + shell.Key,
                                 Action = _ =>
                                 {
@@ -442,7 +444,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             {
                                 Title = shell.Key + marker,
                                 SubTitle = string.IsNullOrEmpty(shell.Value) ? shell.Key : shell.Value,
-                                IcoPath = AppIconPath,
+                                IcoPath = AppIconGreenPath,
                                 AutoCompleteText = query.ActionKeyword + " shell " + shell.Key,
                                 Action = _ =>
                                 {
@@ -475,7 +477,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             {
                 Title = GetTranslation("plugin_quickssh_title_commandconfig"),
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commandconfig"),
-                IcoPath = AppIconPath,
+                IcoPath = AppIconGreenPath,
                 Action = _ =>
                 {
                     try
