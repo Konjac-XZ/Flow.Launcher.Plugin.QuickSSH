@@ -4,6 +4,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Optional tag, for example v1.0.6. Leave empty to use v<Version from plugin.json>.'
+        required: false
+        type: string
 
 jobs:
   publish:
@@ -12,38 +17,66 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      - name: Verify version matches tag
-        id: version
+      - name: Resolve version and tag
+        id: meta
         shell: pwsh
         run: |
           $pluginVersion = (Get-Content "plugin.json" | ConvertFrom-Json).Version
-          $tag = "${{ github.event.release.tag_name }}"
+
+          if ("${{ github.event_name }}" -eq "release") {
+            $tag = "${{ github.event.release.tag_name }}"
+          }
+          else {
+            $manualTag = "${{ github.event.inputs.tag_name }}"
+            if ([string]::IsNullOrWhiteSpace($manualTag)) {
+              $tag = "v$pluginVersion"
+            }
+            else {
+              $tag = $manualTag.Trim()
+            }
+          }
+
           if ($tag -ne "v$pluginVersion") {
             throw "Tag $tag nesedi s plugin.json verziou $pluginVersion"
           }
-          echo "version=$pluginVersion" >> $env:GITHUB_OUTPUT
 
-      - name: Build
+          "plugin_version=$pluginVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "tag_name=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Build plugin
         shell: pwsh
         run: |
-          dotnet publish Flow.Launcher.Plugin.QuickSSH.csproj -c Release -r win-x64 --no-self-contained -o "Flow.Launcher.Plugin.QuickSSH"
-          7z a -tzip "Flow.Launcher.Plugin.QuickSSH.zip" "./Flow.Launcher.Plugin.QuickSSH/*"
+          dotnet publish "Flow.Launcher.Plugin.QuickSSH.csproj" `
+            -c Release `
+            -r win-x64 `
+            --no-self-contained `
+            -o "QuickSSH"
 
-      - name: Publish
+      - name: Create ZIP
+        shell: pwsh
+        run: |
+          if (Test-Path "QuickSSH.zip") {
+            Remove-Item "QuickSSH.zip" -Force
+          }
+          7z a -tzip "QuickSSH.zip" ".\QuickSSH\*"
+
+      - name: Publish release asset
         uses: softprops/action-gh-release@v2
         with:
-          files: Flow.Launcher.Plugin.QuickSSH.zip
-          tag_name: ${{ github.event.release.tag_name }}
-          name: Release ${{ github.event.release.tag_name }}
-          generate_release_notes: true
+          tag_name: ${{ steps.meta.outputs.tag_name }}
+          target_commitish: ${{ github.sha }}
+          name: Release ${{ steps.meta.outputs.tag_name }}
+          files: QuickSSH.zip
           draft: false
           prerelease: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
