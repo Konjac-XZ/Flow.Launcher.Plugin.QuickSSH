@@ -151,7 +151,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             var addParts = rest.Split(new[] { ' ' }, 2);
             var profileName = addParts[0];
-            var sshCommand = addParts.Length > 1 ? addParts[1].Trim() : "";
+            var rawSshCommand = addParts.Length > 1 ? addParts[1].Trim() : "";
+
+            // Normalise: strip cmd-style /flags, ensure "ssh " prefix.
+            var sshCommand = string.IsNullOrEmpty(rawSshCommand)
+                ? ""
+                : (NormalizeSshCommand(rawSshCommand) ?? "");
 
             if (string.IsNullOrEmpty(sshCommand))
             {
@@ -308,10 +313,20 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
             }
 
-            // Allow the user to type either "ssh user@host" (full command) or just "user@host".
-            var sshCmd = rest.StartsWith("ssh ", StringComparison.OrdinalIgnoreCase)
-                ? rest
-                : "ssh " + rest;
+            // Normalise the user input: strip accidental cmd-style /flags and
+            // ensure the command starts with "ssh ".
+            var sshCmd = NormalizeSshCommand(rest);
+            if (string.IsNullOrEmpty(sshCmd))
+            {
+                results.Add(new Result
+                {
+                    Title = "Direct connect",
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddirectconnect") + " d user@host",
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " d "
+                });
+                return results;
+            }
 
             results.Add(new Result
             {
@@ -523,8 +538,75 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         #region SSH Execution
 
+        /// <summary>
+        /// Normalises a raw SSH command string so it is safe to pass to a terminal.
+        /// <list type="bullet">
+        ///   <item>Strips leading Windows cmd.exe-style /flags (e.g. "/c", "/k") that
+        ///   users sometimes accidentally prepend. SSH uses POSIX '-' options, so a
+        ///   leading '/' token is always wrong.</item>
+        ///   <item>Auto-prepends "ssh " when the user supplied only a destination
+        ///   (e.g. "user@host" instead of "ssh user@host").</item>
+        ///   <item>Removes /flags that appear immediately after the "ssh " prefix for
+        ///   the same reason (e.g. "ssh /c user@host" → "ssh user@host").</item>
+        /// </list>
+        /// Returns <see langword="null"/> if nothing valid remains after stripping.
+        /// </summary>
+        private static string NormalizeSshCommand(string rawCommand)
+        {
+            if (string.IsNullOrWhiteSpace(rawCommand))
+                return null;
+
+            var cmd = rawCommand.Trim();
+
+            // Strip any leading Windows cmd-style /flags.
+            while (cmd.StartsWith("/", StringComparison.Ordinal))
+            {
+                var space = cmd.IndexOf(' ');
+                if (space < 0)
+                    return null; // nothing left after stripping
+                cmd = cmd.Substring(space + 1).TrimStart();
+            }
+
+            if (string.IsNullOrEmpty(cmd))
+                return null;
+
+            // Auto-prepend "ssh " when only a destination was given.
+            if (!cmd.StartsWith("ssh ", StringComparison.OrdinalIgnoreCase)
+                && !cmd.Equals("ssh", StringComparison.OrdinalIgnoreCase))
+            {
+                cmd = "ssh " + cmd;
+            }
+
+            // Remove any /flags that appear right after the "ssh " prefix
+            // (e.g. a user stored "ssh /c user@host" by mistake).
+            const string sshPrefix = "ssh ";
+            if (cmd.Length > sshPrefix.Length)
+            {
+                var rest = cmd.Substring(sshPrefix.Length);
+                bool changed = false;
+                while (rest.StartsWith("/", StringComparison.Ordinal))
+                {
+                    var space = rest.IndexOf(' ');
+                    if (space < 0) { rest = string.Empty; changed = true; break; }
+                    rest = rest.Substring(space + 1).TrimStart();
+                    changed = true;
+                }
+                if (changed)
+                    cmd = string.IsNullOrEmpty(rest) ? null : "ssh " + rest;
+            }
+
+            return cmd;
+        }
+
         private void RunSshCommand(string sshCommand)
         {
+            // Normalise: strip accidental Windows cmd-style /flags and ensure the
+            // command starts with "ssh " so it can always be passed verbatim to a
+            // terminal (cmd.exe /k <sshCommand>).
+            sshCommand = NormalizeSshCommand(sshCommand);
+            if (string.IsNullOrEmpty(sshCommand))
+                return;
+
             var selectedShell = _profileManager.UserData.SelectedCustomShell;
             var customShells = _profileManager.UserData.CustomShell;
 
@@ -563,8 +645,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
             {
                 // Default: use cmd.exe with /k so the window stays open after SSH exits,
                 // allowing the user to see any connection-error messages.
-                // sshCommand is a user-supplied SSH command (e.g. "ssh user@host") that
-                // was explicitly typed or saved by the user; passing it verbatim is intentional.
                 fileName = GetCmdExePath();
                 arguments = "/k " + sshCommand;
             }
