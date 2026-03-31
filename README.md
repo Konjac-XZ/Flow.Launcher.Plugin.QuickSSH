@@ -111,6 +111,60 @@ dotnet publish -c Release -r win-x64 --no-self-contained
 
 Profiles are stored in `~/.ssh/profiles.json`.
 
+## Publishing to Flow Launcher Plugin Store
+
+To make QuickSSH available via `pm install QuickSSH` in Flow Launcher:
+
+1. **Create a GitHub Release** — run the *Publish Release* workflow from the **Actions** tab. It builds the zip and creates a tagged release automatically.
+
+2. **Fork the Plugin Manifest** — fork [Flow-Launcher/Flow.Launcher.PluginsManifest](https://github.com/Flow-Launcher/Flow.Launcher.PluginsManifest).
+
+3. **Add a manifest entry** — in your fork create the file:
+
+   ```
+   plugins/QuickSSH-86AC23FE48BC45E5B7E0A94F5847FA83.json
+   ```
+
+   with the following content (update `UrlDownload` to point to the latest release zip):
+
+   ```json
+   {
+     "ID": "86AC23FE48BC45E5B7E0A94F5847FA83",
+     "Name": "QuickSSH",
+     "Description": "Enhanced SSH connection plugin with TAB auto-completion, SSH config support, and improved shell handling",
+     "Author": "Vaso73",
+     "Version": "1.0.3",
+     "Language": "csharp",
+     "MinFlowLauncherVersion": "1.19.0",
+     "Website": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
+     "UrlSourceCode": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
+     "UrlDownload": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH/releases/download/v1.0.3/Flow.Launcher.Plugin.QuickSSH.zip",
+     "IcoPath": "https://raw.githubusercontent.com/Vaso73/Flow.Launcher.Plugin.QuickSSH/main/Images/app.png"
+   }
+   ```
+
+4. **Open a Pull Request** — submit the PR to `Flow-Launcher/Flow.Launcher.PluginsManifest`. Once merged the plugin becomes available in the Flow Launcher store.
+
+## Contributing
+
+Contributions are welcome! Here is the typical workflow:
+
+1. Fork the repository and create a feature branch.
+2. Make your changes.
+3. Run a local build to verify nothing is broken:
+   ```powershell
+   dotnet publish -c Release -r win-x64 --no-self-contained
+   ```
+4. Update `plugin.json` version if you are preparing a new release.
+5. Open a Pull Request describing your changes.
+
+### Releasing a new version
+
+1. Update `"Version"` in `plugin.json` (e.g. `1.0.4`).
+2. Commit and push to `main`.
+3. Go to **Actions → Publish Release → Run workflow** — this builds the zip and creates a GitHub Release tagged `v<version>`.
+4. Update `UrlDownload` and `Version` in the Plugin Manifest entry (see above) and submit a PR there.
+
 ## License
 
 [MIT](LICENSE)
