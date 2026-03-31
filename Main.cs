@@ -679,8 +679,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             UseShellExecute = true,
                             WorkingDirectory = workingDir
                         });
-                        _pluginContext?.API?.ShowMsg("QuickSSH",
-                            string.Format(GetTranslation("plugin_quickssh_shell_fallback"), customShellName));
                     }
                     catch (Exception ex2)
                     {
