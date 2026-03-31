@@ -1,6 +1,6 @@
 # QuickSSH — Flow Launcher Plugin
 
-Enhanced SSH connection plugin for [Flow Launcher](https://www.flowlauncher.com/) with TAB auto-completion, SSH config import, custom shell support, and fuzzy search.
+Enhanced SSH connection plugin for [Flow Launcher](https://www.flowlauncher.com/) with TAB auto-completion, SSH config import, profile export/import, custom shell support, and fuzzy search.
 
 Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Flow.Launcher.Plugin.easyssh).
 
@@ -8,63 +8,198 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 
 | Command | Description |
 |---------|-------------|
-| `ssh profiles` (or `ssh p`) | List, search, and connect to saved SSH profiles |
 | `ssh add <name> <ssh-command>` | Save a new SSH profile |
-| `ssh remove` | Delete a saved profile |
+| `ssh remove [filter]` | Delete a saved profile |
+| `ssh profiles [filter]` / `ssh p [filter]` | List, search, and connect to saved profiles |
 | `ssh d <ssh-command>` | Direct SSH connection without saving |
 | `ssh shell` | Manage custom shell interpreters (add / remove / select) |
 | `ssh config` | Import hosts from `~/.ssh/config` |
+| `ssh export` | Export all profiles to a JSON file |
+| `ssh import [filter]` | Import profiles from a JSON file |
 | `ssh docs` | Open plugin documentation |
 
-### Enhanced Features
+### Capabilities
 
 - **TAB auto-completion** — press TAB to auto-complete commands and profile names
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
+- **Profile export / import** — back up and restore profiles as plain JSON files
 - **Proper quoting & escaping** — handles SSH keys and paths with spaces correctly
 - **Fuzzy search** — accent-insensitive search with Damerau-Levenshtein distance
-- **Custom shells** — use cmd.exe, PowerShell, WSL, Git Bash, Kitty, or any shell
-- **Multi-language support** — i18n ready via Flow Launcher translations
-- **Atomic saves** — profile data is saved atomically to prevent corruption
+- **Command normalisation** — auto-prepends `ssh ` when you type only a destination
+- **Custom shells** — use cmd.exe, PowerShell, WSL, Git Bash, Kitty, or any terminal
+- **Multi-language support** — English and Slovak (i18n via Flow Launcher)
+- **Atomic saves** — profile data is written atomically to prevent corruption
+- **Custom-shell fallback** — if the selected shell cannot start, cmd.exe is used automatically
+
+---
 
 ## Usage Examples
 
-### Save a profile and connect
+### Add a profile and connect
 
 ```
 ssh add myserver ssh user@192.168.1.100
 ssh add production ssh -i "C:\Users\me\.ssh\id_rsa" admin@prod.example.com -p 2222
+ssh add dev-box ssh -p 2222 dev@10.0.0.50
+```
+
+You can also omit the `ssh` prefix — the plugin adds it for you:
+
+```
+ssh add bastion admin@bastion.example.com -p 22222
 ```
 
 ### List and connect to saved profiles
 
 ```
-ssh profiles           → shows all saved profiles
-ssh p myserver         → fuzzy-searches for "myserver" and connects on Enter
+ssh profiles           → show all saved profiles
+ssh p                  → shorthand for ssh profiles
+ssh p myserver         → fuzzy-search for "myserver"; press Enter to connect
+ssh profiles prod      → filter profiles containing "prod"
+```
+
+### Remove a profile
+
+```
+ssh remove             → list all profiles for removal
+ssh remove prod        → filter profiles by "prod", then click to delete
 ```
 
 ### Quick one-time connection (without saving)
 
 ```
-ssh d ssh root@10.0.0.1
+ssh d root@10.0.0.1
 ssh d ssh -p 2222 deploy@staging.example.com
+ssh d user@host        → "ssh " prefix is added automatically
 ```
 
-### Import hosts from SSH config
+### Import hosts from `~/.ssh/config`
 
 ```
-ssh config             → imports all hosts from ~/.ssh/config
+ssh config             → import all Host entries from ~/.ssh/config
 ```
+
+Only new hosts are imported — existing profiles are not overwritten.
+
+Example `~/.ssh/config` that is fully supported:
+
+```
+Host myserver
+    HostName 192.168.1.100
+    User admin
+    Port 22
+
+Host production
+    HostName prod.example.com
+    User deploy
+    Port 2222
+    IdentityFile ~/.ssh/id_ed25519
+
+Host bastion
+    HostName bastion.corp.internal
+    User ec2-user
+    IdentityFile "C:\Users\me\.ssh\corp_key"
+```
+
+Wildcard entries (`Host *`) are skipped automatically.
 
 ### Custom shell management
 
 ```
-ssh shell                          → list available shells
-ssh shell add PowerShell           → add PowerShell as a shell option
-ssh shell add GitBash "C:\Program Files\Git\bin\bash.exe" -c
-ssh shell remove PowerShell        → remove a shell
+ssh shell                                             → list shells; click one to select
+ssh shell add PowerShell                              → add PowerShell (found via PATH)
+ssh shell add GitBash "C:\Program Files\Git\bin\bash.exe" --login -i -c
+ssh shell add WSL wsl.exe --
+ssh shell add WindowsTerminal wt.exe ssh
+ssh shell remove PowerShell                           → remove a shell entry
 ```
 
-Select a shell by clicking it in the list — all SSH commands will then launch through that shell.
+**Shell value format** — `ssh shell add <name> [<executable> [extra-args]]`:
+
+| Example | Effect |
+|---------|--------|
+| `ssh shell add PowerShell` | Name = value = `PowerShell`; resolved via PATH |
+| `ssh shell add PS "C:\...\pwsh.exe"` | Name `PS`, explicit exe path, no extra args |
+| `ssh shell add GitBash "C:\...\bash.exe" -c` | Name `GitBash`, exe + `-c` flag prepended to command |
+
+Click any shell in the list to **select** it. All SSH connections will then launch through that shell. Click it again to deselect (returns to default `cmd.exe`).
+
+### Export and import profiles
+
+**Export** — saves all current profiles to a JSON file in the plugin data folder:
+
+```
+ssh export
+```
+
+The file is written to:
+
+```
+%APPDATA%\FlowLauncher\Plugins\QuickSSH\data\profiles_export.json
+```
+
+**Import** — loads profiles from any `*.json` file placed in the same `data\` folder:
+
+```
+ssh import                       → list all JSON files available for import
+ssh import mybackup              → filter files containing "mybackup"
+```
+
+Place your backup file in the `data\` folder, then run `ssh import` and click the file.
+Only profiles that do not already exist are added (no overwriting).
+
+Example JSON format accepted by import:
+
+```json
+{
+  "myserver": "ssh user@192.168.1.100",
+  "production": "ssh -i \"C:\\Users\\me\\.ssh\\id_rsa\" admin@prod.example.com -p 2222",
+  "bastion": "ssh -p 22222 ec2-user@bastion.corp.internal"
+}
+```
+
+---
+
+## Data Storage
+
+| File | Purpose |
+|------|---------|
+| `~/.ssh/profiles.json` | Main profile and shell database |
+| `%APPDATA%\FlowLauncher\Plugins\QuickSSH\data\*.json` | Import / export files |
+
+### profiles.json schema
+
+```json
+{
+  "PluginVersion": "1.0",
+  "EntriesLists": {
+    "<profile-name>": "<full ssh command>"
+  },
+  "CustomShellLists": {
+    "<shell-name>": "<executable path + optional args>"
+  },
+  "SelectedCustomShell": "<shell-name or null>"
+}
+```
+
+**Example:**
+
+```json
+{
+  "PluginVersion": "1.0",
+  "EntriesLists": {
+    "myserver": "ssh user@192.168.1.100",
+    "production": "ssh -i \"C:\\Users\\me\\.ssh\\id_rsa\" admin@prod.example.com -p 2222"
+  },
+  "CustomShellLists": {
+    "PowerShell": "",
+    "GitBash": "C:\\Program Files\\Git\\bin\\bash.exe -c"
+  },
+  "SelectedCustomShell": "GitBash"
+}
+```
+
+---
 
 ## Installation
 
@@ -96,20 +231,26 @@ cd Flow.Launcher.Plugin.QuickSSH
 # Build
 dotnet publish -c Release -r win-x64 --no-self-contained
 
-# The output will be in bin\Release\win-x64\publish\
-# Copy the contents to your Flow Launcher plugins folder:
+# Output: bin\Release\win-x64\publish\
+# Copy that folder's contents to:
 # %APPDATA%\FlowLauncher\Plugins\QuickSSH\
 ```
 
 ## Requirements
 
-- Windows with OpenSSH client installed (`ssh` available in PATH)
+- Windows 10 version 1809+ or Windows Server 2019+ (built-in OpenSSH)  
+  — or any Windows with `ssh.exe` available in PATH
 - [Flow Launcher](https://www.flowlauncher.com/) v1.19+
-- .NET 9.0 Runtime
+- .NET 9.0 Runtime (bundled with Flow Launcher v1.19+)
 
-## Data Storage
+## Languages
 
-Profiles are stored in `~/.ssh/profiles.json`.
+| Code | Language |
+|------|----------|
+| `en` | English |
+| `sk` | Slovak (Slovenčina) |
+
+Flow Launcher automatically selects the language that matches your system locale.
 
 ## Publishing to Flow Launcher Plugin Store
 
@@ -133,12 +274,12 @@ To make QuickSSH available via `pm install QuickSSH` in Flow Launcher:
      "Name": "QuickSSH",
      "Description": "Enhanced SSH connection plugin with TAB auto-completion, SSH config support, and improved shell handling",
      "Author": "Vaso73",
-     "Version": "1.0.3",
+     "Version": "1.0.11",
      "Language": "csharp",
      "MinFlowLauncherVersion": "1.19.0",
      "Website": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
      "UrlSourceCode": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
-     "UrlDownload": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH/releases/download/v1.0.3/Flow.Launcher.Plugin.QuickSSH.zip",
+     "UrlDownload": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH/releases/download/v1.0.11/Flow.Launcher.Plugin.QuickSSH.zip",
      "IcoPath": "https://raw.githubusercontent.com/Vaso73/Flow.Launcher.Plugin.QuickSSH/main/Images/app.png"
    }
    ```
@@ -160,7 +301,7 @@ Contributions are welcome! Here is the typical workflow:
 
 ### Releasing a new version
 
-1. Update `"Version"` in `plugin.json` (e.g. `1.0.4`).
+1. Update `"Version"` in `plugin.json` (e.g. `1.0.12`).
 2. Commit and push to `main`.
 3. Go to **Actions → Publish Release → Run workflow** — this builds the zip and creates a GitHub Release tagged `v<version>`.
 4. Update `UrlDownload` and `Version` in the Plugin Manifest entry (see above) and submit a PR there.
