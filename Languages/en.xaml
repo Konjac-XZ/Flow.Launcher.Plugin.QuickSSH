@@ -49,4 +49,7 @@
     <system:String x:Key="plugin_quickssh_title_commanddocs">Documentation</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Open plugin documentation on GitHub.</system:String>
 
+    <!-- SHELL FALLBACK -->
+    <system:String x:Key="plugin_quickssh_shell_fallback">Shell '{0}' not found. Falling back to default cmd.exe.</system:String>
+
 </ResourceDictionary>
