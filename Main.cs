@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace Flow.Launcher.Plugin.QuickSSH
 {
@@ -23,6 +24,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private const string CommandDirectConnect = "d";
         private const string CommandCustomShell = "shell";
         private const string CommandConfig = "config";
+        private const string CommandExport = "export";
+        private const string CommandImport = "import";
         private const string CommandDocs = "docs";
 
         private const string AppIconPath = "Images\\app.png";
@@ -30,6 +33,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private const string AppIconRedPath = "Images\\app-red.png";
 
         private string _databasePath;
+        private string _dataDir;
         private bool _isSshInstalled = true;
         private bool _isDatabaseCreated = true;
 
@@ -42,6 +46,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 ".ssh");
 
             _databasePath = Path.Combine(sshDir, "profiles.json");
+            _dataDir = Path.Combine(context.CurrentPluginMetadata.PluginDirectory, "data");
 
             try
             {
@@ -117,6 +122,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     break;
                 case CommandConfig:
                     results.AddRange(HandleConfig(query));
+                    break;
+                case CommandExport:
+                    results.AddRange(HandleExport(query, rest));
+                    break;
+                case CommandImport:
+                    results.AddRange(HandleImport(query, rest));
                     break;
                 case CommandDocs:
                     results.AddRange(HandleDocs());
@@ -534,6 +545,138 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     }
                 }
             };
+        }
+
+        private List<Result> HandleExport(Query query, string rest)
+        {
+            var results = new List<Result>();
+            var exportPath = Path.Combine(_dataDir, "profiles_export.json");
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandexport"),
+                SubTitle = string.Format(GetTranslation("plugin_quickssh_subtitle_commandexport"), exportPath),
+                IcoPath = AppIconGreenPath,
+                AutoCompleteText = query.ActionKeyword + " export ",
+                Action = _ =>
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(_dataDir);
+                        var entries = _profileManager.UserData.Entries
+                            .ToDictionary(e => e.Key, e => e.Value);
+                        var json = JsonConvert.SerializeObject(entries, Formatting.Indented);
+                        File.WriteAllText(exportPath, json);
+                        _pluginContext.API.ShowMsg("QuickSSH",
+                            string.Format(GetTranslation("plugin_quickssh_export_success"),
+                                entries.Count, exportPath));
+                    }
+                    catch (Exception ex)
+                    {
+                        _pluginContext.API.ShowMsg("QuickSSH", "Error: " + ex.Message);
+                    }
+                    return true;
+                }
+            });
+
+            return results;
+        }
+
+        private List<Result> HandleImport(Query query, string rest)
+        {
+            var results = new List<Result>();
+
+            string[] importFiles = Array.Empty<string>();
+            try
+            {
+                if (Directory.Exists(_dataDir))
+                    importFiles = Directory.GetFiles(_dataDir, "*.json");
+            }
+            catch (UnauthorizedAccessException) { }
+            catch (IOException) { }
+
+            if (importFiles.Length == 0)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandimport"),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_import_nofiles"), _dataDir),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " import "
+                });
+                return results;
+            }
+
+            foreach (var file in importFiles)
+            {
+                var fileName = Path.GetFileName(file);
+                if (!string.IsNullOrEmpty(rest) &&
+                    !fileName.ToLowerInvariant().Contains(rest.ToLowerInvariant()))
+                    continue;
+
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandimport") + ": " + fileName,
+                    SubTitle = file,
+                    IcoPath = AppIconGreenPath,
+                    AutoCompleteText = query.ActionKeyword + " import " + fileName,
+                    Action = _ =>
+                    {
+                        try
+                        {
+                            var json = File.ReadAllText(file);
+                            var entries = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                            if (entries == null || entries.Count == 0)
+                            {
+                                _pluginContext.API.ShowMsg("QuickSSH",
+                                    GetTranslation("plugin_quickssh_import_empty"));
+                                return true;
+                            }
+
+                            int imported = 0;
+                            _profileManager.UserData.Entries.SetCallback(null);
+                            try
+                            {
+                                foreach (var entry in entries)
+                                {
+                                    if (!_profileManager.UserData.Entries.ContainsKey(entry.Key))
+                                    {
+                                        _profileManager.UserData.Entries[entry.Key] = entry.Value;
+                                        imported++;
+                                    }
+                                }
+                            }
+                            finally
+                            {
+                                _profileManager.UserData.Entries.SetCallback(_profileManager.SaveConfiguration);
+                            }
+
+                            if (imported > 0)
+                                _profileManager.SaveConfiguration();
+
+                            _pluginContext.API.ShowMsg("QuickSSH",
+                                string.Format(GetTranslation("plugin_quickssh_import_success"), imported));
+                        }
+                        catch (Exception ex)
+                        {
+                            _pluginContext.API.ShowMsg("QuickSSH", "Error: " + ex.Message);
+                        }
+                        return true;
+                    }
+                });
+            }
+
+            if (results.Count == 0)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandimport"),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_import_nofiles"), _dataDir),
+                    IcoPath = AppIconPath
+                });
+            }
+
+            return results;
         }
 
         #endregion

@@ -45,6 +45,18 @@
     <system:String x:Key="plugin_quickssh_config_imported">Importovaných {0} host(ov) zo SSH config.</system:String>
     <system:String x:Key="plugin_quickssh_config_notfound">Súbor SSH config nebol nájdený na ~/.ssh/config.</system:String>
 
+    <!-- EXPORT -->
+    <system:String x:Key="plugin_quickssh_title_commandexport">Exportovať profily</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandexport">Exportovať SSH profily do: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_export_success">Exportovaných {0} profil(ov) do {1}</system:String>
+
+    <!-- IMPORT -->
+    <system:String x:Key="plugin_quickssh_title_commandimport">Importovať profily</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandimport">Importovať SSH profily zo súboru JSON v: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_import_nofiles">Žiadne JSON súbory nenájdené v: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_import_success">Importovaných {0} profil(ov) úspešne.</system:String>
+    <system:String x:Key="plugin_quickssh_import_empty">V zvolenom súbore sa nenašli žiadne profily.</system:String>
+
     <!-- DOCS -->
     <system:String x:Key="plugin_quickssh_title_commanddocs">Dokumentácia</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Otvoriť dokumentáciu pluginu na GitHube.</system:String>
