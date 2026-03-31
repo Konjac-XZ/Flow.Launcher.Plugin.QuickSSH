@@ -28,7 +28,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private const string AppIconPath = "Images\\app.png";
 
         private string _databasePath;
-        private string _sshClient = "cmd.exe";
         private bool _isSshInstalled = true;
         private bool _isDatabaseCreated = true;
 
@@ -302,21 +301,26 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 results.Add(new Result
                 {
                     Title = "Direct connect",
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddirectconnect") + " d ssh user@host",
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddirectconnect") + " d user@host",
                     IcoPath = AppIconPath,
                     AutoCompleteText = query.ActionKeyword + " d "
                 });
                 return results;
             }
 
+            // Allow the user to type either "ssh user@host" (full command) or just "user@host".
+            var sshCmd = rest.StartsWith("ssh ", StringComparison.OrdinalIgnoreCase)
+                ? rest
+                : "ssh " + rest;
+
             results.Add(new Result
             {
                 Title = "Connect: " + rest,
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddirectconnect") + " " + rest,
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddirectconnect") + " " + sshCmd,
                 IcoPath = AppIconPath,
                 Action = _ =>
                 {
-                    RunSshCommand(rest);
+                    RunSshCommand(sshCmd);
                     return true;
                 }
             });
@@ -526,10 +530,13 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             string fileName;
             string arguments;
+            string customShellName = null;
 
             if (!string.IsNullOrEmpty(selectedShell) && customShells.ContainsKey(selectedShell))
             {
                 var shellValue = customShells[selectedShell];
+                customShellName = selectedShell;
+
                 if (string.IsNullOrEmpty(shellValue))
                 {
                     // Shell name is the executable
@@ -558,9 +565,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 // allowing the user to see any connection-error messages.
                 // sshCommand is a user-supplied SSH command (e.g. "ssh user@host") that
                 // was explicitly typed or saved by the user; passing it verbatim is intentional.
-                fileName = _sshClient;
+                fileName = GetCmdExePath();
                 arguments = "/k " + sshCommand;
             }
+
+            // Use the user's home directory as the working directory so SSH can always
+            // find ~/.ssh keys and config, even when FlowLauncher itself is installed in
+            // a path that contains non-ASCII characters or spaces.
+            var workingDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
 
             try
             {
@@ -568,13 +580,49 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 {
                     FileName = fileName,
                     Arguments = arguments,
-                    UseShellExecute = true
+                    UseShellExecute = true,
+                    WorkingDirectory = workingDir
                 });
             }
             catch (Exception ex)
             {
-                _pluginContext?.API?.ShowMsg("QuickSSH", "Error: " + ex.Message);
+                if (customShellName != null)
+                {
+                    // The custom shell executable could not be started; fall back to
+                    // cmd.exe so the connection still opens despite the broken shell.
+                    try
+                    {
+                        using var fallback = Process.Start(new ProcessStartInfo
+                        {
+                            FileName = GetCmdExePath(),
+                            Arguments = "/k " + sshCommand,
+                            UseShellExecute = true,
+                            WorkingDirectory = workingDir
+                        });
+                        _pluginContext?.API?.ShowMsg("QuickSSH",
+                            string.Format(GetTranslation("plugin_quickssh_shell_fallback"), customShellName));
+                    }
+                    catch (Exception ex2)
+                    {
+                        _pluginContext?.API?.ShowMsg("QuickSSH", "Error: " + ex2.Message);
+                    }
+                }
+                else
+                {
+                    _pluginContext?.API?.ShowMsg("QuickSSH", "Error: " + ex.Message);
+                }
             }
+        }
+
+        /// <summary>
+        /// Returns the absolute path to cmd.exe (always in %SystemRoot%\System32).
+        /// Falls back to the bare name as a last resort so PATH can resolve it.
+        /// </summary>
+        private static string GetCmdExePath()
+        {
+            var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            var cmdPath = Path.Combine(systemDir, "cmd.exe");
+            return File.Exists(cmdPath) ? cmdPath : "cmd.exe";
         }
 
         #endregion
