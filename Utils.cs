@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.IO;
 
@@ -33,6 +34,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 };
                 p.Start();
                 string output = p.StandardOutput.ReadLine();
+                // Drain stderr to prevent deadlock; we only need the first stdout line.
+                p.StandardError.ReadToEnd();
                 p.WaitForExit();
                 if (!string.IsNullOrWhiteSpace(output) && File.Exists(output.Trim()))
                     return output.Trim();
@@ -47,6 +50,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// </summary>
         public static bool IsSshInstalled()
         {
+            // First, check the default Windows built-in OpenSSH location
+            // (available since Windows 10 version 1809 / Windows Server 2019).
+            // Environment.SpecialFolder.System resolves to %SystemRoot%\System32.
+            var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            if (File.Exists(Path.Combine(systemDir, "OpenSSH", "ssh.exe")))
+                return true;
+
+            // Fallback: search PATH via the 'where' command and rely on its exit code.
             try
             {
                 using var process = new Process
@@ -62,11 +73,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     }
                 };
                 process.Start();
-                string output = process.StandardOutput.ReadToEnd();
-                string error = process.StandardError.ReadToEnd();
+                // Drain both streams to prevent deadlock; we only need the exit code.
+                process.StandardOutput.ReadToEnd();
+                process.StandardError.ReadToEnd();
                 process.WaitForExit();
 
-                return !string.IsNullOrEmpty(output) && string.IsNullOrEmpty(error);
+                return process.ExitCode == 0;
             }
             catch
             {
