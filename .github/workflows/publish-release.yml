@@ -1,55 +1,99 @@
 name: Publish Release
 
 on:
-  release:
-    types: [published]
-  workflow_dispatch:
-    inputs:
-      tag_name:
-        description: 'Optional tag, for example v1.0.6. Leave empty to use v<Version from plugin.json>.'
-        required: false
-        type: string
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: publish-release-main
+  cancel-in-progress: false
 
 jobs:
   publish:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      !contains(join(github.event.pull_request.labels.*.name, ','), 'skip-release')
     runs-on: windows-latest
-    permissions:
-      contents: write
 
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      - name: Resolve version and tag
+      - name: Resolve next version
         id: meta
         shell: pwsh
         run: |
-          $pluginVersion = (Get-Content "plugin.json" | ConvertFrom-Json).Version
+          $event = Get-Content $env:GITHUB_EVENT_PATH | ConvertFrom-Json
+          $labels = @($event.pull_request.labels | ForEach-Object { $_.name })
 
-          if ("${{ github.event_name }}" -eq "release") {
-            $tag = "${{ github.event.release.tag_name }}"
+          $bump = "patch"
+          if ($labels -contains "release:major") {
+            $bump = "major"
           }
-          else {
-            $manualTag = "${{ github.event.inputs.tag_name }}"
-            if ([string]::IsNullOrWhiteSpace($manualTag)) {
-              $tag = "v$pluginVersion"
+          elseif ($labels -contains "release:minor") {
+            $bump = "minor"
+          }
+          elseif ($labels -contains "release:patch") {
+            $bump = "patch"
+          }
+
+          $plugin = Get-Content "plugin.json" | ConvertFrom-Json
+          $current = [Version]$plugin.Version
+
+          $major = $current.Major
+          $minor = $current.Minor
+          $patch = $current.Build
+
+          switch ($bump) {
+            "major" {
+              $major++
+              $minor = 0
+              $patch = 0
             }
-            else {
-              $tag = $manualTag.Trim()
+            "minor" {
+              $minor++
+              $patch = 0
+            }
+            default {
+              $patch++
             }
           }
 
-          if ($tag -ne "v$pluginVersion") {
-            throw "Tag $tag nesedi s plugin.json verziou $pluginVersion"
-          }
+          $newVersion = "$major.$minor.$patch"
+          $newTag = "v$newVersion"
 
-          "plugin_version=$pluginVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-          "tag_name=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          $plugin.Version = $newVersion
+          $plugin | ConvertTo-Json -Depth 10 | Set-Content "plugin.json" -Encoding UTF8
+
+          "version=$newVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "tag=$newTag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "bump=$bump" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Commit version bump and create tag
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add plugin.json
+          git commit -m "chore: release ${{ steps.meta.outputs.tag }}"
+          git tag "${{ steps.meta.outputs.tag }}"
+
+          git push origin HEAD:main
+          git push origin "${{ steps.meta.outputs.tag }}"
 
       - name: Build plugin
         shell: pwsh
@@ -66,14 +110,14 @@ jobs:
           if (Test-Path "QuickSSH.zip") {
             Remove-Item "QuickSSH.zip" -Force
           }
+
           7z a -tzip "QuickSSH.zip" ".\QuickSSH\*"
 
-      - name: Publish release asset
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.meta.outputs.tag_name }}
-          target_commitish: ${{ github.sha }}
-          name: Release ${{ steps.meta.outputs.tag_name }}
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: Release ${{ steps.meta.outputs.tag }}
           files: QuickSSH.zip
           draft: false
           prerelease: false
