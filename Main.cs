@@ -164,7 +164,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 Title = GetTranslation("plugin_quickssh_title_commandadd"),
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commandadd"),
                 IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " add "
+                AutoCompleteText = query.ActionKeyword + " add ",
+                Score = int.MaxValue
             });
 
             if (string.IsNullOrEmpty(rest))
@@ -219,7 +220,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 Title = GetTranslation("plugin_quickssh_title_commandremove"),
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commandremove"),
                 IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " remove "
+                AutoCompleteText = query.ActionKeyword + " remove ",
+                Score = int.MaxValue
             });
 
             foreach (var entry in entries)
@@ -271,7 +273,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 Title = GetTranslation("plugin_quickssh_title_commandprofiles"),
                 SubTitle = GetTranslation(usageKey),
                 IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " " + verb + " "
+                AutoCompleteText = query.ActionKeyword + " " + verb + " ",
+                Score = int.MaxValue
             });
 
             var scored = new List<(int score, string name, string command)>();
@@ -321,7 +324,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 Title = GetTranslation("plugin_quickssh_title_commanddirect"),
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commandd_usage"),
                 IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " d "
+                AutoCompleteText = query.ActionKeyword + " d ",
+                Score = int.MaxValue
             });
 
             if (string.IsNullOrEmpty(rest))
@@ -363,7 +367,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     {
                         Title = GetTranslation("plugin_quickssh_title_commandshell_add"),
                         SubTitle = GetTranslation("plugin_quickssh_subtitle_commandshell_add_usage"),
-                        IcoPath = AppIconPath
+                        IcoPath = AppIconPath,
+                        Score = int.MaxValue
                     });
                     if (!string.IsNullOrEmpty(subRest))
                     {
@@ -408,7 +413,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             Title = GetTranslation("plugin_quickssh_title_commandshell_remove"),
                             SubTitle = GetTranslation("plugin_quickssh_subtitle_commandshell_remove"),
                             IcoPath = AppIconPath,
-                            AutoCompleteText = query.ActionKeyword + " shell remove "
+                            AutoCompleteText = query.ActionKeyword + " shell remove ",
+                            Score = int.MaxValue
                         });
                         foreach (var shell in shells)
                         {
@@ -446,7 +452,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         Title = GetTranslation("plugin_quickssh_title_commandshell"),
                         SubTitle = GetTranslation("plugin_quickssh_subtitle_commandshell_help"),
                         IcoPath = AppIconPath,
-                        AutoCompleteText = query.ActionKeyword + " shell "
+                        AutoCompleteText = query.ActionKeyword + " shell ",
+                        Score = int.MaxValue
                     });
 
                     // List shells + help
@@ -519,7 +526,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 Title = GetTranslation("plugin_quickssh_title_commandconfig"),
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commandconfig_usage"),
                 IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " config "
+                AutoCompleteText = query.ActionKeyword + " config ",
+                Score = int.MaxValue
             });
 
             results.Add(new Result
@@ -572,7 +580,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 {
                     Title = GetTranslation("plugin_quickssh_title_commanddocs"),
                     SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddocs_usage"),
-                    IcoPath = AppIconPath
+                    IcoPath = AppIconPath,
+                    Score = int.MaxValue
                 },
                 new Result
                 {
@@ -614,7 +623,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 Title = GetTranslation("plugin_quickssh_title_commandcopy"),
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commandcopy_usage"),
                 IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " copy "
+                AutoCompleteText = query.ActionKeyword + " copy ",
+                Score = int.MaxValue
             });
 
             foreach (var entry in entries)
@@ -679,7 +689,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Title = GetTranslation("plugin_quickssh_title_commandrename"),
                     SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
                     IcoPath = AppIconPath,
-                    AutoCompleteText = query.ActionKeyword + " rename "
+                    AutoCompleteText = query.ActionKeyword + " rename ",
+                    Score = int.MaxValue
                 });
 
                 foreach (var entry in entries)
@@ -709,7 +720,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Title = GetTranslation("plugin_quickssh_title_commandrename"),
                     SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
                     IcoPath = AppIconPath,
-                    AutoCompleteText = query.ActionKeyword + " rename "
+                    AutoCompleteText = query.ActionKeyword + " rename ",
+                    Score = int.MaxValue
                 });
                 results.Add(new Result
                 {
@@ -726,7 +738,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 Title = GetTranslation("plugin_quickssh_title_commandrename"),
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
                 IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " rename " + oldName + " "
+                AutoCompleteText = query.ActionKeyword + " rename " + oldName + " ",
+                Score = int.MaxValue
             });
 
             if (!string.IsNullOrEmpty(newName))
@@ -770,7 +783,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 Title = GetTranslation("plugin_quickssh_title_commandexport"),
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commandexport_usage"),
                 IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " export "
+                AutoCompleteText = query.ActionKeyword + " export ",
+                Score = int.MaxValue
             });
 
             results.Add(new Result
@@ -834,7 +848,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 Title = GetTranslation("plugin_quickssh_title_commandimport"),
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commandimport_usage"),
                 IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " import "
+                AutoCompleteText = query.ActionKeyword + " import ",
+                Score = int.MaxValue
             });
 
             foreach (var file in importFiles)
