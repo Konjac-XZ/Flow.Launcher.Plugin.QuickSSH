@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        shell: pwsh
+        run: dotnet restore "Flow.Launcher.Plugin.QuickSSH.csproj"
+
+      - name: Build
+        shell: pwsh
+        run: dotnet build "Flow.Launcher.Plugin.QuickSSH.csproj" -c Release --no-restore
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          dotnet publish "Flow.Launcher.Plugin.QuickSSH.csproj" `
+            -c Release `
+            -r win-x64 `
+            --no-self-contained `
+            -o "ci-build"
