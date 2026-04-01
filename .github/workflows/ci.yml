@@ -1,31 +1,48 @@
 name: CI
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
-  pull_request:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  build:
     runs-on: windows-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '9.0.x'
 
       - name: Restore
+        shell: pwsh
         run: dotnet restore QuickSSH.slnx
 
       - name: Build
-        run: dotnet build QuickSSH.slnx --no-restore -c Debug
+        shell: pwsh
+        run: dotnet build QuickSSH.slnx -c Release --no-restore
 
       - name: Test
+        shell: pwsh
         run: dotnet test Tests/Flow.Launcher.Plugin.QuickSSH.Tests.csproj --no-build --logger "console;verbosity=normal"
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          dotnet publish "Flow.Launcher.Plugin.QuickSSH.csproj" `
+            -c Release `
+            -r win-x64 `
+            --no-self-contained `
+            -o "ci-build"
