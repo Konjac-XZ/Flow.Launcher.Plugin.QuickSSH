@@ -158,17 +158,17 @@ namespace Flow.Launcher.Plugin.QuickSSH
         {
             var results = new List<Result>();
 
-            if (string.IsNullOrEmpty(rest))
+            // Always show usage hint at the top.
+            results.Add(new Result
             {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandadd"),
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandadd"),
-                    IcoPath = AppIconPath,
-                    AutoCompleteText = query.ActionKeyword + " add "
-                });
+                Title = GetTranslation("plugin_quickssh_title_commandadd"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandadd"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " add "
+            });
+
+            if (string.IsNullOrEmpty(rest))
                 return results;
-            }
 
             var addParts = rest.Split(new[] { ' ' }, 2);
             var profileName = addParts[0];
@@ -179,16 +179,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 ? ""
                 : (NormalizeSshCommand(rawSshCommand) ?? "");
 
-            if (string.IsNullOrEmpty(sshCommand))
-            {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandadd") + ": " + profileName,
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandadd"),
-                    IcoPath = AppIconPath
-                });
-            }
-            else
+            if (!string.IsNullOrEmpty(sshCommand))
             {
                 results.Add(new Result
                 {
