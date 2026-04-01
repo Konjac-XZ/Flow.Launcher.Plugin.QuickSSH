@@ -70,12 +70,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 });
             }
 
-            // If typing after "profiles" or "p", also suggest profile names
-            if (trimmed.StartsWith("profiles ") || trimmed.StartsWith("p "))
+            // If typing after "profiles" or "p", also suggest profile names.
+            // Use TrimStart (not Trim) so a trailing space in "profiles " is preserved
+            // and correctly matched by StartsWith("profiles ").
+            var prefixCheck = input.TrimStart().ToLowerInvariant();
+            bool isProfilesPrefix = prefixCheck.StartsWith("profiles ");
+            bool isPPrefix = !isProfilesPrefix && prefixCheck.StartsWith("p ");
+            if (isProfilesPrefix || isPPrefix)
             {
-                var search = trimmed.StartsWith("profiles ")
-                    ? trimmed.Substring(9)
-                    : trimmed.Substring(2);
+                var search = isProfilesPrefix ? prefixCheck.Substring(9) : prefixCheck.Substring(2);
 
                 if (userData?.Entries != null)
                 {

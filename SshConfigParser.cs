@@ -121,6 +121,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
             value = isEquals
                 ? line.Substring(sepIdx + 1).TrimStart()
                 : line.Substring(sepIdx + 1).Trim();
+
+            // Handle "Key = Value": space won the separator race but value still starts with "="
+            if (!isEquals && value.StartsWith("="))
+                value = value.Substring(1).TrimStart();
+
             return !string.IsNullOrEmpty(key);
         }
 
