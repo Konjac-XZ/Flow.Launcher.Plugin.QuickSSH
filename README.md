@@ -211,7 +211,7 @@ Example JSON format accepted by import:
 
 ### Manual Installation
 
-1. Download `Flow.Launcher.Plugin.QuickSSH.zip` from [Releases](https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH/releases)
+1. Download `QuickSSH.zip` from [Releases](https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH/releases)
 2. Extract the zip into a new folder:
    ```
    %APPDATA%\FlowLauncher\Plugins\QuickSSH\
@@ -256,7 +256,7 @@ Flow Launcher automatically selects the language that matches your system locale
 
 To make QuickSSH available via `pm install QuickSSH` in Flow Launcher:
 
-1. **Create a GitHub Release** — run the *Publish Release* workflow from the **Actions** tab. It builds the zip and creates a tagged release automatically.
+1. **Create a GitHub Release** — open a Pull Request in this repository, add one label (`release:patch`, `release:minor`, or `release:major`), and merge it into `main`. GitHub Actions will automatically build `QuickSSH.zip`, create a tag, and publish the release.
 
 2. **Fork the Plugin Manifest** — fork [Flow-Launcher/Flow.Launcher.PluginsManifest](https://github.com/Flow-Launcher/Flow.Launcher.PluginsManifest).
 
@@ -274,12 +274,12 @@ To make QuickSSH available via `pm install QuickSSH` in Flow Launcher:
      "Name": "QuickSSH",
      "Description": "Enhanced SSH connection plugin with TAB auto-completion, SSH config support, and improved shell handling",
      "Author": "Vaso73",
-     "Version": "1.0.11",
+     "Version": "1.0.13",
      "Language": "csharp",
      "MinFlowLauncherVersion": "1.19.0",
      "Website": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
      "UrlSourceCode": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
-     "UrlDownload": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH/releases/download/v1.0.11/Flow.Launcher.Plugin.QuickSSH.zip",
+     "UrlDownload": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH/releases/latest/download/QuickSSH.zip",
      "IcoPath": "https://raw.githubusercontent.com/Vaso73/Flow.Launcher.Plugin.QuickSSH/main/Images/app.png"
    }
    ```
@@ -296,15 +296,16 @@ Contributions are welcome! Here is the typical workflow:
    ```powershell
    dotnet publish -c Release -r win-x64 --no-self-contained
    ```
-4. Update `plugin.json` version if you are preparing a new release.
+4. If the Pull Request should create a release, add one label: `release:patch`, `release:minor`, or `release:major`.
 5. Open a Pull Request describing your changes.
 
 ### Releasing a new version
 
-1. Update `"Version"` in `plugin.json` (e.g. `1.0.12`).
-2. Commit and push to `main`.
-3. Go to **Actions → Publish Release → Run workflow** — this builds the zip and creates a GitHub Release tagged `v<version>`.
-4. Update `UrlDownload` and `Version` in the Plugin Manifest entry (see above) and submit a PR there.
+1. Open a Pull Request with your changes.
+2. Add one label: `release:patch`, `release:minor`, or `release:major`.
+3. Merge the Pull Request into `main`.
+4. GitHub Actions automatically builds `QuickSSH.zip`, creates a new tag, and publishes a GitHub Release.
+5. Update the Plugin Manifest entry in `Flow-Launcher/Flow.Launcher.PluginsManifest` if needed.
 
 ## License
 
