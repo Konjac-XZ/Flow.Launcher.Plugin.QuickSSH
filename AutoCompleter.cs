@@ -110,21 +110,23 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         private static string GetCommandDescription(string command)
         {
-            return command switch
+            var key = command switch
             {
-                "add" => "Add a new SSH profile",
-                "remove" => "Remove an SSH profile",
-                "profiles" or "p" => "List and search saved profiles",
-                "d" => "Direct SSH connection without saving",
-                "shell" => "Manage custom shell interpreters",
-                "config" => "Import hosts from ~/.ssh/config",
-                "export" => "Export SSH profiles to the plugin data folder",
-                "import" => "Import SSH profiles from the plugin data folder",
-                "copy" => "Copy an SSH command to the clipboard",
-                "rename" => "Rename an existing SSH profile",
-                "docs" => "Open plugin documentation",
-                _ => ""
+                "add" => "plugin_quickssh_subtitle_commandadd",
+                "remove" => "plugin_quickssh_subtitle_commandremove",
+                "profiles" => "plugin_quickssh_subtitle_commandprofiles",
+                "p" => "plugin_quickssh_subtitle_commandp_usage",
+                "d" => "plugin_quickssh_subtitle_commandd_usage",
+                "shell" => "plugin_quickssh_subtitle_commandshell_help",
+                "config" => "plugin_quickssh_subtitle_commandconfig_usage",
+                "export" => "plugin_quickssh_subtitle_commandexport_usage",
+                "import" => "plugin_quickssh_subtitle_commandimport_usage",
+                "copy" => "plugin_quickssh_subtitle_commandcopy_usage",
+                "rename" => "plugin_quickssh_subtitle_commandrename",
+                "docs" => "plugin_quickssh_subtitle_commanddocs_usage",
+                _ => null
             };
+            return key != null ? QuickSsh.GetTranslation(key) : "";
         }
     }
 }
