@@ -16,27 +16,37 @@
     <!-- Default / help -->
     <system:String x:Key="plugin_quickssh_subtitle_default">Zadajte: add ; remove ; profiles|p ; direct|d ; shell ; config ; docs</system:String>
 
+    <!-- Shared / common -->
+    <system:String x:Key="plugin_quickssh_noprofiles">Žiadne profily neboli uložené.</system:String>
+    <system:String x:Key="plugin_quickssh_noshells">Žiadne shell profily neboli uložené.</system:String>
+    <system:String x:Key="plugin_quickssh_save_label">Uložiť:</system:String>
+    <system:String x:Key="plugin_quickssh_connect_label">Pripojiť:</system:String>
+    <system:String x:Key="plugin_quickssh_addshell_label">Pridať shell:</system:String>
+
     <!-- ADD -->
     <system:String x:Key="plugin_quickssh_title_commandadd">Pridať profil</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandadd">Použitie: add &lt;názov&gt; ssh používateľ@host</system:String>
 
     <!-- REMOVE -->
     <system:String x:Key="plugin_quickssh_title_commandremove">Odstrániť profil</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandremove">Vyberte profil na odstránenie.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandremove">Použitie: remove [filter]</system:String>
 
     <!-- PROFILES -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles">Uložené profily</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Vyberte profil pre pripojenie.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Použitie: profiles [filter]</system:String>
 
     <!-- DIRECT CONNECT -->
+    <system:String x:Key="plugin_quickssh_title_commanddirect">Priame pripojenie</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect">Priame pripojenie:</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandd_usage">Použitie: d používateľ@host</system:String>
 
     <!-- SHELL -->
+    <system:String x:Key="plugin_quickssh_title_commandshell">Správa shellov</system:String>
     <system:String x:Key="plugin_quickssh_title_commandshell_add">Pridať shell profil</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandshell_add_usage">Použitie: shell add &lt;exe&gt; alebo shell add &lt;názov&gt; &lt;exe + argumenty&gt;</system:String>
     <system:String x:Key="plugin_quickssh_title_commandshell_remove">Odstrániť shell profil</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Vyberte shell profil na odstránenie.</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Použitie: shell add ; remove</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Použitie: shell remove [filter]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Použitie: shell [add|remove]</system:String>
     <system:String x:Key="plugin_quickssh_shell_selected">(vybraný)</system:String>
 
     <!-- CONFIG -->
@@ -60,6 +70,7 @@
     <!-- COPY -->
     <system:String x:Key="plugin_quickssh_title_commandcopy">Kopírovať SSH príkaz</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Kopírovať:</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Použitie: copy [filter]</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy_empty">Žiadne zodpovedajúce profily nenájdené.</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Nepodarilo sa skopírovať do schránky. Uistite sa, že Flow Launcher beží na UI vlákne.</system:String>
 

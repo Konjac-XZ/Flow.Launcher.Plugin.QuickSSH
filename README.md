@@ -16,6 +16,8 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 | `ssh config` | Import hosts from `~/.ssh/config` |
 | `ssh export` | Export all profiles to a JSON file |
 | `ssh import [filter]` | Import profiles from a JSON file |
+| `ssh copy [filter]` | Copy an SSH command to the clipboard |
+| `ssh rename <oldname> <newname>` | Rename an existing profile |
 | `ssh docs` | Open plugin documentation |
 
 ### Capabilities
@@ -27,7 +29,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 - **Fuzzy search** — accent-insensitive search with Damerau-Levenshtein distance
 - **Command normalisation** — auto-prepends `ssh ` when you type only a destination
 - **Custom shells** — use cmd.exe, PowerShell, WSL, Git Bash, Kitty, or any terminal
-- **Multi-language support** — English and Slovak (i18n via Flow Launcher)
+- **Multi-language support** — English, Slovak, French, German, Russian, Polish, and Spanish (i18n via Flow Launcher)
 - **Atomic saves** — profile data is written atomically to prevent corruption
 - **Custom-shell fallback** — if the selected shell cannot start, cmd.exe is used automatically
 
@@ -63,6 +65,21 @@ ssh profiles prod      → filter profiles containing "prod"
 ```
 ssh remove             → list all profiles for removal
 ssh remove prod        → filter profiles by "prod", then click to delete
+```
+
+### Copy an SSH command to the clipboard
+
+```
+ssh copy               → list all profiles for copying
+ssh copy myserver      → filter by "myserver", then click to copy the SSH command
+```
+
+### Rename a profile
+
+```
+ssh rename                        → list all profiles to select for renaming
+ssh rename myserver               → pick "myserver" as the source (TAB to auto-complete)
+ssh rename myserver new-name      → rename "myserver" to "new-name"
 ```
 
 ### Quick one-time connection (without saving)
@@ -249,6 +266,11 @@ dotnet publish -c Release -r win-x64 --no-self-contained
 |------|----------|
 | `en` | English |
 | `sk` | Slovak (Slovenčina) |
+| `fr` | French (Français) |
+| `de` | German (Deutsch) |
+| `ru` | Russian (Русский) |
+| `pl` | Polish (Polski) |
+| `es` | Spanish (Español) |
 
 Flow Launcher automatically selects the language that matches your system locale.
 
