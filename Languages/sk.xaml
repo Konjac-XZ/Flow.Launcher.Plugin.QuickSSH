@@ -57,6 +57,17 @@
     <system:String x:Key="plugin_quickssh_import_success">Importovaných {0} profil(ov) úspešne.</system:String>
     <system:String x:Key="plugin_quickssh_import_empty">V zvolenom súbore sa nenašli žiadne profily.</system:String>
 
+    <!-- COPY -->
+    <system:String x:Key="plugin_quickssh_title_commandcopy">Kopírovať SSH príkaz</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Kopírovať:</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_empty">Žiadne zodpovedajúce profily nenájdené.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_clipboard_error">Nepodarilo sa skopírovať do schránky. Uistite sa, že Flow Launcher beží na UI vlákne.</system:String>
+
+    <!-- RENAME -->
+    <system:String x:Key="plugin_quickssh_title_commandrename">Premenovať profil</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandrename">Použitie: rename &lt;starý názov&gt; &lt;nový názov&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_rename_notfound">Profil sa nenašiel.</system:String>
+
     <!-- DOCS -->
     <system:String x:Key="plugin_quickssh_title_commanddocs">Dokumentácia</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Otvoriť dokumentáciu pluginu na GitHube.</system:String>

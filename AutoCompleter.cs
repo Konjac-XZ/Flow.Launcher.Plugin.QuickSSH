@@ -10,7 +10,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
     {
         private static readonly string[] Commands = new[]
         {
-            "add", "remove", "profiles", "p", "d", "shell", "config", "export", "import", "docs"
+            "add", "remove", "profiles", "p", "d", "shell", "config", "export", "import", "copy", "rename", "docs"
         };
 
         /// <summary>
@@ -117,6 +117,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 "config" => "Import hosts from ~/.ssh/config",
                 "export" => "Export SSH profiles to the plugin data folder",
                 "import" => "Import SSH profiles from the plugin data folder",
+                "copy" => "Copy an SSH command to the clipboard",
+                "rename" => "Rename an existing SSH profile",
                 "docs" => "Open plugin documentation",
                 _ => ""
             };
