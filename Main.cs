@@ -27,6 +27,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private const string CommandExport = "export";
         private const string CommandImport = "import";
         private const string CommandDocs = "docs";
+        private const string CommandCopy = "copy";
+        private const string CommandRename = "rename";
 
         private const string AppIconPath = "Images\\app.png";
         private const string AppIconGreenPath = "Images\\app-green.png";
@@ -131,6 +133,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     break;
                 case CommandDocs:
                     results.AddRange(HandleDocs());
+                    break;
+                case CommandCopy:
+                    results.AddRange(HandleCopy(query, rest));
+                    break;
+                case CommandRename:
+                    results.AddRange(HandleRename(query, rest));
                     break;
                 default:
                     // Show auto-complete suggestions
@@ -427,7 +435,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                     _profileManager.UserData.CustomShell.SetCallback(null);
                                     _profileManager.UserData.CustomShell.Remove(shell.Key);
                                     if (_profileManager.UserData.SelectedCustomShell == shell.Key)
-                                        _profileManager.UserData.SelectedCustomShell = null;
+                                    {
+                                        // Auto-select the first remaining shell (if any).
+                                        _profileManager.UserData.SelectedCustomShell =
+                                            _profileManager.UserData.CustomShell.Keys.FirstOrDefault();
+                                    }
                                     _profileManager.UserData.CustomShell.SetCallback(_profileManager.SaveConfiguration);
                                     _profileManager.SaveConfiguration();
                                     return true;
@@ -571,6 +583,158 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     }
                 }
             };
+        }
+
+        private List<Result> HandleCopy(Query query, string search)
+        {
+            var results = new List<Result>();
+            var entries = _profileManager.UserData.Entries;
+
+            if (entries.Count == 0)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandcopy"),
+                    SubTitle = "No profiles saved.",
+                    IcoPath = AppIconPath
+                });
+                return results;
+            }
+
+            foreach (var entry in entries)
+            {
+                if (!string.IsNullOrEmpty(search) &&
+                    !entry.Key.ToLowerInvariant().Contains(search.ToLowerInvariant()))
+                    continue;
+
+                var name = entry.Key;
+                var command = entry.Value;
+                results.Add(new Result
+                {
+                    Title = name,
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandcopy") + " " + command,
+                    IcoPath = AppIconGreenPath,
+                    AutoCompleteText = query.ActionKeyword + " copy " + name,
+                    Action = _ =>
+                    {
+                        try
+                        {
+                            System.Windows.Clipboard.SetText(command);
+                        }
+                        catch (Exception)
+                        {
+                            _pluginContext?.API?.ShowMsg("QuickSSH",
+                                GetTranslation("plugin_quickssh_copy_clipboard_error"));
+                        }
+                        return true;
+                    }
+                });
+            }
+
+            if (results.Count == 0)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandcopy"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandcopy_empty"),
+                    IcoPath = AppIconPath
+                });
+            }
+
+            return results;
+        }
+
+        private List<Result> HandleRename(Query query, string rest)
+        {
+            var results = new List<Result>();
+            var entries = _profileManager.UserData.Entries;
+
+            var parts = rest.Split(new[] { ' ' }, 2);
+            var oldName = parts[0].Trim();
+            var newName = parts.Length > 1 ? parts[1].Trim() : "";
+
+            if (string.IsNullOrEmpty(oldName))
+            {
+                // No name typed yet – show all profiles as suggestions.
+                if (entries.Count == 0)
+                {
+                    results.Add(new Result
+                    {
+                        Title = GetTranslation("plugin_quickssh_title_commandrename"),
+                        SubTitle = "No profiles saved.",
+                        IcoPath = AppIconPath
+                    });
+                    return results;
+                }
+
+                foreach (var entry in entries)
+                {
+                    var name = entry.Key;
+                    var autoText = query.ActionKeyword + " rename " + name + " ";
+                    results.Add(new Result
+                    {
+                        Title = name,
+                        SubTitle = entry.Value,
+                        IcoPath = AppIconPath,
+                        AutoCompleteText = autoText,
+                        Action = _ =>
+                        {
+                            _pluginContext?.API?.ChangeQuery(autoText, true);
+                            return false;
+                        }
+                    });
+                }
+                return results;
+            }
+
+            if (!entries.ContainsKey(oldName))
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandrename") + ": " + oldName,
+                    SubTitle = GetTranslation("plugin_quickssh_rename_notfound"),
+                    IcoPath = AppIconRedPath
+                });
+                return results;
+            }
+
+            if (string.IsNullOrEmpty(newName))
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandrename") + ": " + oldName,
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " rename " + oldName + " "
+                });
+                return results;
+            }
+
+            var cmdValue = entries[oldName];
+            results.Add(new Result
+            {
+                Title = oldName + " → " + newName,
+                SubTitle = cmdValue,
+                IcoPath = AppIconGreenPath,
+                Action = _ =>
+                {
+                    var value = entries[oldName];
+                    entries.SetCallback(null);
+                    try
+                    {
+                        entries.Remove(oldName);
+                        entries[newName] = value;
+                    }
+                    finally
+                    {
+                        entries.SetCallback(_profileManager.SaveConfiguration);
+                    }
+                    _profileManager.SaveConfiguration();
+                    return true;
+                }
+            });
+
+            return results;
         }
 
         private List<Result> HandleExport(Query query, string rest)
@@ -722,7 +886,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// </list>
         /// Returns <see langword="null"/> if nothing valid remains after stripping.
         /// </summary>
-        private static string NormalizeSshCommand(string rawCommand)
+        internal static string NormalizeSshCommand(string rawCommand)
         {
             if (string.IsNullOrWhiteSpace(rawCommand))
                 return null;
@@ -878,7 +1042,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         #region Search Scoring
 
-        private static int ScoreProfile(string search, string name, string command)
+        internal static int ScoreProfile(string search, string name, string command)
         {
             var searchLower = RemoveDiacritics(search.ToLowerInvariant());
             var nameLower = RemoveDiacritics(name.ToLowerInvariant());

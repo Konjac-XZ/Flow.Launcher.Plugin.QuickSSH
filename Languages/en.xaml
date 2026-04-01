@@ -57,6 +57,17 @@
     <system:String x:Key="plugin_quickssh_import_success">Imported {0} profile(s) successfully.</system:String>
     <system:String x:Key="plugin_quickssh_import_empty">No profiles found in the selected file.</system:String>
 
+    <!-- COPY -->
+    <system:String x:Key="plugin_quickssh_title_commandcopy">Copy SSH command</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Copy:</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_empty">No matching profiles found.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_clipboard_error">Could not copy to clipboard. Ensure Flow Launcher is running on the UI thread.</system:String>
+
+    <!-- RENAME -->
+    <system:String x:Key="plugin_quickssh_title_commandrename">Rename profile</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandrename">Usage: rename &lt;oldname&gt; &lt;newname&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_rename_notfound">Profile not found.</system:String>
+
     <!-- DOCS -->
     <system:String x:Key="plugin_quickssh_title_commanddocs">Documentation</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Open plugin documentation on GitHub.</system:String>
