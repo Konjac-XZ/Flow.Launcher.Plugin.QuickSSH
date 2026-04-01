@@ -13,9 +13,6 @@
     <system:String x:Key="plugin_quickssh_databasenotcreated_title">QuickSSH</system:String>
     <system:String x:Key="plugin_quickssh_databasenotcreated_subtitle">Profildatenbank konnte nicht erstellt werden.</system:String>
 
-    <!-- Default / help -->
-    <system:String x:Key="plugin_quickssh_subtitle_default">Eingabe: add ; remove ; profiles|p ; direct|d ; shell ; config ; docs</system:String>
-
     <!-- Shared / common -->
     <system:String x:Key="plugin_quickssh_noprofiles">Keine Profile gespeichert.</system:String>
     <system:String x:Key="plugin_quickssh_noshells">Keine Shell-Profile gespeichert.</system:String>
@@ -65,7 +62,6 @@
 
     <!-- IMPORT -->
     <system:String x:Key="plugin_quickssh_title_commandimport">Profile importieren</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandimport">SSH-Profile aus einer JSON-Datei importieren in: {0}</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandimport_usage">Verwendung: import [Filter]</system:String>
     <system:String x:Key="plugin_quickssh_import_nofiles">Keine JSON-Dateien gefunden in: {0}</system:String>
     <system:String x:Key="plugin_quickssh_import_success">{0} Profil(e) erfolgreich importiert.</system:String>
@@ -75,7 +71,6 @@
     <system:String x:Key="plugin_quickssh_title_commandcopy">SSH-Befehl kopieren</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Kopieren:</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Verwendung: copy &lt;Vorhandener&gt; &lt;neuer-Name&gt;</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_empty">Keine passenden Profile gefunden.</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Kopieren in die Zwischenablage fehlgeschlagen. Stellen Sie sicher, dass Flow Launcher auf dem UI-Thread läuft.</system:String>
 
     <!-- RENAME -->
@@ -87,8 +82,5 @@
     <system:String x:Key="plugin_quickssh_title_commanddocs">Dokumentation</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Plugin-Dokumentation auf GitHub öffnen.</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs_usage">Verwendung: docs</system:String>
-
-    <!-- SHELL FALLBACK -->
-    <system:String x:Key="plugin_quickssh_shell_fallback">Shell '{0}' nicht gefunden. Rückfall auf Standard-cmd.exe.</system:String>
 
 </ResourceDictionary>

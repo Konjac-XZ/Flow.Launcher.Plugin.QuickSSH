@@ -13,9 +13,6 @@
     <system:String x:Key="plugin_quickssh_databasenotcreated_title">QuickSSH</system:String>
     <system:String x:Key="plugin_quickssh_databasenotcreated_subtitle">Databázu profilov sa nepodarilo vytvoriť.</system:String>
 
-    <!-- Default / help -->
-    <system:String x:Key="plugin_quickssh_subtitle_default">Zadajte: add ; remove ; profiles|p ; direct|d ; shell ; config ; docs</system:String>
-
     <!-- Shared / common -->
     <system:String x:Key="plugin_quickssh_noprofiles">Žiadne profily neboli uložené.</system:String>
     <system:String x:Key="plugin_quickssh_noshells">Žiadne shell profily neboli uložené.</system:String>
@@ -65,7 +62,6 @@
 
     <!-- IMPORT -->
     <system:String x:Key="plugin_quickssh_title_commandimport">Importovať profily</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandimport">Importovať SSH profily zo súboru JSON v: {0}</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandimport_usage">Použitie: import [filter]</system:String>
     <system:String x:Key="plugin_quickssh_import_nofiles">Žiadne JSON súbory nenájdené v: {0}</system:String>
     <system:String x:Key="plugin_quickssh_import_success">Importovaných {0} profil(ov) úspešne.</system:String>
@@ -75,7 +71,6 @@
     <system:String x:Key="plugin_quickssh_title_commandcopy">Kopírovať SSH príkaz</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Kopírovať:</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Použitie: copy &lt;existujúci&gt; &lt;nový-názov&gt;</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_empty">Žiadne zodpovedajúce profily nenájdené.</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Nepodarilo sa skopírovať do schránky. Uistite sa, že Flow Launcher beží na UI vlákne.</system:String>
 
     <!-- RENAME -->
@@ -87,8 +82,5 @@
     <system:String x:Key="plugin_quickssh_title_commanddocs">Dokumentácia</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Otvoriť dokumentáciu pluginu na GitHube.</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs_usage">Použitie: docs</system:String>
-
-    <!-- SHELL FALLBACK -->
-    <system:String x:Key="plugin_quickssh_shell_fallback">Shell '{0}' nebol nájdený. Použitý predvolený cmd.exe.</system:String>
 
 </ResourceDictionary>

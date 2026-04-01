@@ -13,9 +13,6 @@
     <system:String x:Key="plugin_quickssh_databasenotcreated_title">QuickSSH</system:String>
     <system:String x:Key="plugin_quickssh_databasenotcreated_subtitle">Nie można było utworzyć bazy danych profili.</system:String>
 
-    <!-- Default / help -->
-    <system:String x:Key="plugin_quickssh_subtitle_default">Wpisz: add ; remove ; profiles|p ; direct|d ; shell ; config ; docs</system:String>
-
     <!-- Shared / common -->
     <system:String x:Key="plugin_quickssh_noprofiles">Brak zapisanych profili.</system:String>
     <system:String x:Key="plugin_quickssh_noshells">Brak zapisanych profili powłoki.</system:String>
@@ -65,7 +62,6 @@
 
     <!-- IMPORT -->
     <system:String x:Key="plugin_quickssh_title_commandimport">Importuj profile</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandimport">Importuj profile SSH z pliku JSON w: {0}</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandimport_usage">Użycie: import [filtr]</system:String>
     <system:String x:Key="plugin_quickssh_import_nofiles">Nie znaleziono plików JSON w: {0}</system:String>
     <system:String x:Key="plugin_quickssh_import_success">Zaimportowano {0} profil(i) pomyślnie.</system:String>
@@ -75,7 +71,6 @@
     <system:String x:Key="plugin_quickssh_title_commandcopy">Kopiuj polecenie SSH</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Kopiuj:</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Użycie: copy &lt;istniejący&gt; &lt;nowa-nazwa&gt;</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_empty">Nie znaleziono pasujących profili.</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Nie można skopiować do schowka. Upewnij się, że Flow Launcher działa na wątku UI.</system:String>
 
     <!-- RENAME -->
@@ -87,8 +82,5 @@
     <system:String x:Key="plugin_quickssh_title_commanddocs">Dokumentacja</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Otwórz dokumentację wtyczki na GitHub.</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs_usage">Użycie: docs</system:String>
-
-    <!-- SHELL FALLBACK -->
-    <system:String x:Key="plugin_quickssh_shell_fallback">Powłoka '{0}' nie znaleziona. Używanie domyślnego cmd.exe.</system:String>
 
 </ResourceDictionary>

@@ -13,9 +13,6 @@
     <system:String x:Key="plugin_quickssh_databasenotcreated_title">QuickSSH</system:String>
     <system:String x:Key="plugin_quickssh_databasenotcreated_subtitle">Не удалось создать базу данных профилей.</system:String>
 
-    <!-- Default / help -->
-    <system:String x:Key="plugin_quickssh_subtitle_default">Введите: add ; remove ; profiles|p ; direct|d ; shell ; config ; docs</system:String>
-
     <!-- Shared / common -->
     <system:String x:Key="plugin_quickssh_noprofiles">Профили не сохранены.</system:String>
     <system:String x:Key="plugin_quickssh_noshells">Профили оболочек не сохранены.</system:String>
@@ -65,7 +62,6 @@
 
     <!-- IMPORT -->
     <system:String x:Key="plugin_quickssh_title_commandimport">Импорт профилей</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandimport">Импортировать SSH-профили из JSON-файла в: {0}</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandimport_usage">Использование: import [фильтр]</system:String>
     <system:String x:Key="plugin_quickssh_import_nofiles">JSON-файлы не найдены в: {0}</system:String>
     <system:String x:Key="plugin_quickssh_import_success">Импортировано {0} профиль(ей) успешно.</system:String>
@@ -75,7 +71,6 @@
     <system:String x:Key="plugin_quickssh_title_commandcopy">Копировать SSH-команду</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Копировать:</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Использование: copy &lt;существующий&gt; &lt;новое-имя&gt;</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_empty">Соответствующие профили не найдены.</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Не удалось скопировать в буфер обмена. Убедитесь, что Flow Launcher запущен в потоке UI.</system:String>
 
     <!-- RENAME -->
@@ -87,8 +82,5 @@
     <system:String x:Key="plugin_quickssh_title_commanddocs">Документация</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Открыть документацию плагина на GitHub.</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs_usage">Использование: docs</system:String>
-
-    <!-- SHELL FALLBACK -->
-    <system:String x:Key="plugin_quickssh_shell_fallback">Оболочка '{0}' не найдена. Используется стандартный cmd.exe.</system:String>
 
 </ResourceDictionary>
