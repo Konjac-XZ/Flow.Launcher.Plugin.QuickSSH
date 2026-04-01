@@ -114,7 +114,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     break;
                 case CommandProfiles:
                 case CommandProfilesShort:
-                    results.AddRange(HandleProfiles(query, rest));
+                    results.AddRange(HandleProfiles(query, rest, verb));
                     break;
                 case CommandDirectConnect:
                     results.AddRange(HandleDirectConnect(query, rest));
@@ -245,10 +245,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
             return results;
         }
 
-        private List<Result> HandleProfiles(Query query, string search)
+        private List<Result> HandleProfiles(Query query, string search, string verb)
         {
             var results = new List<Result>();
             var entries = _profileManager.UserData.Entries;
+
+            var usageKey = verb == CommandProfilesShort
+                ? "plugin_quickssh_subtitle_commandp_usage"
+                : "plugin_quickssh_subtitle_commandprofiles";
 
             if (entries.Count == 0)
             {
@@ -265,9 +269,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
             results.Add(new Result
             {
                 Title = GetTranslation("plugin_quickssh_title_commandprofiles"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles"),
+                SubTitle = GetTranslation(usageKey),
                 IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " profiles "
+                AutoCompleteText = query.ActionKeyword + " " + verb + " "
             });
 
             var scored = new List<(int score, string name, string command)>();
@@ -509,6 +513,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
         {
             var results = new List<Result>();
 
+            // Always show usage hint at the top.
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandconfig"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandconfig_usage"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " config "
+            });
+
             results.Add(new Result
             {
                 Title = GetTranslation("plugin_quickssh_title_commandconfig"),
@@ -554,11 +567,18 @@ namespace Flow.Launcher.Plugin.QuickSSH
         {
             return new List<Result>
             {
+                // Always show usage hint at the top.
+                new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commanddocs"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddocs_usage"),
+                    IcoPath = AppIconPath
+                },
                 new Result
                 {
                     Title = GetTranslation("plugin_quickssh_title_commanddocs"),
                     SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddocs"),
-                    IcoPath = AppIconPath,
+                    IcoPath = AppIconGreenPath,
                     Action = _ =>
                     {
                         using var process = Process.Start(new ProcessStartInfo
@@ -744,6 +764,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
             var results = new List<Result>();
             var exportPath = Path.Combine(_dataDir, "profiles_export.json");
 
+            // Always show usage hint at the top.
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandexport"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandexport_usage"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " export "
+            });
+
             results.Add(new Result
             {
                 Title = GetTranslation("plugin_quickssh_title_commandexport"),
@@ -803,7 +832,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             results.Add(new Result
             {
                 Title = GetTranslation("plugin_quickssh_title_commandimport"),
-                SubTitle = string.Format(GetTranslation("plugin_quickssh_subtitle_commandimport"), _dataDir),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandimport_usage"),
                 IcoPath = AppIconPath,
                 AutoCompleteText = query.ActionKeyword + " import "
             });

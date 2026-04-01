@@ -13,9 +13,6 @@
     <system:String x:Key="plugin_quickssh_databasenotcreated_title">QuickSSH</system:String>
     <system:String x:Key="plugin_quickssh_databasenotcreated_subtitle">Profildatenbank konnte nicht erstellt werden.</system:String>
 
-    <!-- Default / help -->
-    <system:String x:Key="plugin_quickssh_subtitle_default">Eingabe: add ; remove ; profiles|p ; direct|d ; shell ; config ; docs</system:String>
-
     <!-- Shared / common -->
     <system:String x:Key="plugin_quickssh_noprofiles">Keine Profile gespeichert.</system:String>
     <system:String x:Key="plugin_quickssh_noshells">Keine Shell-Profile gespeichert.</system:String>
@@ -25,7 +22,7 @@
 
     <!-- ADD -->
     <system:String x:Key="plugin_quickssh_title_commandadd">Profil hinzufügen</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandadd">Verwendung: add &lt;Name&gt; ssh Benutzer@Host</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandadd">Verwendung: add &lt;Name&gt; &lt;SSH-Befehl&gt;</system:String>
 
     <!-- REMOVE -->
     <system:String x:Key="plugin_quickssh_title_commandremove">Profil entfernen</system:String>
@@ -34,11 +31,12 @@
     <!-- PROFILES -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles">Gespeicherte Profile</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Verwendung: profiles [Filter]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandp_usage">Verwendung: p [Filter]</system:String>
 
     <!-- DIRECT CONNECT -->
     <system:String x:Key="plugin_quickssh_title_commanddirect">Direkte Verbindung</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect">Direkte Verbindung:</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandd_usage">Verwendung: d Benutzer@Host</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandd_usage">Verwendung: d &lt;SSH-Befehl&gt;</system:String>
 
     <!-- SHELL -->
     <system:String x:Key="plugin_quickssh_title_commandshell">Shell-Verwaltung</system:String>
@@ -46,23 +44,25 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandshell_add_usage">Verwendung: shell add &lt;exe&gt; oder shell add &lt;Name&gt; &lt;exe + Argumente&gt;</system:String>
     <system:String x:Key="plugin_quickssh_title_commandshell_remove">Shell-Profil entfernen</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Verwendung: shell remove [Filter]</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Verwendung: shell [add|remove]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Verwendung: shell add ; remove ; list</system:String>
     <system:String x:Key="plugin_quickssh_shell_selected">(ausgewählt)</system:String>
 
     <!-- CONFIG -->
     <system:String x:Key="plugin_quickssh_title_commandconfig">SSH-Konfiguration importieren</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandconfig">Hosts aus ~/.ssh/config-Datei importieren.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandconfig_usage">Verwendung: config</system:String>
     <system:String x:Key="plugin_quickssh_config_imported">{0} Host(s) aus SSH-Konfiguration importiert.</system:String>
     <system:String x:Key="plugin_quickssh_config_notfound">SSH-Konfigurationsdatei nicht unter ~/.ssh/config gefunden.</system:String>
 
     <!-- EXPORT -->
     <system:String x:Key="plugin_quickssh_title_commandexport">Profile exportieren</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandexport">SSH-Profile exportieren nach: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandexport_usage">Verwendung: export</system:String>
     <system:String x:Key="plugin_quickssh_export_success">{0} Profil(e) nach {1} exportiert</system:String>
 
     <!-- IMPORT -->
     <system:String x:Key="plugin_quickssh_title_commandimport">Profile importieren</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandimport">SSH-Profile aus einer JSON-Datei importieren in: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandimport_usage">Verwendung: import [Filter]</system:String>
     <system:String x:Key="plugin_quickssh_import_nofiles">Keine JSON-Dateien gefunden in: {0}</system:String>
     <system:String x:Key="plugin_quickssh_import_success">{0} Profil(e) erfolgreich importiert.</system:String>
     <system:String x:Key="plugin_quickssh_import_empty">Keine Profile in der ausgewählten Datei gefunden.</system:String>
@@ -70,8 +70,7 @@
     <!-- COPY -->
     <system:String x:Key="plugin_quickssh_title_commandcopy">SSH-Befehl kopieren</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Kopieren:</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Verwendung: copy [Filter]</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_empty">Keine passenden Profile gefunden.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Verwendung: copy &lt;Vorhandener&gt; &lt;neuer-Name&gt;</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Kopieren in die Zwischenablage fehlgeschlagen. Stellen Sie sicher, dass Flow Launcher auf dem UI-Thread läuft.</system:String>
 
     <!-- RENAME -->
@@ -82,8 +81,6 @@
     <!-- DOCS -->
     <system:String x:Key="plugin_quickssh_title_commanddocs">Dokumentation</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Plugin-Dokumentation auf GitHub öffnen.</system:String>
-
-    <!-- SHELL FALLBACK -->
-    <system:String x:Key="plugin_quickssh_shell_fallback">Shell '{0}' nicht gefunden. Rückfall auf Standard-cmd.exe.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddocs_usage">Verwendung: docs</system:String>
 
 </ResourceDictionary>

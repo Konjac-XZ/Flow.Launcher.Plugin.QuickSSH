@@ -23,6 +23,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 ### Capabilities
 
 - **TAB auto-completion** — press TAB to auto-complete commands and profile names
+- **In-line usage hints** — every command view shows a pinned usage/help entry at the top of the results list
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
 - **Profile export / import** — back up and restore profiles as plain JSON files
 - **Proper quoting & escaping** — handles SSH keys and paths with spaces correctly

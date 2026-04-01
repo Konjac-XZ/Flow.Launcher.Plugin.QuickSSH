@@ -13,9 +13,6 @@
     <system:String x:Key="plugin_quickssh_databasenotcreated_title">QuickSSH</system:String>
     <system:String x:Key="plugin_quickssh_databasenotcreated_subtitle">Databázu profilov sa nepodarilo vytvoriť.</system:String>
 
-    <!-- Default / help -->
-    <system:String x:Key="plugin_quickssh_subtitle_default">Zadajte: add ; remove ; profiles|p ; direct|d ; shell ; config ; docs</system:String>
-
     <!-- Shared / common -->
     <system:String x:Key="plugin_quickssh_noprofiles">Žiadne profily neboli uložené.</system:String>
     <system:String x:Key="plugin_quickssh_noshells">Žiadne shell profily neboli uložené.</system:String>
@@ -25,7 +22,7 @@
 
     <!-- ADD -->
     <system:String x:Key="plugin_quickssh_title_commandadd">Pridať profil</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandadd">Použitie: add &lt;názov&gt; ssh používateľ@host</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandadd">Použitie: add &lt;názov&gt; &lt;ssh-príkaz&gt;</system:String>
 
     <!-- REMOVE -->
     <system:String x:Key="plugin_quickssh_title_commandremove">Odstrániť profil</system:String>
@@ -34,11 +31,12 @@
     <!-- PROFILES -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles">Uložené profily</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Použitie: profiles [filter]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandp_usage">Použitie: p [filter]</system:String>
 
     <!-- DIRECT CONNECT -->
     <system:String x:Key="plugin_quickssh_title_commanddirect">Priame pripojenie</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect">Priame pripojenie:</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandd_usage">Použitie: d používateľ@host</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandd_usage">Použitie: d &lt;ssh-príkaz&gt;</system:String>
 
     <!-- SHELL -->
     <system:String x:Key="plugin_quickssh_title_commandshell">Správa shellov</system:String>
@@ -46,23 +44,25 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandshell_add_usage">Použitie: shell add &lt;exe&gt; alebo shell add &lt;názov&gt; &lt;exe + argumenty&gt;</system:String>
     <system:String x:Key="plugin_quickssh_title_commandshell_remove">Odstrániť shell profil</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Použitie: shell remove [filter]</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Použitie: shell [add|remove]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Použitie: shell add ; remove ; list</system:String>
     <system:String x:Key="plugin_quickssh_shell_selected">(vybraný)</system:String>
 
     <!-- CONFIG -->
     <system:String x:Key="plugin_quickssh_title_commandconfig">Importovať SSH config</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandconfig">Importovať hosty zo súboru ~/.ssh/config.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandconfig_usage">Použitie: config</system:String>
     <system:String x:Key="plugin_quickssh_config_imported">Importovaných {0} host(ov) zo SSH config.</system:String>
     <system:String x:Key="plugin_quickssh_config_notfound">Súbor SSH config nebol nájdený na ~/.ssh/config.</system:String>
 
     <!-- EXPORT -->
     <system:String x:Key="plugin_quickssh_title_commandexport">Exportovať profily</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandexport">Exportovať SSH profily do: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandexport_usage">Použitie: export</system:String>
     <system:String x:Key="plugin_quickssh_export_success">Exportovaných {0} profil(ov) do {1}</system:String>
 
     <!-- IMPORT -->
     <system:String x:Key="plugin_quickssh_title_commandimport">Importovať profily</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandimport">Importovať SSH profily zo súboru JSON v: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandimport_usage">Použitie: import [filter]</system:String>
     <system:String x:Key="plugin_quickssh_import_nofiles">Žiadne JSON súbory nenájdené v: {0}</system:String>
     <system:String x:Key="plugin_quickssh_import_success">Importovaných {0} profil(ov) úspešne.</system:String>
     <system:String x:Key="plugin_quickssh_import_empty">V zvolenom súbore sa nenašli žiadne profily.</system:String>
@@ -70,8 +70,7 @@
     <!-- COPY -->
     <system:String x:Key="plugin_quickssh_title_commandcopy">Kopírovať SSH príkaz</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Kopírovať:</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Použitie: copy [filter]</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_empty">Žiadne zodpovedajúce profily nenájdené.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Použitie: copy &lt;existujúci&gt; &lt;nový-názov&gt;</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Nepodarilo sa skopírovať do schránky. Uistite sa, že Flow Launcher beží na UI vlákne.</system:String>
 
     <!-- RENAME -->
@@ -82,8 +81,6 @@
     <!-- DOCS -->
     <system:String x:Key="plugin_quickssh_title_commanddocs">Dokumentácia</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Otvoriť dokumentáciu pluginu na GitHube.</system:String>
-
-    <!-- SHELL FALLBACK -->
-    <system:String x:Key="plugin_quickssh_shell_fallback">Shell '{0}' nebol nájdený. Použitý predvolený cmd.exe.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddocs_usage">Použitie: docs</system:String>
 
 </ResourceDictionary>
