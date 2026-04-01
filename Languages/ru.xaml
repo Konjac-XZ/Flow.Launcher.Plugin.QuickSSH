@@ -1,0 +1,89 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Plugin meta -->
+    <system:String x:Key="plugin_quickssh_plugin_name">QuickSSH</system:String>
+    <system:String x:Key="plugin_quickssh_plugin_description">Быстро сохраняйте и запускайте SSH-подключения из Flow Launcher.</system:String>
+
+    <!-- Health / status messages -->
+    <system:String x:Key="plugin_quickssh_sshnotinstalled_title">QuickSSH</system:String>
+    <system:String x:Key="plugin_quickssh_sshnotinstalled_subtitle">Клиент OpenSSH не найден в этой системе.</system:String>
+
+    <system:String x:Key="plugin_quickssh_databasenotcreated_title">QuickSSH</system:String>
+    <system:String x:Key="plugin_quickssh_databasenotcreated_subtitle">Не удалось создать базу данных профилей.</system:String>
+
+    <!-- Default / help -->
+    <system:String x:Key="plugin_quickssh_subtitle_default">Введите: add ; remove ; profiles|p ; direct|d ; shell ; config ; docs</system:String>
+
+    <!-- Shared / common -->
+    <system:String x:Key="plugin_quickssh_noprofiles">Профили не сохранены.</system:String>
+    <system:String x:Key="plugin_quickssh_noshells">Профили оболочек не сохранены.</system:String>
+    <system:String x:Key="plugin_quickssh_save_label">Сохранить:</system:String>
+    <system:String x:Key="plugin_quickssh_connect_label">Подключить:</system:String>
+    <system:String x:Key="plugin_quickssh_addshell_label">Добавить оболочку:</system:String>
+
+    <!-- ADD -->
+    <system:String x:Key="plugin_quickssh_title_commandadd">Добавить профиль</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandadd">Использование: add &lt;имя&gt; ssh пользователь@хост</system:String>
+
+    <!-- REMOVE -->
+    <system:String x:Key="plugin_quickssh_title_commandremove">Удалить профиль</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandremove">Использование: remove [фильтр]</system:String>
+
+    <!-- PROFILES -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles">Сохранённые профили</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Использование: profiles [фильтр]</system:String>
+
+    <!-- DIRECT CONNECT -->
+    <system:String x:Key="plugin_quickssh_title_commanddirect">Прямое подключение</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect">Прямое подключение:</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandd_usage">Использование: d пользователь@хост</system:String>
+
+    <!-- SHELL -->
+    <system:String x:Key="plugin_quickssh_title_commandshell">Управление оболочками</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandshell_add">Добавить профиль оболочки</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_add_usage">Использование: shell add &lt;exe&gt; или shell add &lt;имя&gt; &lt;exe + аргументы&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandshell_remove">Удалить профиль оболочки</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Использование: shell remove [фильтр]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Использование: shell [add|remove]</system:String>
+    <system:String x:Key="plugin_quickssh_shell_selected">(выбрано)</system:String>
+
+    <!-- CONFIG -->
+    <system:String x:Key="plugin_quickssh_title_commandconfig">Импорт SSH-конфига</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandconfig">Импортировать хосты из файла ~/.ssh/config.</system:String>
+    <system:String x:Key="plugin_quickssh_config_imported">Импортировано {0} хост(ов) из SSH-конфига.</system:String>
+    <system:String x:Key="plugin_quickssh_config_notfound">Файл SSH-конфига не найден по пути ~/.ssh/config.</system:String>
+
+    <!-- EXPORT -->
+    <system:String x:Key="plugin_quickssh_title_commandexport">Экспорт профилей</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandexport">Экспортировать SSH-профили в: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_export_success">Экспортировано {0} профиль(ей) в {1}</system:String>
+
+    <!-- IMPORT -->
+    <system:String x:Key="plugin_quickssh_title_commandimport">Импорт профилей</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandimport">Импортировать SSH-профили из JSON-файла в: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_import_nofiles">JSON-файлы не найдены в: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_import_success">Импортировано {0} профиль(ей) успешно.</system:String>
+    <system:String x:Key="plugin_quickssh_import_empty">В выбранном файле профили не найдены.</system:String>
+
+    <!-- COPY -->
+    <system:String x:Key="plugin_quickssh_title_commandcopy">Копировать SSH-команду</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Копировать:</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Использование: copy [фильтр]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_empty">Соответствующие профили не найдены.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_clipboard_error">Не удалось скопировать в буфер обмена. Убедитесь, что Flow Launcher запущен в потоке UI.</system:String>
+
+    <!-- RENAME -->
+    <system:String x:Key="plugin_quickssh_title_commandrename">Переименовать профиль</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandrename">Использование: rename &lt;старое имя&gt; &lt;новое имя&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_rename_notfound">Профиль не найден.</system:String>
+
+    <!-- DOCS -->
+    <system:String x:Key="plugin_quickssh_title_commanddocs">Документация</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Открыть документацию плагина на GitHub.</system:String>
+
+    <!-- SHELL FALLBACK -->
+    <system:String x:Key="plugin_quickssh_shell_fallback">Оболочка '{0}' не найдена. Используется стандартный cmd.exe.</system:String>
+
+</ResourceDictionary>

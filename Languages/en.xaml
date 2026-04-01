@@ -16,27 +16,37 @@
     <!-- Default / help -->
     <system:String x:Key="plugin_quickssh_subtitle_default">Type: add ; remove ; profiles|p ; direct|d ; shell ; config ; docs</system:String>
 
+    <!-- Shared / common -->
+    <system:String x:Key="plugin_quickssh_noprofiles">No profiles saved.</system:String>
+    <system:String x:Key="plugin_quickssh_noshells">No shell profiles saved.</system:String>
+    <system:String x:Key="plugin_quickssh_save_label">Save:</system:String>
+    <system:String x:Key="plugin_quickssh_connect_label">Connect:</system:String>
+    <system:String x:Key="plugin_quickssh_addshell_label">Add shell:</system:String>
+
     <!-- ADD -->
     <system:String x:Key="plugin_quickssh_title_commandadd">Add profile</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandadd">Usage: add &lt;name&gt; ssh user@host</system:String>
 
     <!-- REMOVE -->
     <system:String x:Key="plugin_quickssh_title_commandremove">Remove profile</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandremove">Select a profile to remove.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandremove">Usage: remove [filter]</system:String>
 
     <!-- PROFILES -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles">Saved profiles</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Select a profile to connect.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Usage: profiles [filter]</system:String>
 
     <!-- DIRECT CONNECT -->
+    <system:String x:Key="plugin_quickssh_title_commanddirect">Direct connect</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect">Direct connect:</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandd_usage">Usage: d user@host</system:String>
 
     <!-- SHELL -->
+    <system:String x:Key="plugin_quickssh_title_commandshell">Shell management</system:String>
     <system:String x:Key="plugin_quickssh_title_commandshell_add">Add shell profile</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandshell_add_usage">Usage: shell add &lt;exe&gt; or shell add &lt;name&gt; &lt;exe + args&gt;</system:String>
     <system:String x:Key="plugin_quickssh_title_commandshell_remove">Remove shell profile</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Select a shell profile to remove.</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Use: shell add ; remove</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Usage: shell remove [filter]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Usage: shell [add|remove]</system:String>
     <system:String x:Key="plugin_quickssh_shell_selected">(selected)</system:String>
 
     <!-- CONFIG -->
@@ -60,6 +70,7 @@
     <!-- COPY -->
     <system:String x:Key="plugin_quickssh_title_commandcopy">Copy SSH command</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Copy:</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Usage: copy [filter]</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandcopy_empty">No matching profiles found.</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Could not copy to clipboard. Ensure Flow Launcher is running on the UI thread.</system:String>
 

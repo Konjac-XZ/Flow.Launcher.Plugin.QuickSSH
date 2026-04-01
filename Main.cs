@@ -183,7 +183,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             {
                 results.Add(new Result
                 {
-                    Title = "Save: " + profileName,
+                    Title = GetTranslation("plugin_quickssh_save_label") + " " + profileName,
                     SubTitle = sshCommand,
                     IcoPath = AppIconGreenPath,
                     Action = _ =>
@@ -207,11 +207,20 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 results.Add(new Result
                 {
                     Title = GetTranslation("plugin_quickssh_title_commandremove"),
-                    SubTitle = "No profiles saved.",
+                    SubTitle = GetTranslation("plugin_quickssh_noprofiles"),
                     IcoPath = AppIconPath
                 });
                 return results;
             }
+
+            // Always show usage hint at the top.
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandremove"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandremove"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " remove "
+            });
 
             foreach (var entry in entries)
             {
@@ -233,16 +242,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 });
             }
 
-            if (results.Count == 0)
-            {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandremove"),
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandremove"),
-                    IcoPath = AppIconPath
-                });
-            }
-
             return results;
         }
 
@@ -256,11 +255,20 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 results.Add(new Result
                 {
                     Title = GetTranslation("plugin_quickssh_title_commandprofiles"),
-                    SubTitle = "No profiles saved.",
+                    SubTitle = GetTranslation("plugin_quickssh_noprofiles"),
                     IcoPath = AppIconPath
                 });
                 return results;
             }
+
+            // Always show usage hint at the top.
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandprofiles"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " profiles "
+            });
 
             var scored = new List<(int score, string name, string command)>();
 
@@ -296,16 +304,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 });
             }
 
-            if (results.Count == 0)
-            {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandprofiles"),
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles"),
-                    IcoPath = AppIconPath
-                });
-            }
-
             return results;
         }
 
@@ -313,36 +311,27 @@ namespace Flow.Launcher.Plugin.QuickSSH
         {
             var results = new List<Result>();
 
-            if (string.IsNullOrEmpty(rest))
+            // Always show usage hint at the top.
+            results.Add(new Result
             {
-                results.Add(new Result
-                {
-                    Title = "Direct connect",
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddirectconnect") + " d user@host",
-                    IcoPath = AppIconPath,
-                    AutoCompleteText = query.ActionKeyword + " d "
-                });
+                Title = GetTranslation("plugin_quickssh_title_commanddirect"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandd_usage"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " d "
+            });
+
+            if (string.IsNullOrEmpty(rest))
                 return results;
-            }
 
             // Normalise the user input: strip accidental cmd-style /flags and
             // ensure the command starts with "ssh ".
             var sshCmd = NormalizeSshCommand(rest);
             if (string.IsNullOrEmpty(sshCmd))
-            {
-                results.Add(new Result
-                {
-                    Title = "Direct connect",
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddirectconnect") + " d user@host",
-                    IcoPath = AppIconPath,
-                    AutoCompleteText = query.ActionKeyword + " d "
-                });
                 return results;
-            }
 
             results.Add(new Result
             {
-                Title = "Connect: " + rest,
+                Title = GetTranslation("plugin_quickssh_connect_label") + " " + rest,
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddirectconnect") + " " + sshCmd,
                 IcoPath = AppIconGreenPath,
                 Action = _ =>
@@ -365,21 +354,19 @@ namespace Flow.Launcher.Plugin.QuickSSH
             switch (subCmd)
             {
                 case "add":
-                    if (string.IsNullOrEmpty(subRest))
+                    // Always show usage hint at the top.
+                    results.Add(new Result
                     {
-                        results.Add(new Result
-                        {
-                            Title = GetTranslation("plugin_quickssh_title_commandshell_add"),
-                            SubTitle = GetTranslation("plugin_quickssh_subtitle_commandshell_add_usage"),
-                            IcoPath = AppIconPath
-                        });
-                    }
-                    else
+                        Title = GetTranslation("plugin_quickssh_title_commandshell_add"),
+                        SubTitle = GetTranslation("plugin_quickssh_subtitle_commandshell_add_usage"),
+                        IcoPath = AppIconPath
+                    });
+                    if (!string.IsNullOrEmpty(subRest))
                     {
                         var (name, value) = ParseShellAddArgs(subRest);
                         results.Add(new Result
                         {
-                            Title = "Add shell: " + name,
+                            Title = GetTranslation("plugin_quickssh_addshell_label") + " " + name,
                             SubTitle = string.IsNullOrEmpty(value) ? name : value,
                             IcoPath = AppIconGreenPath,
                             Action = _ =>
@@ -405,12 +392,20 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         results.Add(new Result
                         {
                             Title = GetTranslation("plugin_quickssh_title_commandshell_remove"),
-                            SubTitle = "No shell profiles saved.",
+                            SubTitle = GetTranslation("plugin_quickssh_noshells"),
                             IcoPath = AppIconPath
                         });
                     }
                     else
                     {
+                        // Always show usage hint at the top.
+                        results.Add(new Result
+                        {
+                            Title = GetTranslation("plugin_quickssh_title_commandshell_remove"),
+                            SubTitle = GetTranslation("plugin_quickssh_subtitle_commandshell_remove"),
+                            IcoPath = AppIconPath,
+                            AutoCompleteText = query.ActionKeyword + " shell remove "
+                        });
                         foreach (var shell in shells)
                         {
                             results.Add(new Result
@@ -441,6 +436,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     break;
 
                 default:
+                    // Always show "Shell management" hint at the top.
+                    results.Add(new Result
+                    {
+                        Title = GetTranslation("plugin_quickssh_title_commandshell"),
+                        SubTitle = GetTranslation("plugin_quickssh_subtitle_commandshell_help"),
+                        IcoPath = AppIconPath,
+                        AutoCompleteText = query.ActionKeyword + " shell "
+                    });
+
                     // List shells + help
                     var allShells = _profileManager.UserData.CustomShell;
                     var selected = _profileManager.UserData.SelectedCustomShell;
@@ -495,14 +499,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             });
                         }
                     }
-
-                    results.Add(new Result
-                    {
-                        Title = "Shell management",
-                        SubTitle = GetTranslation("plugin_quickssh_subtitle_commandshell_help"),
-                        IcoPath = AppIconPath,
-                        AutoCompleteText = query.ActionKeyword + " shell "
-                    });
                     break;
             }
 
@@ -586,11 +582,20 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 results.Add(new Result
                 {
                     Title = GetTranslation("plugin_quickssh_title_commandcopy"),
-                    SubTitle = "No profiles saved.",
+                    SubTitle = GetTranslation("plugin_quickssh_noprofiles"),
                     IcoPath = AppIconPath
                 });
                 return results;
             }
+
+            // Always show usage hint at the top.
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandcopy"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandcopy_usage"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " copy "
+            });
 
             foreach (var entry in entries)
             {
@@ -622,16 +627,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 });
             }
 
-            if (results.Count == 0)
-            {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandcopy"),
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandcopy_empty"),
-                    IcoPath = AppIconPath
-                });
-            }
-
             return results;
         }
 
@@ -652,11 +647,20 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     results.Add(new Result
                     {
                         Title = GetTranslation("plugin_quickssh_title_commandrename"),
-                        SubTitle = "No profiles saved.",
+                        SubTitle = GetTranslation("plugin_quickssh_noprofiles"),
                         IcoPath = AppIconPath
                     });
                     return results;
                 }
+
+                // Always show usage hint at the top.
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandrename"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " rename "
+                });
 
                 foreach (var entry in entries)
                 {
@@ -682,6 +686,13 @@ namespace Flow.Launcher.Plugin.QuickSSH
             {
                 results.Add(new Result
                 {
+                    Title = GetTranslation("plugin_quickssh_title_commandrename"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " rename "
+                });
+                results.Add(new Result
+                {
                     Title = GetTranslation("plugin_quickssh_title_commandrename") + ": " + oldName,
                     SubTitle = GetTranslation("plugin_quickssh_rename_notfound"),
                     IcoPath = AppIconRedPath
@@ -689,41 +700,41 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
             }
 
-            if (string.IsNullOrEmpty(newName))
-            {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandrename") + ": " + oldName,
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
-                    IcoPath = AppIconPath,
-                    AutoCompleteText = query.ActionKeyword + " rename " + oldName + " "
-                });
-                return results;
-            }
-
-            var cmdValue = entries[oldName];
+            // Always show usage hint at the top.
             results.Add(new Result
             {
-                Title = oldName + " → " + newName,
-                SubTitle = cmdValue,
-                IcoPath = AppIconGreenPath,
-                Action = _ =>
-                {
-                    var value = entries[oldName];
-                    entries.SetCallback(null);
-                    try
-                    {
-                        entries.Remove(oldName);
-                        entries[newName] = value;
-                    }
-                    finally
-                    {
-                        entries.SetCallback(_profileManager.SaveConfiguration);
-                    }
-                    _profileManager.SaveConfiguration();
-                    return true;
-                }
+                Title = GetTranslation("plugin_quickssh_title_commandrename"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " rename " + oldName + " "
             });
+
+            if (!string.IsNullOrEmpty(newName))
+            {
+                var cmdValue = entries[oldName];
+                results.Add(new Result
+                {
+                    Title = oldName + " → " + newName,
+                    SubTitle = cmdValue,
+                    IcoPath = AppIconGreenPath,
+                    Action = _ =>
+                    {
+                        var value = entries[oldName];
+                        entries.SetCallback(null);
+                        try
+                        {
+                            entries.Remove(oldName);
+                            entries[newName] = value;
+                        }
+                        finally
+                        {
+                            entries.SetCallback(_profileManager.SaveConfiguration);
+                        }
+                        _profileManager.SaveConfiguration();
+                        return true;
+                    }
+                });
+            }
 
             return results;
         }
@@ -788,6 +799,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
             }
 
+            // Always show usage hint at the top.
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandimport"),
+                SubTitle = string.Format(GetTranslation("plugin_quickssh_subtitle_commandimport"), _dataDir),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " import "
+            });
+
             foreach (var file in importFiles)
             {
                 var fileName = Path.GetFileName(file);
@@ -844,16 +864,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         }
                         return true;
                     }
-                });
-            }
-
-            if (results.Count == 0)
-            {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandimport"),
-                    SubTitle = string.Format(GetTranslation("plugin_quickssh_import_nofiles"), _dataDir),
-                    IcoPath = AppIconPath
                 });
             }
 

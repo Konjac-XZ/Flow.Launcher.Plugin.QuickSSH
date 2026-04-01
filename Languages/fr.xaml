@@ -1,0 +1,89 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+
+    <!-- Plugin meta -->
+    <system:String x:Key="plugin_quickssh_plugin_name">QuickSSH</system:String>
+    <system:String x:Key="plugin_quickssh_plugin_description">Enregistrez et lancez rapidement des connexions SSH depuis Flow Launcher.</system:String>
+
+    <!-- Health / status messages -->
+    <system:String x:Key="plugin_quickssh_sshnotinstalled_title">QuickSSH</system:String>
+    <system:String x:Key="plugin_quickssh_sshnotinstalled_subtitle">Le client OpenSSH n'a pas été trouvé sur ce système.</system:String>
+
+    <system:String x:Key="plugin_quickssh_databasenotcreated_title">QuickSSH</system:String>
+    <system:String x:Key="plugin_quickssh_databasenotcreated_subtitle">La base de données de profils n'a pas pu être créée.</system:String>
+
+    <!-- Default / help -->
+    <system:String x:Key="plugin_quickssh_subtitle_default">Tapez : add ; remove ; profiles|p ; direct|d ; shell ; config ; docs</system:String>
+
+    <!-- Shared / common -->
+    <system:String x:Key="plugin_quickssh_noprofiles">Aucun profil enregistré.</system:String>
+    <system:String x:Key="plugin_quickssh_noshells">Aucun profil de shell enregistré.</system:String>
+    <system:String x:Key="plugin_quickssh_save_label">Enregistrer :</system:String>
+    <system:String x:Key="plugin_quickssh_connect_label">Connecter :</system:String>
+    <system:String x:Key="plugin_quickssh_addshell_label">Ajouter le shell :</system:String>
+
+    <!-- ADD -->
+    <system:String x:Key="plugin_quickssh_title_commandadd">Ajouter un profil</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandadd">Utilisation : add &lt;nom&gt; ssh utilisateur@hôte</system:String>
+
+    <!-- REMOVE -->
+    <system:String x:Key="plugin_quickssh_title_commandremove">Supprimer un profil</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandremove">Utilisation : remove [filtre]</system:String>
+
+    <!-- PROFILES -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles">Profils enregistrés</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Utilisation : profiles [filtre]</system:String>
+
+    <!-- DIRECT CONNECT -->
+    <system:String x:Key="plugin_quickssh_title_commanddirect">Connexion directe</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect">Connexion directe :</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandd_usage">Utilisation : d utilisateur@hôte</system:String>
+
+    <!-- SHELL -->
+    <system:String x:Key="plugin_quickssh_title_commandshell">Gestion des shells</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandshell_add">Ajouter un profil de shell</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_add_usage">Utilisation : shell add &lt;exe&gt; ou shell add &lt;nom&gt; &lt;exe + args&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandshell_remove">Supprimer un profil de shell</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Utilisation : shell remove [filtre]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Utilisation : shell [add|remove]</system:String>
+    <system:String x:Key="plugin_quickssh_shell_selected">(sélectionné)</system:String>
+
+    <!-- CONFIG -->
+    <system:String x:Key="plugin_quickssh_title_commandconfig">Importer la config SSH</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandconfig">Importer les hôtes depuis le fichier ~/.ssh/config.</system:String>
+    <system:String x:Key="plugin_quickssh_config_imported">Importé {0} hôte(s) depuis la config SSH.</system:String>
+    <system:String x:Key="plugin_quickssh_config_notfound">Fichier de config SSH introuvable sur ~/.ssh/config.</system:String>
+
+    <!-- EXPORT -->
+    <system:String x:Key="plugin_quickssh_title_commandexport">Exporter les profils</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandexport">Exporter les profils SSH vers : {0}</system:String>
+    <system:String x:Key="plugin_quickssh_export_success">Exporté {0} profil(s) vers {1}</system:String>
+
+    <!-- IMPORT -->
+    <system:String x:Key="plugin_quickssh_title_commandimport">Importer des profils</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandimport">Importer des profils SSH depuis un fichier JSON dans : {0}</system:String>
+    <system:String x:Key="plugin_quickssh_import_nofiles">Aucun fichier JSON trouvé dans : {0}</system:String>
+    <system:String x:Key="plugin_quickssh_import_success">Importé {0} profil(s) avec succès.</system:String>
+    <system:String x:Key="plugin_quickssh_import_empty">Aucun profil trouvé dans le fichier sélectionné.</system:String>
+
+    <!-- COPY -->
+    <system:String x:Key="plugin_quickssh_title_commandcopy">Copier la commande SSH</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Copier :</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Utilisation : copy [filtre]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_empty">Aucun profil correspondant trouvé.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_clipboard_error">Impossible de copier dans le presse-papiers. Assurez-vous que Flow Launcher s'exécute sur le thread UI.</system:String>
+
+    <!-- RENAME -->
+    <system:String x:Key="plugin_quickssh_title_commandrename">Renommer un profil</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandrename">Utilisation : rename &lt;ancien nom&gt; &lt;nouveau nom&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_rename_notfound">Profil introuvable.</system:String>
+
+    <!-- DOCS -->
+    <system:String x:Key="plugin_quickssh_title_commanddocs">Documentation</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Ouvrir la documentation du plugin sur GitHub.</system:String>
+
+    <!-- SHELL FALLBACK -->
+    <system:String x:Key="plugin_quickssh_shell_fallback">Shell '{0}' introuvable. Utilisation du cmd.exe par défaut.</system:String>
+
+</ResourceDictionary>
