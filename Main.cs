@@ -467,6 +467,32 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         }
                     }
 
+                    // Sub-command suggestions for TAB completion
+                    var shellSubCmds = new[]
+                    {
+                        ("add", GetTranslation("plugin_quickssh_title_commandshell_add"), GetTranslation("plugin_quickssh_subtitle_commandshell_add_usage")),
+                        ("remove", GetTranslation("plugin_quickssh_title_commandshell_remove"), GetTranslation("plugin_quickssh_subtitle_commandshell_remove")),
+                    };
+                    foreach (var (scName, scTitle, scSubTitle) in shellSubCmds)
+                    {
+                        if (string.IsNullOrEmpty(subCmd) || scName.StartsWith(subCmd))
+                        {
+                            var autoText = query.ActionKeyword + " shell " + scName + " ";
+                            results.Add(new Result
+                            {
+                                Title = scTitle,
+                                SubTitle = scSubTitle,
+                                IcoPath = AppIconPath,
+                                AutoCompleteText = autoText,
+                                Action = _ =>
+                                {
+                                    _pluginContext?.API?.ChangeQuery(autoText, true);
+                                    return false;
+                                }
+                            });
+                        }
+                    }
+
                     results.Add(new Result
                     {
                         Title = "Shell management",
