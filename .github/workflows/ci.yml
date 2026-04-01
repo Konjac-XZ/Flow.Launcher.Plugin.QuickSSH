@@ -21,6 +21,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Docs check
+        shell: pwsh
+        run: ./scripts/check-docs.ps1
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
