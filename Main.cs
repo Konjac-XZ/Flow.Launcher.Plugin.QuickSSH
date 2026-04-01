@@ -203,6 +203,16 @@ namespace Flow.Launcher.Plugin.QuickSSH
             var results = new List<Result>();
             var entries = _profileManager.UserData.Entries;
 
+            // Always show usage hint at the top.
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandremove"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandremove"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " remove ",
+                Score = int.MaxValue
+            });
+
             if (entries.Count == 0)
             {
                 results.Add(new Result
@@ -213,16 +223,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 });
                 return results;
             }
-
-            // Always show usage hint at the top.
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_title_commandremove"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandremove"),
-                IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " remove ",
-                Score = int.MaxValue
-            });
 
             foreach (var entry in entries)
             {
@@ -256,6 +256,16 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 ? "plugin_quickssh_subtitle_commandp_usage"
                 : "plugin_quickssh_subtitle_commandprofiles";
 
+            // Always show usage hint at the top.
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandprofiles"),
+                SubTitle = GetTranslation(usageKey),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " " + verb + " ",
+                Score = int.MaxValue
+            });
+
             if (entries.Count == 0)
             {
                 results.Add(new Result
@@ -266,16 +276,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 });
                 return results;
             }
-
-            // Always show usage hint at the top.
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_title_commandprofiles"),
-                SubTitle = GetTranslation(usageKey),
-                IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " " + verb + " ",
-                Score = int.MaxValue
-            });
 
             var scored = new List<(int score, string name, string command)>();
 
@@ -396,6 +396,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
                 case "remove":
                     var shells = _profileManager.UserData.CustomShell;
+                    // Always show usage hint at the top.
+                    results.Add(new Result
+                    {
+                        Title = GetTranslation("plugin_quickssh_title_commandshell_remove"),
+                        SubTitle = GetTranslation("plugin_quickssh_subtitle_commandshell_remove"),
+                        IcoPath = AppIconPath,
+                        AutoCompleteText = query.ActionKeyword + " shell remove ",
+                        Score = int.MaxValue
+                    });
                     if (shells.Count == 0)
                     {
                         results.Add(new Result
@@ -407,15 +416,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     }
                     else
                     {
-                        // Always show usage hint at the top.
-                        results.Add(new Result
-                        {
-                            Title = GetTranslation("plugin_quickssh_title_commandshell_remove"),
-                            SubTitle = GetTranslation("plugin_quickssh_subtitle_commandshell_remove"),
-                            IcoPath = AppIconPath,
-                            AutoCompleteText = query.ActionKeyword + " shell remove ",
-                            Score = int.MaxValue
-                        });
                         foreach (var shell in shells)
                         {
                             results.Add(new Result
@@ -606,6 +606,16 @@ namespace Flow.Launcher.Plugin.QuickSSH
             var results = new List<Result>();
             var entries = _profileManager.UserData.Entries;
 
+            // Always show usage hint at the top.
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandcopy"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandcopy_usage"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " copy ",
+                Score = int.MaxValue
+            });
+
             if (entries.Count == 0)
             {
                 results.Add(new Result
@@ -616,16 +626,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 });
                 return results;
             }
-
-            // Always show usage hint at the top.
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_title_commandcopy"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandcopy_usage"),
-                IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " copy ",
-                Score = int.MaxValue
-            });
 
             foreach (var entry in entries)
             {
@@ -671,6 +671,16 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             if (string.IsNullOrEmpty(oldName))
             {
+                // Always show usage hint at the top.
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandrename"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " rename ",
+                    Score = int.MaxValue
+                });
+
                 // No name typed yet – show all profiles as suggestions.
                 if (entries.Count == 0)
                 {
@@ -682,16 +692,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     });
                     return results;
                 }
-
-                // Always show usage hint at the top.
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandrename"),
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
-                    IcoPath = AppIconPath,
-                    AutoCompleteText = query.ActionKeyword + " rename ",
-                    Score = int.MaxValue
-                });
 
                 foreach (var entry in entries)
                 {
@@ -830,6 +830,16 @@ namespace Flow.Launcher.Plugin.QuickSSH
             catch (UnauthorizedAccessException) { }
             catch (IOException) { }
 
+            // Always show usage hint at the top.
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandimport"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandimport_usage"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " import ",
+                Score = int.MaxValue
+            });
+
             if (importFiles.Length == 0)
             {
                 results.Add(new Result
@@ -841,16 +851,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 });
                 return results;
             }
-
-            // Always show usage hint at the top.
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_title_commandimport"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandimport_usage"),
-                IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " import ",
-                Score = int.MaxValue
-            });
 
             foreach (var file in importFiles)
             {
