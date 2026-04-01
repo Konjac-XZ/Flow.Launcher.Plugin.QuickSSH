@@ -23,7 +23,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 ### Capabilities
 
 - **TAB auto-completion** — press TAB to auto-complete commands and profile names
-- **In-line usage hints** — every command view shows a non-actionable usage/help entry pinned to the top of the results list (enforced via `Result.Score = int.MaxValue` so Flow Launcher's own sorting never reorders it below actionable items)
+- **In-line usage hints** — every command view shows a non-actionable usage/help entry pinned to the top of the results list, even in empty states (e.g. no profiles, no shells, no import files). Empty-state info rows appear second. Ordering is enforced via `Result.Score = int.MaxValue` so Flow Launcher's own sorting never reorders the hint below actionable or informational items.
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
 - **Profile export / import** — back up and restore profiles as plain JSON files
 - **Proper quoting & escaping** — handles SSH keys and paths with spaces correctly
