@@ -8,9 +8,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
     /// </summary>
     public class AutoCompleter
     {
-        private static readonly string[] Commands = new[]
+        /// <summary>
+        /// Commands visible in the autocomplete / suggestion UI.
+        /// Hidden short aliases ("p", "d") are intentionally excluded;
+        /// they still work when typed but are not shown in suggestions.
+        /// </summary>
+        private static readonly string[] VisibleCommands = new[]
         {
-            "add", "remove", "profiles", "p", "d", "shell", "config", "export", "import", "copy", "rename", "docs"
+            "add", "remove", "profiles", "shell", "config", "export", "import", "copy", "rename", "docs"
         };
 
         /// <summary>
@@ -28,8 +33,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             if (string.IsNullOrEmpty(trimmed))
             {
-                // Show all available commands
-                foreach (var cmd in Commands)
+                // Show all visible commands (hidden aliases are excluded)
+                foreach (var cmd in VisibleCommands)
                 {
                     var autoText = actionKeyword + " " + cmd + " ";
                     results.Add(new Result
@@ -48,8 +53,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
             }
 
-            // Match commands that start with the input
-            var matchingCommands = Commands
+            // Match visible commands that start with the input
+            // (hidden aliases like "p" and "d" are not shown as suggestions)
+            var matchingCommands = VisibleCommands
                 .Where(c => c.StartsWith(trimmed))
                 .ToList();
 
