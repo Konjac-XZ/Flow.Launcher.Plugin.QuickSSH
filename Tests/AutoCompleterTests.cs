@@ -157,17 +157,26 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         // ── Partial "profiles <prefix>" sub-command suggestions ───────────────────
 
         [Theory]
-        [InlineData("ad",    "add")]
-        [InlineData("rem",   "remove")]
-        [InlineData("ren",   "rename")]
-        [InlineData("cop",   "copy")]
-        [InlineData("expor", "export")]
-        [InlineData("impor", "import")]
-        public void GetSuggestions_ProfilesPartialSubCommand_SuggestsExpectedSubCommand(
-            string partial, string expected)
+        [InlineData("r",  new[] { "remove", "rename" })]
+        [InlineData("re", new[] { "remove", "rename" })]
+        [InlineData("rem", new[] { "remove" })]
+        [InlineData("ren", new[] { "rename" })]
+        [InlineData("e",  new[] { "export" })]
+        [InlineData("i",  new[] { "import" })]
+        [InlineData("c",  new[] { "copy" })]
+        public void GetSuggestions_ProfilesPartialPrefix_ShowsMatchingSubCommands(
+            string partial, string[] expected)
         {
             var results = AutoCompleter.GetSuggestions("ssh", "profiles " + partial, null, "icon.png");
-            Assert.Contains(results, r => r.Title == expected);
+            var subCommandTitles = results
+                .Select(r => r.Title)
+                .Where(t => t == "add" || t == "remove" || t == "rename" ||
+                            t == "copy" || t == "export" || t == "import")
+                .ToHashSet();
+
+            foreach (var e in expected)
+                Assert.Contains(e, subCommandTitles);
+            Assert.Equal(expected.Length, subCommandTitles.Count);
         }
 
         [Theory]

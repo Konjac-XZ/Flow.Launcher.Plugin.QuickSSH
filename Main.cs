@@ -176,12 +176,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             var subCmd = parts[0].ToLowerInvariant();
             var subRest = parts.Length > 1 ? parts[1].Trim() : "";
 
-            // Resolve exact match first, then fall back to unique-prefix match.
-            // This lets "ssh profiles cop" route to the copy handler without requiring
-            // the user to finish typing "copy".
-            var resolvedSubCmd = ResolveProfilesSubCommandPrefix(subCmd);
-
-            switch (resolvedSubCmd)
+            switch (subCmd)
             {
                 case ProfilesSubAdd:    return HandleProfilesAdd(query, subRest);
                 case ProfilesSubRemove: return HandleProfilesRemove(query, subRest);
@@ -191,36 +186,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 case ProfilesSubImport: return HandleProfilesImport(query, subRest);
                 default:                return HandleProfilesList(query, rest);
             }
-        }
-
-        /// <summary>
-        /// Returns the unique profiles sub-command whose name starts with
-        /// <paramref name="prefix"/> (case-insensitive).  Returns <c>null</c> when
-        /// the prefix is empty, matches no sub-command, or is ambiguous (matches more
-        /// than one).  An exact match always takes priority over a prefix match.
-        /// </summary>
-        internal static string ResolveProfilesSubCommandPrefix(string prefix)
-        {
-            if (string.IsNullOrEmpty(prefix))
-                return null;
-
-            // Exact match wins immediately.
-            foreach (var sub in ProfilesSubCommands)
-                if (string.Equals(sub, prefix, StringComparison.OrdinalIgnoreCase))
-                    return sub;
-
-            // Unique prefix match.
-            string matched = null;
-            foreach (var sub in ProfilesSubCommands)
-            {
-                if (sub.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    if (matched != null)
-                        return null; // ambiguous — let the caller decide
-                    matched = sub;
-                }
-            }
-            return matched;
         }
 
         // ── profiles (list / connect) ─────────────────────────────────────────────
