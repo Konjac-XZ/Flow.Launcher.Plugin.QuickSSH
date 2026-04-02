@@ -23,7 +23,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 
 - **TAB auto-completion** — press TAB to auto-complete commands and profile names
 - **Shell-like command entry** — typing the first letters of a command filters matching suggestions; selecting a suggestion autocompletes the command into the query (via TAB or Enter) instead of executing it
-- **Hidden aliases** — short aliases `p` (profiles) and `d` (direct connect) are accepted when typed but are hidden from the autocomplete UI to keep the suggestion list clean
+- **Hidden aliases** — short aliases `p` (profiles), `d` (direct connect), and `docs` (help) are accepted when typed but are hidden from the autocomplete UI to keep the suggestion list clean
 - **In-line usage hints** — every command view shows a non-actionable usage/help entry pinned to the top of the results list, even in empty states (e.g. no profiles, no shells, no import files). Empty-state info rows appear second. Ordering is enforced via `Result.Score = int.MaxValue` so Flow Launcher's own sorting never reorders the hint below actionable or informational items.
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
 - **Profile export / import** — back up and restore profiles as plain JSON files
