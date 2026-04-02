@@ -2,7 +2,7 @@
     "ID": "86AC23FE48BC45E5B7E0A94F5847FA83",
     "ActionKeyword": "ssh",
     "Name": "QuickSSH",
-    "Description": "SSH/SCP plugin with structured profiles, SSH-config-like import/export, direct SSH, custom shell management, and TAB auto-completion",
+    "Description": "SSH/SCP plugin with structured profiles, SSH-config-like import/export, direct SSH, custom shell management, and query autocomplete via suggestions",
     "Author": "Vaso73",
     "Version": "3.0.0",
     "Language": "csharp",

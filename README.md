@@ -455,7 +455,7 @@ Flow Launcher automatically selects the language that matches your system locale
 
 To make QuickSSH available via `pm install QuickSSH` in Flow Launcher:
 
-1. **Create a GitHub Release** — open a Pull Request in this repository, add one label (`release:patch`, `release:minor`, or `release:major`), and merge it into `main`. GitHub Actions will automatically build `QuickSSH.zip`, create a tag, and publish the release.
+1. **Create a GitHub Release** — open a Pull Request in this repository, update `plugin.json` with the desired version, add one label (`release:patch`, `release:minor`, or `release:major`), and merge it into `main`. GitHub Actions will automatically build `QuickSSH.zip`, create a tag, and publish the release.
 
 2. **Fork the Plugin Manifest** — fork [Flow-Launcher/Flow.Launcher.PluginsManifest](https://github.com/Flow-Launcher/Flow.Launcher.PluginsManifest).
 
@@ -473,7 +473,7 @@ To make QuickSSH available via `pm install QuickSSH` in Flow Launcher:
      "Name": "QuickSSH",
      "Description": "Enhanced SSH/SCP connection plugin with query autocomplete, structured profiles, SSH config support, and custom shell handling",
      "Author": "Vaso73",
-     "Version": "2.0.0",
+     "Version": "3.0.0",
      "Language": "csharp",
      "MinFlowLauncherVersion": "1.19.0",
      "Website": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
@@ -505,17 +505,17 @@ Contributions are welcome! Here is the typical workflow:
 ### Releasing a new version
 
 1. Open a Pull Request with your changes.
-2. Add **exactly one** release label: `release:patch`, `release:minor`, or `release:major` (or `skip-release` to skip the release entirely).
-3. Merge the Pull Request into `main`.
-4. GitHub Actions automatically:
-   - Reads the current version from `plugin.json`
-   - Bumps it according to the label (`patch` → x.y.Z+1, `minor` → x.Y+1.0, `major` → X+1.0.0)
-   - Commits the updated `plugin.json` back to `main`
-   - Builds `QuickSSH.zip` (which includes the bumped `plugin.json`)
+2. **Update `plugin.json`** — set `Version` to the desired new version (e.g. `"3.0.1"` for a patch, `"3.1.0"` for a minor, `"4.0.0"` for a major). This must be done in the PR itself before merge — the workflow reads whatever version is already in `plugin.json` on `main` after the merge.
+3. Add **exactly one** release label: `release:patch`, `release:minor`, or `release:major` (or `skip-release` to skip the release entirely).
+4. Merge the Pull Request into `main`.
+5. GitHub Actions automatically:
+   - Validates that exactly one release label is present
+   - Reads the current version from `plugin.json` on `main`
+   - Builds `QuickSSH.zip`
    - Creates a matching git tag and GitHub Release
-5. Update the Plugin Manifest entry in `Flow-Launcher/Flow.Launcher.PluginsManifest` if needed.
+6. Update the Plugin Manifest entry in `Flow-Launcher/Flow.Launcher.PluginsManifest` if needed.
 
-No manual version editing is ever required — the workflow fails clearly if no label or multiple conflicting labels are present.
+`plugin.json` is the **single source of truth** for the plugin version. The version must already be correct in the PR — the workflow does **not** modify `main` after merge. This is required because `main` is a protected branch and post-merge pushes from CI would be rejected.
 
 > **Note:** `skip-release` prevents the entire release job from running. It is different from a missing label: a PR without any label at all that is merged to `main` will cause the release job to **fail** with a clear error. Always include either a release label or `skip-release`.
 
