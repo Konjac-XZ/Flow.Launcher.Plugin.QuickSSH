@@ -133,6 +133,69 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.Null(exception);
         }
 
+        // ── Top-level command order for plain "ssh" ───────────────────────────────
+
+        [Fact]
+        public void GetSuggestions_EmptyInput_CommandsHaveDescendingScoresInDefinedOrder()
+        {
+            // Expected display order: profiles > shell > config > help
+            // Flow Launcher sorts by Score descending, so each command must have a
+            // strictly higher score than the one that should follow it.
+            var results = AutoCompleter.GetSuggestions("ssh", "", null, "icon.png");
+
+            int profilesScore = results.First(r => r.Title == "profiles").Score;
+            int shellScore    = results.First(r => r.Title == "shell").Score;
+            int configScore   = results.First(r => r.Title == "config").Score;
+            int helpScore     = results.First(r => r.Title == "help").Score;
+
+            Assert.True(profilesScore > shellScore,  "profiles must outrank shell");
+            Assert.True(shellScore    > configScore, "shell must outrank config");
+            Assert.True(configScore   > helpScore,   "config must outrank help");
+        }
+
+        // ── Partial "profiles <prefix>" sub-command suggestions ───────────────────
+
+        [Theory]
+        [InlineData("ad",    "add")]
+        [InlineData("rem",   "remove")]
+        [InlineData("ren",   "rename")]
+        [InlineData("cop",   "copy")]
+        [InlineData("expor", "export")]
+        [InlineData("impor", "import")]
+        public void GetSuggestions_ProfilesPartialSubCommand_SuggestsExpectedSubCommand(
+            string partial, string expected)
+        {
+            var results = AutoCompleter.GetSuggestions("ssh", "profiles " + partial, null, "icon.png");
+            Assert.Contains(results, r => r.Title == expected);
+        }
+
+        [Theory]
+        [InlineData("ad",    "remove")]
+        [InlineData("ad",    "rename")]
+        [InlineData("cop",   "add")]
+        [InlineData("expor", "import")]
+        public void GetSuggestions_ProfilesPartialSubCommand_DoesNotSuggestNonMatchingSubCommands(
+            string partial, string notExpected)
+        {
+            var results = AutoCompleter.GetSuggestions("ssh", "profiles " + partial, null, "icon.png");
+            Assert.DoesNotContain(results, r => r.Title == notExpected);
+        }
+
+        [Fact]
+        public void GetSuggestions_ProfilesNonSubCommandSearch_StillFiltersProfileNames()
+        {
+            // "wor" is not a prefix of any sub-command; profile names should still appear.
+            var userData = new UserData();
+            userData.Attach(() => { });
+            userData.Profiles["work"] = new SshProfile { HostName = "work.example.com" };
+            userData.Profiles["home"] = new SshProfile { HostName = "home.example.com" };
+
+            var results = AutoCompleter.GetSuggestions("ssh", "profiles wor", userData, "icon.png");
+
+            Assert.Contains(results, r => r.Title == "work");
+            Assert.DoesNotContain(results, r => r.Title == "home");
+        }
+
         // ── Exact command match — must return empty (command handler owns the view) ──
 
         [Theory]
