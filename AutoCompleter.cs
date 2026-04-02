@@ -53,6 +53,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
             }
 
+            // When the input is exactly a known command name with no trailing space or arguments,
+            // return no suggestions. The Query() switch routes that verb to its dedicated handler,
+            // which owns the result list. "profiles " (with trailing space) is intentionally
+            // excluded from this guard — it signals the user is about to type arguments and
+            // profile-name suggestions should still appear.
+            if (!input.TrimStart().Contains(' ') && System.Array.IndexOf(VisibleCommands, trimmed) >= 0)
+                return results;
+
             // Match visible commands that start with the input
             // (hidden aliases like "p", "d", and "docs" are not shown as suggestions)
             var matchingCommands = VisibleCommands

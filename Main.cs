@@ -31,6 +31,18 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private const string CommandCopy = "copy";
         private const string CommandRename = "rename";
 
+        /// <summary>
+        /// All recognised command verbs (visible + hidden aliases).
+        /// Used in the Query default case to prevent exact command names from
+        /// accidentally being routed to the autocomplete / implicit-SSH paths.
+        /// </summary>
+        private static readonly string[] AllCommandVerbs = new[]
+        {
+            CommandAdd, CommandRemove, CommandProfiles, CommandProfilesShort,
+            CommandDirectConnect, CommandCustomShell, CommandConfig, CommandExport,
+            CommandImport, CommandHelp, CommandDocs, CommandCopy, CommandRename
+        };
+
         private const string AppIconPath = "Images\\app.png";
         private const string AppIconGreenPath = "Images\\app-green.png";
         private const string AppIconRedPath = "Images\\app-red.png";
@@ -143,11 +155,27 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     results.AddRange(HandleRename(query, rest));
                     break;
                 default:
-                    // Show auto-complete suggestions
-                    results.AddRange(AutoCompleter.GetSuggestions(
-                        query.ActionKeyword, input,
-                        _profileManager?.UserData, AppIconPath,
-                        _pluginContext?.API));
+                    // Guard: if the verb exactly matches any known command it should have
+                    // been handled by one of the cases above. Reaching here means either a
+                    // future refactoring gap or an unexpected call path. Return empty to
+                    // prevent unrelated top-level suggestions from appearing in a command view.
+                    if (System.Array.IndexOf(AllCommandVerbs, verb) >= 0)
+                        break;
+
+                    // If the input looks like a direct SSH destination or option string,
+                    // treat it as an implicit direct-connect (without requiring the "d" prefix).
+                    if (IsImplicitSshInput(input))
+                    {
+                        results.AddRange(HandleDirectConnect(query, input));
+                    }
+                    else
+                    {
+                        // Show auto-complete suggestions for partial command names.
+                        results.AddRange(AutoCompleter.GetSuggestions(
+                            query.ActionKeyword, input,
+                            _profileManager?.UserData, AppIconPath,
+                            _pluginContext?.API));
+                    }
                     break;
             }
 
@@ -458,42 +486,62 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         Score = int.MaxValue
                     });
 
-                    // List shells + help
+                    // List shells in deterministic order:
+                    //   1. selected shell  (Score 1000)
+                    //   2. other shells    (decreasing from 500)
+                    //   3. action rows     (10 = add, 5 = remove)
                     var allShells = _profileManager.UserData.CustomShell;
                     var selected = _profileManager.UserData.SelectedCustomShell;
 
-                    if (allShells.Count > 0)
+                    // Selected shell (if any) — pinned just below the usage hint.
+                    if (!string.IsNullOrEmpty(selected) && allShells.ContainsKey(selected))
                     {
-                        foreach (var shell in allShells)
+                        var shellVal = allShells[selected];
+                        results.Add(new Result
                         {
-                            var isSelected = shell.Key == selected;
-                            var marker = isSelected
-                                ? " " + GetTranslation("plugin_quickssh_shell_selected")
-                                : "";
-
-                            results.Add(new Result
+                            Title = selected + " " + GetTranslation("plugin_quickssh_shell_selected"),
+                            SubTitle = string.IsNullOrEmpty(shellVal) ? selected : shellVal,
+                            IcoPath = AppIconGreenPath,
+                            AutoCompleteText = query.ActionKeyword + " shell " + selected,
+                            Score = 1000,
+                            Action = _ =>
                             {
-                                Title = shell.Key + marker,
-                                SubTitle = string.IsNullOrEmpty(shell.Value) ? shell.Key : shell.Value,
-                                IcoPath = AppIconGreenPath,
-                                AutoCompleteText = query.ActionKeyword + " shell " + shell.Key,
-                                Action = _ =>
-                                {
-                                    _profileManager.UserData.SelectedCustomShell = shell.Key;
-                                    _profileManager.SaveConfiguration();
-                                    return true;
-                                }
-                            });
-                        }
+                                _profileManager.UserData.SelectedCustomShell = selected;
+                                _profileManager.SaveConfiguration();
+                                return true;
+                            }
+                        });
                     }
 
-                    // Sub-command suggestions for TAB completion
+                    // Remaining (non-selected) shell profiles.
+                    int otherShellScore = 500;
+                    foreach (var shell in allShells)
+                    {
+                        if (shell.Key == selected)
+                            continue;
+                        results.Add(new Result
+                        {
+                            Title = shell.Key,
+                            SubTitle = string.IsNullOrEmpty(shell.Value) ? shell.Key : shell.Value,
+                            IcoPath = AppIconGreenPath,
+                            AutoCompleteText = query.ActionKeyword + " shell " + shell.Key,
+                            Score = otherShellScore--,
+                            Action = _ =>
+                            {
+                                _profileManager.UserData.SelectedCustomShell = shell.Key;
+                                _profileManager.SaveConfiguration();
+                                return true;
+                            }
+                        });
+                    }
+
+                    // Sub-command action rows (add / remove) — always below shell entries.
                     var shellSubCmds = new[]
                     {
-                        ("add", GetTranslation("plugin_quickssh_title_commandshell_add"), GetTranslation("plugin_quickssh_subtitle_commandshell_add_usage")),
-                        ("remove", GetTranslation("plugin_quickssh_title_commandshell_remove"), GetTranslation("plugin_quickssh_subtitle_commandshell_remove")),
+                        ("add",    GetTranslation("plugin_quickssh_title_commandshell_add"),    GetTranslation("plugin_quickssh_subtitle_commandshell_add_usage"),    10),
+                        ("remove", GetTranslation("plugin_quickssh_title_commandshell_remove"), GetTranslation("plugin_quickssh_subtitle_commandshell_remove"),        5),
                     };
-                    foreach (var (scName, scTitle, scSubTitle) in shellSubCmds)
+                    foreach (var (scName, scTitle, scSubTitle, scScore) in shellSubCmds)
                     {
                         if (string.IsNullOrEmpty(subCmd) || scName.StartsWith(subCmd))
                         {
@@ -504,6 +552,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                 SubTitle = scSubTitle,
                                 IcoPath = AppIconPath,
                                 AutoCompleteText = autoText,
+                                Score = scScore,
                                 Action = _ =>
                                 {
                                     _pluginContext?.API?.ChangeQuery(autoText, true);
@@ -978,6 +1027,55 @@ namespace Flow.Launcher.Plugin.QuickSSH
             }
 
             return cmd;
+        }
+
+        /// <summary>
+        /// Returns <see langword="true"/> when the input string looks like a direct SSH
+        /// destination or option string rather than a plugin command name.
+        /// Supports:
+        /// <list type="bullet">
+        ///   <item><c>user@host</c> — contains an at-sign</item>
+        ///   <item><c>-p 22 user@host</c> — starts with a dash (SSH option flag)</item>
+        ///   <item><c>10.100.100.110</c> or <c>myserver.example.com</c> — bare hostname / IP
+        ///   (only hostname-safe characters, at least one dot)</item>
+        /// </list>
+        /// </summary>
+        internal static bool IsImplicitSshInput(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return false;
+
+            // SSH option flag (e.g. -p, -i, -o, -L, -R, -D, etc.)
+            if (input[0] == '-')
+                return true;
+
+            // user@host format
+            if (input.Contains('@'))
+                return true;
+
+            // Bare hostname or IP address: check only the first token so that
+            // "10.0.0.1 -p 22" is still detected via the first token.
+            var firstToken = input.Split(' ', 2)[0];
+            return IsHostnameOrIp(firstToken);
+        }
+
+        /// <summary>
+        /// Returns <see langword="true"/> when <paramref name="token"/> looks like a
+        /// hostname or dotted IP address (only hostname-safe chars and at least one dot).
+        /// </summary>
+        private static bool IsHostnameOrIp(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return false;
+
+            bool hasDot = false;
+            foreach (var c in token)
+            {
+                if (c == '.') { hasDot = true; continue; }
+                if (char.IsLetterOrDigit(c) || c == '-' || c == '_') continue;
+                return false; // illegal char — not a hostname/IP
+            }
+            return hasDot; // must have at least one dot to be unambiguous
         }
 
         private void RunSshCommand(string sshCommand)

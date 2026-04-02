@@ -147,6 +147,60 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.Null(exception);
         }
 
+        // ── Exact command match — must return empty (command handler owns the view) ──
+
+        [Theory]
+        [InlineData("add")]
+        [InlineData("remove")]
+        [InlineData("profiles")]
+        [InlineData("shell")]
+        [InlineData("config")]
+        [InlineData("export")]
+        [InlineData("import")]
+        [InlineData("copy")]
+        [InlineData("rename")]
+        [InlineData("help")]
+        public void GetSuggestions_ExactCommandName_NoTrailingSpace_ReturnsEmpty(string exactCommand)
+        {
+            // When the first token exactly matches a known command (no trailing space),
+            // the Query() switch routes to that command's handler. AutoCompleter must
+            // return no suggestions to avoid polluting the command-specific result view.
+            var results = AutoCompleter.GetSuggestions("ssh", exactCommand, null, "icon.png");
+            Assert.Empty(results);
+        }
+
+        [Fact]
+        public void GetSuggestions_ExactCommandName_CaseInsensitive_ReturnsEmpty()
+        {
+            // Exact-match guard should be case-insensitive (verb is always ToLowerInvariant).
+            var results = AutoCompleter.GetSuggestions("ssh", "RENAME", null, "icon.png");
+            Assert.Empty(results);
+        }
+
+        [Fact]
+        public void GetSuggestions_ExactCommandName_WithTrailingSpace_IsNotBlocked()
+        {
+            // "profiles " (with trailing space) means the user pressed space after the command
+            // and is about to type an argument. The guard must NOT block this — profile names
+            // should still be suggested.
+            var userData = new UserData();
+            userData.Attach(() => { });
+            userData.Entries["dev"] = "ssh dev@host";
+
+            var results = AutoCompleter.GetSuggestions("ssh", "profiles ", userData, "icon.png");
+            Assert.Contains(results, r => r.Title == "dev");
+        }
+
+        // ── Partial names just before exact match still return suggestions ─────────
+
+        [Fact]
+        public void GetSuggestions_PartialRename_ReturnsRenameSuggestion()
+        {
+            // "renam" is a prefix of "rename" but is NOT an exact match — still suggest.
+            var results = AutoCompleter.GetSuggestions("ssh", "renam", null, "icon.png");
+            Assert.Contains(results, r => r.Title == "rename");
+        }
+
         // ── AutoCompleteText format ───────────────────────────────────────────────
 
         [Fact]
