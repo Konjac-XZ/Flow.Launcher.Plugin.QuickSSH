@@ -157,13 +157,17 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         // ── Partial "profiles <prefix>" sub-command suggestions ───────────────────
 
         [Theory]
-        [InlineData("r",  new[] { "remove", "rename" })]
-        [InlineData("re", new[] { "remove", "rename" })]
+        [InlineData("a",   new[] { "add" })]
+        [InlineData("ad",  new[] { "add" })]
+        [InlineData("add", new[] { "add" })]
+        [InlineData("r",   new[] { "remove", "rename" })]
+        [InlineData("re",  new[] { "remove", "rename" })]
         [InlineData("rem", new[] { "remove" })]
+        [InlineData("remo", new[] { "remove" })]
         [InlineData("ren", new[] { "rename" })]
-        [InlineData("e",  new[] { "export" })]
-        [InlineData("i",  new[] { "import" })]
-        [InlineData("c",  new[] { "copy" })]
+        [InlineData("e",   new[] { "export" })]
+        [InlineData("i",   new[] { "import" })]
+        [InlineData("c",   new[] { "copy" })]
         public void GetSuggestions_ProfilesPartialPrefix_ShowsMatchingSubCommands(
             string partial, string[] expected)
         {

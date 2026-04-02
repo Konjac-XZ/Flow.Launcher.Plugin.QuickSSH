@@ -22,9 +22,9 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 
 > **Suggestion order:** Typing bare `ssh` (with no arguments) shows top-level suggestions in this order: **profiles**, **shell**, **config**, **help**.
 
-> **Partial subcommand filtering:** Under `ssh profiles`, typing any prefix progressively filters the subcommand suggestion list.
-> For example: `ssh profiles r` suggests **remove** and **rename**; `ssh profiles rem` narrows to **remove** only.
-> Single-letter prefixes that match only one subcommand show just that suggestion (e.g. `e` → **export**, `i` → **import**, `c` → **copy**).
+> **Partial subcommand matching:** Under `ssh profiles`, subcommand matching reacts from the first matching character, consistently with top-level command matching.
+> Examples: `ssh profiles a` → **add**; `ssh profiles r` → **remove**, **rename**; `ssh profiles rem` → **remove**; `ssh profiles ren` → **rename**.
+> Single-letter prefixes that match only one subcommand show just that suggestion (e.g. `a` → **add**, `e` → **export**, `i` → **import**, `c` → **copy**).
 
 > **Note for v1 users:** The top-level `add` command (v1: `ssh add <name> <cmd>`) has been moved to `ssh profiles add <name> <cmd>`.
 > Typing `ssh add ...` shows an explicit redirect hint in the UI — it will not silently do something unexpected.
@@ -479,7 +479,7 @@ To make QuickSSH available via `pm install QuickSSH` in Flow Launcher:
      "Name": "QuickSSH",
      "Description": "Enhanced SSH/SCP connection plugin with query autocomplete, structured profiles, SSH config support, and custom shell handling",
      "Author": "Vaso73",
-     "Version": "3.0.3",
+     "Version": "3.0.4",
      "Language": "csharp",
      "MinFlowLauncherVersion": "1.19.0",
      "Website": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",

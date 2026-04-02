@@ -184,7 +184,20 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 case ProfilesSubCopy:   return HandleProfilesCopy(query, subRest);
                 case ProfilesSubExport: return HandleProfilesExport(query);
                 case ProfilesSubImport: return HandleProfilesImport(query, subRest);
-                default:                return HandleProfilesList(query, rest);
+                default:
+                    // Mirror the top-level matching pattern: when the partial input
+                    // is a prefix of one or more sub-commands, delegate to the
+                    // autocompleter so that "profiles a" suggests "add" the same way
+                    // "ssh p" suggests "profiles" at the top level.
+                    if (!string.IsNullOrEmpty(subCmd) &&
+                        ProfilesSubCommands.Any(s => s.StartsWith(subCmd)))
+                    {
+                        return new List<Result>(AutoCompleter.GetSuggestions(
+                            query.ActionKeyword, "profiles " + rest,
+                            _profileManager?.UserData, AppIconPath,
+                            _pluginContext?.API));
+                    }
+                    return HandleProfilesList(query, rest);
             }
         }
 
