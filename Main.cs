@@ -20,27 +20,23 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private const string CommandAdd = "add";
         private const string CommandRemove = "remove";
         private const string CommandProfiles = "profiles";
-        private const string CommandProfilesShort = "p";
-        private const string CommandDirectConnect = "d";
         private const string CommandCustomShell = "shell";
         private const string CommandConfig = "config";
         private const string CommandExport = "export";
         private const string CommandImport = "import";
         private const string CommandHelp = "help";
-        private const string CommandDocs = "docs";  // hidden alias for "help"
         private const string CommandCopy = "copy";
         private const string CommandRename = "rename";
 
         /// <summary>
-        /// All recognised command verbs (visible + hidden aliases).
+        /// All recognised command verbs.
         /// Used in the Query default case to prevent exact command names from
         /// accidentally being routed to the autocomplete / implicit-SSH paths.
         /// </summary>
         private static readonly string[] AllCommandVerbs = new[]
         {
-            CommandAdd, CommandRemove, CommandProfiles, CommandProfilesShort,
-            CommandDirectConnect, CommandCustomShell, CommandConfig, CommandExport,
-            CommandImport, CommandHelp, CommandDocs, CommandCopy, CommandRename
+            CommandAdd, CommandRemove, CommandProfiles, CommandCustomShell, CommandConfig,
+            CommandExport, CommandImport, CommandHelp, CommandCopy, CommandRename
         };
 
         private const string AppIconPath = "Images\\app.png";
@@ -126,11 +122,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     results.AddRange(HandleRemove(query, rest));
                     break;
                 case CommandProfiles:
-                case CommandProfilesShort:
-                    results.AddRange(HandleProfiles(query, rest, verb));
-                    break;
-                case CommandDirectConnect:
-                    results.AddRange(HandleDirectConnect(query, rest));
+                    results.AddRange(HandleProfiles(query, rest));
                     break;
                 case CommandCustomShell:
                     results.AddRange(HandleShell(query, rest));
@@ -145,7 +137,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     results.AddRange(HandleImport(query, rest));
                     break;
                 case CommandHelp:
-                case CommandDocs:
                     results.AddRange(HandleDocs());
                     break;
                 case CommandCopy:
@@ -163,7 +154,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         break;
 
                     // If the input looks like a direct SSH destination or option string,
-                    // treat it as an implicit direct-connect (without requiring the "d" prefix).
+                    // treat it as an implicit direct-connect.
                     if (IsImplicitSshInput(input))
                     {
                         results.AddRange(HandleDirectConnect(query, input));
@@ -277,22 +268,18 @@ namespace Flow.Launcher.Plugin.QuickSSH
             return results;
         }
 
-        private List<Result> HandleProfiles(Query query, string search, string verb)
+        private List<Result> HandleProfiles(Query query, string search)
         {
             var results = new List<Result>();
             var entries = _profileManager.UserData.Entries;
-
-            var usageKey = verb == CommandProfilesShort
-                ? "plugin_quickssh_subtitle_commandp_usage"
-                : "plugin_quickssh_subtitle_commandprofiles";
 
             // Always show usage hint at the top.
             results.Add(new Result
             {
                 Title = GetTranslation("plugin_quickssh_title_commandprofiles"),
-                SubTitle = GetTranslation(usageKey),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles"),
                 IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " " + verb + " ",
+                AutoCompleteText = query.ActionKeyword + " profiles ",
                 Score = int.MaxValue
             });
 
@@ -352,9 +339,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
             results.Add(new Result
             {
                 Title = GetTranslation("plugin_quickssh_title_commanddirect"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandd_usage"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddirectconnect_usage"),
                 IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " d ",
                 Score = int.MaxValue
             });
 

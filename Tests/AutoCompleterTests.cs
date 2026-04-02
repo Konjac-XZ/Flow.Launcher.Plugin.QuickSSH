@@ -28,7 +28,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.Contains("rename", titles);
             Assert.Contains("help", titles);
 
-            // Hidden aliases must NOT appear in suggestions.
+            // These commands must NOT appear in suggestions.
             Assert.DoesNotContain("p", titles);
             Assert.DoesNotContain("d", titles);
             Assert.DoesNotContain("docs", titles);
@@ -119,21 +119,6 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
 
             Assert.Contains("work", titles);
             Assert.DoesNotContain("home", titles);
-        }
-
-        [Fact]
-        public void GetSuggestions_ShortAlias_p_AlsoProvidesProfiles()
-        {
-            var userData = new UserData();
-            userData.Attach(() => { });
-            userData.Entries["dev"] = "ssh dev@host";
-
-            var results = AutoCompleter.GetSuggestions("ssh", "p dev", userData, "icon.png");
-
-            var titles = new HashSet<string>();
-            foreach (var r in results) titles.Add(r.Title);
-
-            Assert.Contains("dev", titles);
         }
 
         // ── Null / missing userData ───────────────────────────────────────────────

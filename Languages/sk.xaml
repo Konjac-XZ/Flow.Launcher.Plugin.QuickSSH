@@ -31,12 +31,11 @@
     <!-- PROFILES -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles">Uložené profily</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Použitie: profiles [filter]</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandp_usage">Použitie: p [filter]</system:String>
 
     <!-- DIRECT CONNECT -->
     <system:String x:Key="plugin_quickssh_title_commanddirect">Priame pripojenie</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect">Priame pripojenie:</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandd_usage">Použitie: d &lt;ssh-príkaz&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect_usage">Použitie: ssh root@host  |  ssh -p 22 root@host  |  ssh -i "key" root@host</system:String>
 
     <!-- SHELL -->
     <system:String x:Key="plugin_quickssh_title_commandshell">Správa shellov</system:String>
@@ -44,7 +43,7 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandshell_add_usage">Použitie: shell add &lt;exe&gt; alebo shell add &lt;názov&gt; &lt;exe + argumenty&gt;</system:String>
     <system:String x:Key="plugin_quickssh_title_commandshell_remove">Odstrániť shell profil</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Použitie: shell remove [filter]</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Použitie: shell add ; remove ; list</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Použitie: shell add ; remove</system:String>
     <system:String x:Key="plugin_quickssh_shell_selected">(vybraný)</system:String>
 
     <!-- CONFIG -->
@@ -82,10 +81,5 @@
     <system:String x:Key="plugin_quickssh_title_commandhelp">Pomoc</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandhelp">Otvoriť dokumentáciu pluginu na GitHube.</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandhelp_usage">Použitie: help</system:String>
-
-    <!-- DOCS (hidden alias for help) -->
-    <system:String x:Key="plugin_quickssh_title_commanddocs">Pomoc</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Otvoriť dokumentáciu pluginu na GitHube.</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commanddocs_usage">Použitie: help</system:String>
 
 </ResourceDictionary>

@@ -25,8 +25,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 - **TAB auto-completion** — press TAB to auto-complete commands and profile names
 - **Shell-like command entry** — typing the first letters of a command filters matching suggestions; selecting a suggestion autocompletes the command into the query (via TAB or Enter) instead of executing it
 - **Exact command view isolation** — once the first token exactly matches a known command (e.g. `rename`, `shell`, `profiles`), only that command's results are shown; unrelated top-level suggestions are never mixed in
-- **Implicit direct SSH input** — type a destination (`user@host`, bare IP/hostname) or SSH options (`-p 22 user@host`, `-i key user@host`) directly without any command prefix; the plugin auto-detects these and opens a direct-connect row without requiring `d`
-- **Hidden aliases** — short aliases `p` (profiles), `d` (direct connect), and `docs` (help) are accepted when typed but are hidden from the autocomplete UI to keep the suggestion list clean
+- **Implicit direct SSH input** — type a destination (`user@host`, bare IP/hostname) or SSH options (`-p 22 user@host`, `-i key user@host`) directly without any command prefix; the plugin auto-detects these and opens a direct-connect row
 - **In-line usage hints** — every command view shows a non-actionable usage/help entry pinned to the top of the results list, even in empty states (e.g. no profiles, no shells, no import files). Empty-state info rows appear second. Ordering is enforced via `Result.Score = int.MaxValue` so Flow Launcher's own sorting never reorders the hint below actionable or informational items.
 - **Deterministic shell view ordering** — `ssh shell` always shows: usage hint → selected shell → other shell profiles → action rows (`add` / `remove`)
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
@@ -88,7 +87,7 @@ ssh rename myserver new-name      → rename "myserver" to "new-name"
 
 ### Quick one-time connection (without saving)
 
-Use `d` (direct-connect prefix) or simply type the destination/options directly — the plugin detects these automatically:
+Type a destination or SSH options directly — the plugin detects these automatically:
 
 ```
 ssh root@10.0.0.1
@@ -97,28 +96,10 @@ ssh -i "C:\Users\me\.ssh\private_key" -o IdentitiesOnly=yes root@10.100.100.110
 ssh 10.100.100.110
 ```
 
-The `d` prefix still works and is accepted for backward compatibility:
-
-```
-ssh d root@10.0.0.1
-ssh d ssh -p 2222 deploy@staging.example.com
-ssh d user@host        → "ssh " prefix is added automatically
-```
-
-**Implicit detection rules** — no `d` prefix needed when input:
+**Implicit detection rules** — input is treated as a direct connect when it:
 - contains `@` (e.g. `user@host`, `root@10.0.0.1`)
 - starts with `-` (e.g. `-p 22 user@host`, `-i key user@host`)
 - is a bare hostname or IP with at least one dot (e.g. `10.0.0.1`, `myserver.example.com`)
-
-### Hidden aliases
-
-The following short aliases are supported for backward compatibility but are **not shown** in the autocomplete suggestion list:
-
-| Alias | Equivalent command |
-|-------|-------------------|
-| `ssh p [filter]` | `ssh profiles [filter]` |
-| `ssh d <ssh-command>` | Direct SSH connection (no full-name equivalent) |
-| `ssh docs` | `ssh help` |
 
 ### Import hosts from `~/.ssh/config`
 
