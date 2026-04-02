@@ -4,7 +4,7 @@
 
     <!-- Plugin meta -->
     <system:String x:Key="plugin_quickssh_plugin_name">QuickSSH</system:String>
-    <system:String x:Key="plugin_quickssh_plugin_description">Quickly save and launch SSH connections from Flow Launcher.</system:String>
+    <system:String x:Key="plugin_quickssh_plugin_description">Quickly save and launch SSH/SCP connections from Flow Launcher.</system:String>
 
     <!-- Health / status messages -->
     <system:String x:Key="plugin_quickssh_sshnotinstalled_title">QuickSSH</system:String>
@@ -20,17 +20,48 @@
     <system:String x:Key="plugin_quickssh_connect_label">Connect:</system:String>
     <system:String x:Key="plugin_quickssh_addshell_label">Add shell:</system:String>
 
-    <!-- ADD -->
-    <system:String x:Key="plugin_quickssh_title_commandadd">Add profile</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandadd">Usage: add &lt;name&gt; &lt;ssh-command&gt;</system:String>
-
-    <!-- REMOVE -->
-    <system:String x:Key="plugin_quickssh_title_commandremove">Remove profile</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandremove">Usage: remove [filter]</system:String>
-
-    <!-- PROFILES -->
+    <!-- PROFILES (list / connect) -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles">Saved profiles</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Usage: profiles [filter]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Usage: profiles [filter] | add | remove | rename | copy | export | import</system:String>
+
+    <!-- PROFILES ADD -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles_add">Add profile</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_add">Usage: profiles add &lt;name&gt; &lt;ssh-command&gt;</system:String>
+
+    <!-- PROFILES REMOVE -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles_remove">Remove profile</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_remove">Usage: profiles remove [filter]</system:String>
+
+    <!-- PROFILES RENAME -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles_rename">Rename profile</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_rename">Usage: profiles rename &lt;oldname&gt; &lt;newname&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_rename_notfound">Profile not found.</system:String>
+
+    <!-- PROFILES COPY -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles_copy">Copy SSH command</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy">Copy:</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy_usage">Usage: profiles copy [filter]</system:String>
+    <system:String x:Key="plugin_quickssh_copy_clipboard_error">Could not copy to clipboard. Ensure Flow Launcher is running on the UI thread.</system:String>
+
+    <!-- PROFILES EXPORT -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles_export">Export profiles</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_export">Export profiles to: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_export_usage">Usage: profiles export</system:String>
+    <system:String x:Key="plugin_quickssh_export_success">Exported {0} profile(s) to {1}</system:String>
+
+    <!-- PROFILES IMPORT -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles_import">Import profiles</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_import_usage">Usage: profiles import [filter]</system:String>
+    <system:String x:Key="plugin_quickssh_import_nofiles">No .sshconfig or .json files found in: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_import_success">Imported {0} profile(s) successfully.</system:String>
+    <system:String x:Key="plugin_quickssh_import_empty">No profiles found in the selected file.</system:String>
+    <!-- Label appended to legacy .json import files so users understand JSON is migration-only -->
+    <system:String x:Key="plugin_quickssh_import_legacy_label">(legacy)</system:String>
+
+    <!-- LEGACY ADD REDIRECT -->
+    <!-- The top-level "add" command was removed in v2. This entry is shown when the user types "add ..." -->
+    <system:String x:Key="plugin_quickssh_title_commandadd_legacy">Command renamed: use "profiles add"</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandadd_legacy">The "add" command is now "profiles add &lt;name&gt; &lt;ssh-command&gt;". Press Enter or Tab to navigate.</system:String>
 
     <!-- DIRECT CONNECT -->
     <system:String x:Key="plugin_quickssh_title_commanddirect">Direct connect</system:String>
@@ -49,33 +80,9 @@
     <!-- CONFIG -->
     <system:String x:Key="plugin_quickssh_title_commandconfig">Import SSH config</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandconfig">Import hosts from ~/.ssh/config file.</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandconfig_usage">Usage: config</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandconfig_usage">Usage: config  (imports from ~/.ssh/config)</system:String>
     <system:String x:Key="plugin_quickssh_config_imported">Imported {0} host(s) from SSH config.</system:String>
     <system:String x:Key="plugin_quickssh_config_notfound">SSH config file not found at ~/.ssh/config.</system:String>
-
-    <!-- EXPORT -->
-    <system:String x:Key="plugin_quickssh_title_commandexport">Export profiles</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandexport">Export SSH profiles to: {0}</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandexport_usage">Usage: export</system:String>
-    <system:String x:Key="plugin_quickssh_export_success">Exported {0} profile(s) to {1}</system:String>
-
-    <!-- IMPORT -->
-    <system:String x:Key="plugin_quickssh_title_commandimport">Import profiles</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandimport_usage">Usage: import [filter]</system:String>
-    <system:String x:Key="plugin_quickssh_import_nofiles">No JSON files found in: {0}</system:String>
-    <system:String x:Key="plugin_quickssh_import_success">Imported {0} profile(s) successfully.</system:String>
-    <system:String x:Key="plugin_quickssh_import_empty">No profiles found in the selected file.</system:String>
-
-    <!-- COPY -->
-    <system:String x:Key="plugin_quickssh_title_commandcopy">Copy SSH command</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Copy:</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Usage: copy &lt;existing&gt; &lt;new-name&gt;</system:String>
-    <system:String x:Key="plugin_quickssh_copy_clipboard_error">Could not copy to clipboard. Ensure Flow Launcher is running on the UI thread.</system:String>
-
-    <!-- RENAME -->
-    <system:String x:Key="plugin_quickssh_title_commandrename">Rename profile</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandrename">Usage: rename &lt;oldname&gt; &lt;newname&gt;</system:String>
-    <system:String x:Key="plugin_quickssh_rename_notfound">Profile not found.</system:String>
 
     <!-- HELP -->
     <system:String x:Key="plugin_quickssh_title_commandhelp">Help</system:String>

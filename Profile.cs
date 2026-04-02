@@ -7,17 +7,25 @@ using Newtonsoft.Json;
 namespace Flow.Launcher.Plugin.QuickSSH
 {
     /// <summary>
-    /// Persisted plugin data: SSH profiles, custom shells, and selected shell.
+    /// Persisted plugin data: SSH/SCP profiles, custom shells, and selected shell.
     /// </summary>
     public class UserData
     {
-        public string PluginVersion { get; set; } = "1.0";
+        public string PluginVersion { get; set; } = "2.0";
+
+        // ── Structured profiles (canonical format, v2+) ────────────────────────────
 
         [JsonProperty]
-        private Dictionary<string, string> EntriesLists { get; set; } = new();
+        private Dictionary<string, SshProfile> ProfilesLists { get; set; } = new();
 
         [JsonIgnore]
-        public AutoSaveDictionary<string, string> Entries { get; private set; }
+        public AutoSaveDictionary<string, SshProfile> Profiles { get; private set; }
+
+        // ── Legacy raw-string profiles (v1, migration source only) ─────────────────
+        // Kept as nullable so that newly created files never write this field.
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        private Dictionary<string, string> EntriesLists { get; set; }
 
         [JsonProperty]
         private Dictionary<string, string> CustomShellLists { get; set; } = new();
@@ -29,13 +37,42 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         /// <summary>
         /// Binds auto-save callbacks after construction or deserialization.
+        /// Migrates any legacy raw-string profiles to structured <see cref="SshProfile"/> objects.
         /// </summary>
-        public void Attach(Action onChanged)
+        /// <param name="onChanged">Callback invoked on every profile or shell mutation.</param>
+        /// <returns>
+        /// <see langword="true"/> when v1 legacy data was found and migrated;
+        /// the caller should persist immediately so the disk file reflects the new v2 format.
+        /// </returns>
+        public bool Attach(Action onChanged)
         {
-            EntriesLists ??= new Dictionary<string, string>();
+            ProfilesLists ??= new Dictionary<string, SshProfile>();
             CustomShellLists ??= new Dictionary<string, string>();
-            Entries = new AutoSaveDictionary<string, string>(EntriesLists, onChanged);
+
+            bool migrated = false;
+
+            // One-time migration from v1 raw-string storage (EntriesLists) to the canonical
+            // structured model (ProfilesLists).  We only migrate entries that are not already
+            // present in ProfilesLists so a mixed v1/v2 file is handled safely.
+            // Fields that cannot be parsed from the raw command string are preserved verbatim
+            // in SshProfile.ExtraArgs so no data is ever silently lost.
+            if (EntriesLists != null && EntriesLists.Count > 0)
+            {
+                foreach (var kvp in EntriesLists)
+                {
+                    if (!ProfilesLists.ContainsKey(kvp.Key))
+                        ProfilesLists[kvp.Key] = SshProfile.ParseFromLegacyCommand(kvp.Value);
+                }
+
+                // Null out the legacy field so it is absent from the next serialization.
+                EntriesLists = null;
+                migrated = true;
+            }
+
+            Profiles = new AutoSaveDictionary<string, SshProfile>(ProfilesLists, onChanged);
             CustomShell = new AutoSaveDictionary<string, string>(CustomShellLists, onChanged);
+
+            return migrated;
         }
     }
 
@@ -128,7 +165,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
         {
             var json = File.ReadAllText(_path);
             UserData = JsonConvert.DeserializeObject<UserData>(json) ?? new UserData();
-            UserData.Attach(SaveConfiguration);
+
+            // Attach returns true when v1 raw-string data was migrated.  Persist immediately so
+            // the on-disk file switches to the canonical v2 format after the first load.
+            bool migrated = UserData.Attach(SaveConfiguration);
+            if (migrated)
+                SaveConfiguration();
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace Flow.Launcher.Plugin.QuickSSH.Tests
@@ -33,7 +34,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             var pm = new ProfileManager(path);
 
             Assert.NotNull(pm.UserData);
-            Assert.Empty(pm.UserData.Entries);
+            Assert.Empty(pm.UserData.Profiles);
             Assert.Empty(pm.UserData.CustomShell);
             Assert.True(File.Exists(path));
         }
@@ -57,67 +58,186 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         {
             var path = GetTmpPath();
             var pm = new ProfileManager(path);
-            pm.UserData.Entries["work"] = "ssh alice@work.example.com";
+            pm.UserData.Profiles["work"] = new SshProfile { Type = "ssh", User = "alice", HostName = "work.example.com" };
 
             pm.SaveConfiguration();
 
             var json = File.ReadAllText(path);
             Assert.Contains("work", json);
-            Assert.Contains("ssh alice@work.example.com", json);
+            Assert.Contains("alice", json);
         }
 
         [Fact]
-        public void LoadConfiguration_ReadsPersistedEntries()
+        public void LoadConfiguration_ReadsPersistedProfiles()
         {
             var path = GetTmpPath();
             var pm1 = new ProfileManager(path);
-            pm1.UserData.Entries["myhost"] = "ssh user@myhost";
+            pm1.UserData.Profiles["myhost"] = new SshProfile { Type = "ssh", User = "root", HostName = "myhost" };
             pm1.SaveConfiguration();
 
             var pm2 = new ProfileManager(path);
 
-            Assert.True(pm2.UserData.Entries.ContainsKey("myhost"));
-            Assert.Equal("ssh user@myhost", pm2.UserData.Entries["myhost"]);
+            Assert.True(pm2.UserData.Profiles.ContainsKey("myhost"));
+            Assert.Equal("myhost", pm2.UserData.Profiles["myhost"].HostName);
         }
 
         [Fact]
-        public void AutoSave_TriggeredOnEntryAdd()
+        public void AutoSave_TriggeredOnProfileAdd()
         {
             var path = GetTmpPath();
             var pm = new ProfileManager(path);
 
-            // Adding an entry triggers auto-save through the AutoSaveDictionary callback.
-            pm.UserData.Entries["autokey"] = "ssh auto@host";
+            pm.UserData.Profiles["autokey"] = new SshProfile { HostName = "auto.host" };
 
-            // Reload from file to verify it was persisted.
             var pm2 = new ProfileManager(path);
-            Assert.True(pm2.UserData.Entries.ContainsKey("autokey"));
+            Assert.True(pm2.UserData.Profiles.ContainsKey("autokey"));
         }
 
         [Fact]
-        public void AutoSave_TriggeredOnEntryRemove()
+        public void AutoSave_TriggeredOnProfileRemove()
         {
             var path = GetTmpPath();
             var pm = new ProfileManager(path);
-            pm.UserData.Entries["removeme"] = "ssh user@host";
+            pm.UserData.Profiles["removeme"] = new SshProfile { HostName = "host" };
 
-            pm.UserData.Entries.Remove("removeme");
+            pm.UserData.Profiles.Remove("removeme");
 
             var pm2 = new ProfileManager(path);
-            Assert.False(pm2.UserData.Entries.ContainsKey("removeme"));
+            Assert.False(pm2.UserData.Profiles.ContainsKey("removeme"));
         }
 
         [Fact]
         public void SaveConfiguration_UsesAtomicWrite()
         {
-            // The tmp file must not be left behind after a successful save.
             var path = GetTmpPath();
             var pm = new ProfileManager(path);
-            pm.UserData.Entries["k"] = "v";
+            pm.UserData.Profiles["k"] = new SshProfile { HostName = "v" };
             pm.SaveConfiguration();
 
             Assert.False(File.Exists(path + ".tmp"),
                 "Temp file should be cleaned up after atomic move.");
+        }
+
+        // ── Legacy migration ──────────────────────────────────────────────────────
+
+        [Fact]
+        public void LoadConfiguration_V1RawStrings_MigratedToStructuredProfiles()
+        {
+            var path = GetTmpPath();
+
+            // Write a v1-style JSON
+            var v1Json = JsonConvert.SerializeObject(new
+            {
+                PluginVersion = "1.0",
+                EntriesLists = new Dictionary<string, string>
+                {
+                    ["myserver"] = "ssh user@myhost",
+                    ["dev-box"]  = "ssh -p 2222 dev@10.0.0.50"
+                },
+                CustomShellLists = new Dictionary<string, string>()
+            }, Formatting.Indented);
+            File.WriteAllText(path, v1Json);
+
+            var pm = new ProfileManager(path);
+
+            Assert.True(pm.UserData.Profiles.ContainsKey("myserver"), "myserver should be migrated");
+            Assert.True(pm.UserData.Profiles.ContainsKey("dev-box"), "dev-box should be migrated");
+
+            var myserver = pm.UserData.Profiles["myserver"];
+            Assert.Equal("user", myserver.User);
+            Assert.Equal("myhost", myserver.HostName);
+
+            var devbox = pm.UserData.Profiles["dev-box"];
+            Assert.Equal("2222", devbox.Port);
+            Assert.Equal("dev", devbox.User);
+        }
+
+        [Fact]
+        public void LoadConfiguration_V1Migration_SavesAsV2Format()
+        {
+            var path = GetTmpPath();
+
+            var v1Json = JsonConvert.SerializeObject(new
+            {
+                PluginVersion = "1.0",
+                EntriesLists = new Dictionary<string, string> { ["srv"] = "ssh root@10.0.0.1" },
+                CustomShellLists = new Dictionary<string, string>()
+            }, Formatting.Indented);
+            File.WriteAllText(path, v1Json);
+
+            // Load must trigger migration AND immediately persist the v2 format to disk.
+            _ = new ProfileManager(path);
+
+            // Verify the on-disk JSON no longer contains the legacy raw-string field.
+            var savedJson = File.ReadAllText(path);
+            Assert.DoesNotContain("EntriesLists", savedJson);
+
+            // Verify the v2 structured field IS present.
+            Assert.Contains("ProfilesLists", savedJson);
+
+            // Reload and verify structured format is readable.
+            var pm2 = new ProfileManager(path);
+            Assert.True(pm2.UserData.Profiles.ContainsKey("srv"));
+            Assert.Equal("root", pm2.UserData.Profiles["srv"].User);
+        }
+
+        [Fact]
+        public void LoadConfiguration_V1Migration_ImmediateSave_PreventsReMigrationOnReload()
+        {
+            var path = GetTmpPath();
+
+            var v1Json = JsonConvert.SerializeObject(new
+            {
+                PluginVersion = "1.0",
+                EntriesLists = new Dictionary<string, string> { ["box"] = "ssh deploy@10.0.0.5" },
+                CustomShellLists = new Dictionary<string, string>()
+            }, Formatting.Indented);
+            File.WriteAllText(path, v1Json);
+
+            // First load: migration runs and saves.
+            _ = new ProfileManager(path);
+
+            // Second load: file is already v2, no further migration should occur.
+            // Verify the profile is still correct after a second round-trip.
+            var pm2 = new ProfileManager(path);
+            Assert.True(pm2.UserData.Profiles.ContainsKey("box"));
+            Assert.Equal("deploy", pm2.UserData.Profiles["box"].User);
+            Assert.Equal("10.0.0.5", pm2.UserData.Profiles["box"].HostName);
+        }
+
+        [Fact]
+        public void LoadConfiguration_V1Migration_UnknownFlags_PreservedInExtraArgs()
+        {
+            // Profiles with flags that cannot be represented in structured fields must survive
+            // migration without silent data loss.  Unknown flags are stored in ExtraArgs.
+            var path = GetTmpPath();
+
+            var v1Json = JsonConvert.SerializeObject(new
+            {
+                PluginVersion = "1.0",
+                EntriesLists = new Dictionary<string, string>
+                {
+                    ["x11"] = "ssh -X root@x11host",          // -X (X11 forwarding) is unstructured
+                    ["agent"] = "ssh -A root@agenthost"       // -A (agent forwarding) is unstructured
+                },
+                CustomShellLists = new Dictionary<string, string>()
+            }, Formatting.Indented);
+            File.WriteAllText(path, v1Json);
+
+            var pm = new ProfileManager(path);
+
+            var x11 = pm.UserData.Profiles["x11"];
+            Assert.Equal("root", x11.User);
+            Assert.Equal("x11host", x11.HostName);
+            Assert.NotNull(x11.ExtraArgs);
+            Assert.Contains("-X", x11.ExtraArgs);
+
+            // The generated command must include the preserved flag so behaviour is unchanged.
+            Assert.Contains("-X", x11.ToCommandLine());
+
+            var agent = pm.UserData.Profiles["agent"];
+            Assert.NotNull(agent.ExtraArgs);
+            Assert.Contains("-A", agent.ExtraArgs);
         }
 
         // ── CustomShell ───────────────────────────────────────────────────────────
@@ -157,21 +277,18 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             var path = GetTmpPath();
             var pm = new ProfileManager(path);
 
-            // Disable callback, add entry; no save should occur.
-            pm.UserData.Entries.SetCallback(null);
-            pm.UserData.Entries["silent"] = "ssh silent@host";
+            pm.UserData.Profiles.SetCallback(null);
+            pm.UserData.Profiles["silent"] = new SshProfile { HostName = "silent.host" };
 
-            // Read raw file – it should NOT contain the new entry yet.
             var pm2 = new ProfileManager(path);
-            Assert.False(pm2.UserData.Entries.ContainsKey("silent"),
-                "Entry should not be saved while callback is null.");
+            Assert.False(pm2.UserData.Profiles.ContainsKey("silent"),
+                "Profile should not be saved while callback is null.");
 
-            // Restore callback and explicitly save.
-            pm.UserData.Entries.SetCallback(pm.SaveConfiguration);
+            pm.UserData.Profiles.SetCallback(pm.SaveConfiguration);
             pm.SaveConfiguration();
 
             var pm3 = new ProfileManager(path);
-            Assert.True(pm3.UserData.Entries.ContainsKey("silent"));
+            Assert.True(pm3.UserData.Profiles.ContainsKey("silent"));
         }
 
         [Fact]
@@ -179,13 +296,13 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         {
             var path = GetTmpPath();
             var pm = new ProfileManager(path);
-            pm.UserData.Entries["a"] = "ssh a@host";
-            pm.UserData.Entries["b"] = "ssh b@host";
+            pm.UserData.Profiles["a"] = new SshProfile { HostName = "a.host" };
+            pm.UserData.Profiles["b"] = new SshProfile { HostName = "b.host" };
 
-            pm.UserData.Entries.Clear();
+            pm.UserData.Profiles.Clear();
 
             var pm2 = new ProfileManager(path);
-            Assert.Empty(pm2.UserData.Entries);
+            Assert.Empty(pm2.UserData.Profiles);
         }
 
         [Fact]
@@ -193,13 +310,13 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         {
             var path = GetTmpPath();
             var pm = new ProfileManager(path);
-            Assert.Equal(0, pm.UserData.Entries.Count);
+            Assert.Equal(0, pm.UserData.Profiles.Count);
 
-            pm.UserData.Entries["x"] = "ssh x@host";
-            Assert.Equal(1, pm.UserData.Entries.Count);
+            pm.UserData.Profiles["x"] = new SshProfile { HostName = "x.host" };
+            Assert.Equal(1, pm.UserData.Profiles.Count);
 
-            pm.UserData.Entries.Remove("x");
-            Assert.Equal(0, pm.UserData.Entries.Count);
+            pm.UserData.Profiles.Remove("x");
+            Assert.Equal(0, pm.UserData.Profiles.Count);
         }
     }
 }

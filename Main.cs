@@ -17,26 +17,33 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private static PluginInitContext _pluginContext;
         private ProfileManager _profileManager;
 
-        private const string CommandAdd = "add";
-        private const string CommandRemove = "remove";
         private const string CommandProfiles = "profiles";
         private const string CommandCustomShell = "shell";
         private const string CommandConfig = "config";
-        private const string CommandExport = "export";
-        private const string CommandImport = "import";
         private const string CommandHelp = "help";
-        private const string CommandCopy = "copy";
-        private const string CommandRename = "rename";
 
         /// <summary>
-        /// All recognised command verbs.
+        /// All recognised top-level command verbs.
         /// Used in the Query default case to prevent exact command names from
         /// accidentally being routed to the autocomplete / implicit-SSH paths.
         /// </summary>
         private static readonly string[] AllCommandVerbs = new[]
         {
-            CommandAdd, CommandRemove, CommandProfiles, CommandCustomShell, CommandConfig,
-            CommandExport, CommandImport, CommandHelp, CommandCopy, CommandRename
+            CommandProfiles, CommandCustomShell, CommandConfig, CommandHelp, "add"
+        };
+
+        // Sub-commands of "profiles"
+        private const string ProfilesSubAdd    = "add";
+        private const string ProfilesSubRemove = "remove";
+        private const string ProfilesSubRename = "rename";
+        private const string ProfilesSubCopy   = "copy";
+        private const string ProfilesSubExport = "export";
+        private const string ProfilesSubImport = "import";
+
+        private static readonly string[] ProfilesSubCommands = new[]
+        {
+            ProfilesSubAdd, ProfilesSubRemove, ProfilesSubRename,
+            ProfilesSubCopy, ProfilesSubExport, ProfilesSubImport
         };
 
         private const string AppIconPath = "Images\\app.png";
@@ -115,12 +122,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             switch (verb)
             {
-                case CommandAdd:
-                    results.AddRange(HandleAdd(query, rest));
-                    break;
-                case CommandRemove:
-                    results.AddRange(HandleRemove(query, rest));
-                    break;
                 case CommandProfiles:
                     results.AddRange(HandleProfiles(query, rest));
                     break;
@@ -128,22 +129,16 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     results.AddRange(HandleShell(query, rest));
                     break;
                 case CommandConfig:
-                    results.AddRange(HandleConfig(query));
-                    break;
-                case CommandExport:
-                    results.AddRange(HandleExport(query, rest));
-                    break;
-                case CommandImport:
-                    results.AddRange(HandleImport(query, rest));
+                    results.AddRange(HandleConfig(query, rest));
                     break;
                 case CommandHelp:
                     results.AddRange(HandleDocs());
                     break;
-                case CommandCopy:
-                    results.AddRange(HandleCopy(query, rest));
-                    break;
-                case CommandRename:
-                    results.AddRange(HandleRename(query, rest));
+
+                // Legacy top-level "add" is no longer the canonical command.
+                // Show an explicit user-facing redirect so the user is never left confused.
+                case "add":
+                    results.AddRange(HandleLegacyAddRedirect(query, rest));
                     break;
                 default:
                     // Guard: if the verb exactly matches any known command it should have
@@ -175,103 +170,30 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         #region Command Handlers
 
-        private List<Result> HandleAdd(Query query, string rest)
+        private List<Result> HandleProfiles(Query query, string rest)
         {
-            var results = new List<Result>();
+            var parts = rest.Split(new[] { ' ' }, 2);
+            var subCmd = parts[0].ToLowerInvariant();
+            var subRest = parts.Length > 1 ? parts[1].Trim() : "";
 
-            // Always show usage hint at the top.
-            results.Add(new Result
+            switch (subCmd)
             {
-                Title = GetTranslation("plugin_quickssh_title_commandadd"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandadd"),
-                IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " add ",
-                Score = int.MaxValue
-            });
-
-            if (string.IsNullOrEmpty(rest))
-                return results;
-
-            var addParts = rest.Split(new[] { ' ' }, 2);
-            var profileName = addParts[0];
-            var rawSshCommand = addParts.Length > 1 ? addParts[1].Trim() : "";
-
-            // Normalise: strip cmd-style /flags, ensure "ssh " prefix.
-            var sshCommand = string.IsNullOrEmpty(rawSshCommand)
-                ? ""
-                : (NormalizeSshCommand(rawSshCommand) ?? "");
-
-            if (!string.IsNullOrEmpty(sshCommand))
-            {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_save_label") + " " + profileName,
-                    SubTitle = sshCommand,
-                    IcoPath = AppIconGreenPath,
-                    Action = _ =>
-                    {
-                        _profileManager.UserData.Entries[profileName] = sshCommand;
-                        return true;
-                    }
-                });
+                case ProfilesSubAdd:    return HandleProfilesAdd(query, subRest);
+                case ProfilesSubRemove: return HandleProfilesRemove(query, subRest);
+                case ProfilesSubRename: return HandleProfilesRename(query, subRest);
+                case ProfilesSubCopy:   return HandleProfilesCopy(query, subRest);
+                case ProfilesSubExport: return HandleProfilesExport(query);
+                case ProfilesSubImport: return HandleProfilesImport(query, subRest);
+                default:                return HandleProfilesList(query, rest);
             }
-
-            return results;
         }
 
-        private List<Result> HandleRemove(Query query, string rest)
+        // ── profiles (list / connect) ─────────────────────────────────────────────
+
+        private List<Result> HandleProfilesList(Query query, string search)
         {
             var results = new List<Result>();
-            var entries = _profileManager.UserData.Entries;
-
-            // Always show usage hint at the top.
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_title_commandremove"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandremove"),
-                IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " remove ",
-                Score = int.MaxValue
-            });
-
-            if (entries.Count == 0)
-            {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandremove"),
-                    SubTitle = GetTranslation("plugin_quickssh_noprofiles"),
-                    IcoPath = AppIconPath
-                });
-                return results;
-            }
-
-            foreach (var entry in entries)
-            {
-                if (!string.IsNullOrEmpty(rest) &&
-                    !entry.Key.ToLowerInvariant().Contains(rest.ToLowerInvariant()))
-                    continue;
-
-                results.Add(new Result
-                {
-                    Title = entry.Key,
-                    SubTitle = entry.Value,
-                    IcoPath = AppIconRedPath,
-                    AutoCompleteText = query.ActionKeyword + " remove " + entry.Key,
-                    Action = _ =>
-                    {
-                        _profileManager.UserData.Entries.Remove(entry.Key);
-                        return true;
-                    }
-                });
-            }
-
-            return results;
-        }
-
-        private List<Result> HandleProfiles(Query query, string search)
-        {
-            var results = new List<Result>();
-            var entries = _profileManager.UserData.Entries;
+            var profiles = _profileManager.UserData.Profiles;
 
             // Always show usage hint at the top.
             results.Add(new Result
@@ -283,7 +205,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 Score = int.MaxValue
             });
 
-            if (entries.Count == 0)
+            if (profiles.Count == 0)
             {
                 results.Add(new Result
                 {
@@ -294,17 +216,18 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
             }
 
-            var scored = new List<(int score, string name, string command)>();
+            var scored = new List<(int score, string name, SshProfile profile)>();
 
-            foreach (var entry in entries)
+            foreach (var entry in profiles)
             {
+                var displayCmd = entry.Value?.ToDisplayString() ?? "";
                 if (string.IsNullOrEmpty(search))
                 {
                     scored.Add((0, entry.Key, entry.Value));
                 }
                 else
                 {
-                    int score = ScoreProfile(search, entry.Key, entry.Value);
+                    int score = ScoreProfile(search, entry.Key, displayCmd);
                     if (score < int.MaxValue)
                         scored.Add((score, entry.Key, entry.Value));
                 }
@@ -313,15 +236,16 @@ namespace Flow.Launcher.Plugin.QuickSSH
             foreach (var item in scored.OrderBy(s => s.score))
             {
                 var name = item.name;
-                var command = item.command;
+                var profile = item.profile;
+                var cmd = profile?.ToCommandLine() ?? "";
                 results.Add(new Result
                 {
                     Title = name,
-                    SubTitle = command,
+                    SubTitle = cmd,
                     IcoPath = AppIconGreenPath,
                     Action = _ =>
                     {
-                        RunSshCommand(command);
+                        RunCommand(cmd);
                         return true;
                     },
                     AutoCompleteText = query.ActionKeyword + " profiles " + name
@@ -329,6 +253,497 @@ namespace Flow.Launcher.Plugin.QuickSSH
             }
 
             return results;
+        }
+
+        // ── legacy "add" redirect ─────────────────────────────────────────────────
+
+        /// <summary>
+        /// The top-level "add" command was removed in v2.  All profile operations are now
+        /// sub-commands of "profiles".  This handler shows an unambiguous user-facing message
+        /// rather than silently falling through to autocomplete or implicit-SSH detection.
+        /// </summary>
+        private List<Result> HandleLegacyAddRedirect(Query query, string rest)
+        {
+            var redirectTarget = query.ActionKeyword + " profiles add " + rest;
+            return new List<Result>
+            {
+                // Pinned hint at the top.
+                new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandadd_legacy"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandadd_legacy"),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = redirectTarget,
+                    Score = int.MaxValue,
+                    Action = _ =>
+                    {
+                        _pluginContext?.API?.ChangeQuery(redirectTarget, true);
+                        return false;
+                    }
+                }
+            };
+        }
+
+        // ── profiles add ──────────────────────────────────────────────────────────
+
+        private List<Result> HandleProfilesAdd(Query query, string rest)
+        {
+            var results = new List<Result>();
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandprofiles_add"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles_add"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " profiles add ",
+                Score = int.MaxValue
+            });
+
+            if (string.IsNullOrEmpty(rest))
+                return results;
+
+            var addParts = rest.Split(new[] { ' ' }, 2);
+            var profileName = addParts[0];
+            var rawCommand = addParts.Length > 1 ? addParts[1].Trim() : "";
+
+            if (!string.IsNullOrEmpty(rawCommand))
+            {
+                // Normalise: strip cmd-style /flags, ensure "ssh " prefix.
+                var sshCommand = NormalizeSshCommand(rawCommand) ?? "";
+                if (!string.IsNullOrEmpty(sshCommand))
+                {
+                    var profile = SshProfile.ParseFromLegacyCommand(sshCommand);
+                    var displayCmd = profile.ToCommandLine();
+                    results.Add(new Result
+                    {
+                        Title = GetTranslation("plugin_quickssh_save_label") + " " + profileName,
+                        SubTitle = displayCmd,
+                        IcoPath = AppIconGreenPath,
+                        Action = _ =>
+                        {
+                            _profileManager.UserData.Profiles[profileName] = profile;
+                            return true;
+                        }
+                    });
+                }
+            }
+
+            return results;
+        }
+
+        // ── profiles remove ───────────────────────────────────────────────────────
+
+        private List<Result> HandleProfilesRemove(Query query, string rest)
+        {
+            var results = new List<Result>();
+            var profiles = _profileManager.UserData.Profiles;
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandprofiles_remove"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles_remove"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " profiles remove ",
+                Score = int.MaxValue
+            });
+
+            if (profiles.Count == 0)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandprofiles_remove"),
+                    SubTitle = GetTranslation("plugin_quickssh_noprofiles"),
+                    IcoPath = AppIconPath
+                });
+                return results;
+            }
+
+            foreach (var entry in profiles)
+            {
+                if (!string.IsNullOrEmpty(rest) &&
+                    !entry.Key.ToLowerInvariant().Contains(rest.ToLowerInvariant()))
+                    continue;
+
+                var cmd = entry.Value?.ToCommandLine() ?? "";
+                results.Add(new Result
+                {
+                    Title = entry.Key,
+                    SubTitle = cmd,
+                    IcoPath = AppIconRedPath,
+                    AutoCompleteText = query.ActionKeyword + " profiles remove " + entry.Key,
+                    Action = _ =>
+                    {
+                        _profileManager.UserData.Profiles.Remove(entry.Key);
+                        return true;
+                    }
+                });
+            }
+
+            return results;
+        }
+
+        // ── profiles rename ───────────────────────────────────────────────────────
+
+        private List<Result> HandleProfilesRename(Query query, string rest)
+        {
+            var results = new List<Result>();
+            var profiles = _profileManager.UserData.Profiles;
+
+            var parts = rest.Split(new[] { ' ' }, 2);
+            var oldName = parts[0].Trim();
+            var newName = parts.Length > 1 ? parts[1].Trim() : "";
+
+            if (string.IsNullOrEmpty(oldName))
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandprofiles_rename"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles_rename"),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " profiles rename ",
+                    Score = int.MaxValue
+                });
+
+                if (profiles.Count == 0)
+                {
+                    results.Add(new Result
+                    {
+                        Title = GetTranslation("plugin_quickssh_title_commandprofiles_rename"),
+                        SubTitle = GetTranslation("plugin_quickssh_noprofiles"),
+                        IcoPath = AppIconPath
+                    });
+                    return results;
+                }
+
+                foreach (var entry in profiles)
+                {
+                    var name = entry.Key;
+                    var autoText = query.ActionKeyword + " profiles rename " + name + " ";
+                    results.Add(new Result
+                    {
+                        Title = name,
+                        SubTitle = entry.Value?.ToCommandLine() ?? "",
+                        IcoPath = AppIconPath,
+                        AutoCompleteText = autoText,
+                        Action = _ =>
+                        {
+                            _pluginContext?.API?.ChangeQuery(autoText, true);
+                            return false;
+                        }
+                    });
+                }
+                return results;
+            }
+
+            if (!profiles.ContainsKey(oldName))
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandprofiles_rename"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles_rename"),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " profiles rename ",
+                    Score = int.MaxValue
+                });
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandprofiles_rename") + ": " + oldName,
+                    SubTitle = GetTranslation("plugin_quickssh_rename_notfound"),
+                    IcoPath = AppIconRedPath
+                });
+                return results;
+            }
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandprofiles_rename"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles_rename"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " profiles rename " + oldName + " ",
+                Score = int.MaxValue
+            });
+
+            if (!string.IsNullOrEmpty(newName))
+            {
+                var profileValue = profiles[oldName];
+                results.Add(new Result
+                {
+                    Title = oldName + " → " + newName,
+                    SubTitle = profileValue?.ToCommandLine() ?? "",
+                    IcoPath = AppIconGreenPath,
+                    Action = _ =>
+                    {
+                        var value = profiles[oldName];
+                        profiles.SetCallback(null);
+                        try
+                        {
+                            profiles.Remove(oldName);
+                            profiles[newName] = value;
+                        }
+                        finally
+                        {
+                            profiles.SetCallback(_profileManager.SaveConfiguration);
+                        }
+                        _profileManager.SaveConfiguration();
+                        return true;
+                    }
+                });
+            }
+
+            return results;
+        }
+
+        // ── profiles copy ─────────────────────────────────────────────────────────
+
+        private List<Result> HandleProfilesCopy(Query query, string search)
+        {
+            var results = new List<Result>();
+            var profiles = _profileManager.UserData.Profiles;
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandprofiles_copy"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles_copy_usage"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " profiles copy ",
+                Score = int.MaxValue
+            });
+
+            if (profiles.Count == 0)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandprofiles_copy"),
+                    SubTitle = GetTranslation("plugin_quickssh_noprofiles"),
+                    IcoPath = AppIconPath
+                });
+                return results;
+            }
+
+            foreach (var entry in profiles)
+            {
+                if (!string.IsNullOrEmpty(search) &&
+                    !entry.Key.ToLowerInvariant().Contains(search.ToLowerInvariant()))
+                    continue;
+
+                var name = entry.Key;
+                var cmd = entry.Value?.ToCommandLine() ?? "";
+                results.Add(new Result
+                {
+                    Title = name,
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles_copy") + " " + cmd,
+                    IcoPath = AppIconGreenPath,
+                    AutoCompleteText = query.ActionKeyword + " profiles copy " + name,
+                    Action = _ =>
+                    {
+                        try
+                        {
+                            System.Windows.Clipboard.SetText(cmd);
+                        }
+                        catch (Exception)
+                        {
+                            _pluginContext?.API?.ShowMsg("QuickSSH",
+                                GetTranslation("plugin_quickssh_copy_clipboard_error"));
+                        }
+                        return true;
+                    }
+                });
+            }
+
+            return results;
+        }
+
+        // ── profiles export ───────────────────────────────────────────────────────
+
+        private List<Result> HandleProfilesExport(Query query)
+        {
+            var results = new List<Result>();
+            var exportPath = Path.Combine(_dataDir, "profiles_export.sshconfig");
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandprofiles_export"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles_export_usage"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " profiles export ",
+                Score = int.MaxValue
+            });
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandprofiles_export"),
+                SubTitle = string.Format(GetTranslation("plugin_quickssh_subtitle_commandprofiles_export"), exportPath),
+                IcoPath = AppIconGreenPath,
+                AutoCompleteText = query.ActionKeyword + " profiles export ",
+                Action = _ =>
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(_dataDir);
+                        var profiles = _profileManager.UserData.Profiles
+                            .ToDictionary(e => e.Key, e => e.Value);
+                        var text = ProfileSerializer.Serialize(profiles);
+                        File.WriteAllText(exportPath, text);
+                        _pluginContext.API.ShowMsg("QuickSSH",
+                            string.Format(GetTranslation("plugin_quickssh_export_success"),
+                                profiles.Count, exportPath));
+                    }
+                    catch (Exception ex)
+                    {
+                        _pluginContext.API.ShowMsg("QuickSSH", "Error: " + ex.Message);
+                    }
+                    return true;
+                }
+            });
+
+            return results;
+        }
+
+        // ── profiles import ───────────────────────────────────────────────────────
+
+        private List<Result> HandleProfilesImport(Query query, string rest)
+        {
+            var results = new List<Result>();
+
+            string[] importFiles = Array.Empty<string>();
+            try
+            {
+                if (Directory.Exists(_dataDir))
+                {
+                    // Accept both new .sshconfig and legacy .json files
+                    var sshconfig = Directory.GetFiles(_dataDir, "*.sshconfig");
+                    var json = Directory.GetFiles(_dataDir, "*.json");
+                    importFiles = sshconfig.Concat(json).ToArray();
+                }
+            }
+            catch (UnauthorizedAccessException) { }
+            catch (IOException) { }
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandprofiles_import"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles_import_usage"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " profiles import ",
+                Score = int.MaxValue
+            });
+
+            if (importFiles.Length == 0)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandprofiles_import"),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_import_nofiles"), _dataDir),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " profiles import "
+                });
+                return results;
+            }
+
+            foreach (var file in importFiles)
+            {
+                var fileName = Path.GetFileName(file);
+                if (!string.IsNullOrEmpty(rest) &&
+                    !fileName.ToLowerInvariant().Contains(rest.ToLowerInvariant()))
+                    continue;
+
+                // Mark legacy .json files clearly in the result title so users understand
+                // that .json is migration-only and the canonical format is .sshconfig.
+                bool isLegacyJson = fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
+                var displayTitle = GetTranslation("plugin_quickssh_title_commandprofiles_import") + ": " + fileName
+                    + (isLegacyJson ? " " + GetTranslation("plugin_quickssh_import_legacy_label") : "");
+
+                results.Add(new Result
+                {
+                    Title = displayTitle,
+                    SubTitle = file,
+                    IcoPath = AppIconGreenPath,
+                    AutoCompleteText = query.ActionKeyword + " profiles import " + fileName,
+                    Action = _ =>
+                    {
+                        try
+                        {
+                            ImportProfilesFromFile(file);
+                        }
+                        catch (Exception ex)
+                        {
+                            _pluginContext.API.ShowMsg("QuickSSH", "Error: " + ex.Message);
+                        }
+                        return true;
+                    }
+                });
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// Imports profiles from a file into the structured profile store.
+        /// </summary>
+        /// <remarks>
+        /// Canonical import format: <c>.sshconfig</c> (SSH-config-like text, written by "profiles export").
+        /// <para/>
+        /// Migration-only format: <c>.json</c> (v1 raw-command dictionary).
+        /// JSON files are <b>never written</b> by this plugin and are accepted here solely for
+        /// backward-compatibility migration.  They are clearly labelled "(legacy)" in the UI.
+        /// </remarks>
+        private void ImportProfilesFromFile(string filePath)
+        {
+            var text = File.ReadAllText(filePath);
+            Dictionary<string, SshProfile> imported;
+
+            if (filePath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                // MIGRATION-ONLY PATH: read v1 raw-command JSON (Dictionary<string, string>)
+                // and parse each command into a structured SshProfile.
+                // Unknown flags that cannot be parsed are stored in SshProfile.ExtraArgs
+                // so no information is silently lost.
+                // This path is NOT used for canonical import/export; use .sshconfig files instead.
+                var legacy = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+                if (legacy == null || legacy.Count == 0)
+                {
+                    _pluginContext.API.ShowMsg("QuickSSH",
+                        GetTranslation("plugin_quickssh_import_empty"));
+                    return;
+                }
+                imported = new Dictionary<string, SshProfile>(StringComparer.OrdinalIgnoreCase);
+                foreach (var kvp in legacy)
+                    imported[kvp.Key] = SshProfile.ParseFromLegacyCommand(kvp.Value);
+            }
+            else
+            {
+                imported = ProfileSerializer.Deserialize(text);
+                if (imported.Count == 0)
+                {
+                    _pluginContext.API.ShowMsg("QuickSSH",
+                        GetTranslation("plugin_quickssh_import_empty"));
+                    return;
+                }
+            }
+
+            int count = 0;
+            _profileManager.UserData.Profiles.SetCallback(null);
+            try
+            {
+                foreach (var kvp in imported)
+                {
+                    if (!_profileManager.UserData.Profiles.ContainsKey(kvp.Key))
+                    {
+                        _profileManager.UserData.Profiles[kvp.Key] = kvp.Value;
+                        count++;
+                    }
+                }
+            }
+            finally
+            {
+                _profileManager.UserData.Profiles.SetCallback(_profileManager.SaveConfiguration);
+            }
+
+            if (count > 0)
+                _profileManager.SaveConfiguration();
+
+            _pluginContext.API.ShowMsg("QuickSSH",
+                string.Format(GetTranslation("plugin_quickssh_import_success"), count));
         }
 
         private List<Result> HandleDirectConnect(Query query, string rest)
@@ -360,7 +775,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 IcoPath = AppIconGreenPath,
                 Action = _ =>
                 {
-                    RunSshCommand(sshCmd);
+                    RunCommand(sshCmd);
                     return true;
                 }
             });
@@ -553,11 +968,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
             return results;
         }
 
-        private List<Result> HandleConfig(Query query)
+        private List<Result> HandleConfig(Query query, string rest)
         {
+            // Both "config" and "config import" trigger the same import action.
             var results = new List<Result>();
 
-            // Always show usage hint at the top.
             results.Add(new Result
             {
                 Title = GetTranslation("plugin_quickssh_title_commandconfig"),
@@ -587,9 +1002,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         int imported = 0;
                         foreach (var host in hosts)
                         {
-                            if (!_profileManager.UserData.Entries.ContainsKey(host.Key))
+                            if (!_profileManager.UserData.Profiles.ContainsKey(host.Key))
                             {
-                                _profileManager.UserData.Entries[host.Key] = host.Value;
+                                _profileManager.UserData.Profiles[host.Key] = host.Value;
                                 imported++;
                             }
                         }
@@ -638,334 +1053,21 @@ namespace Flow.Launcher.Plugin.QuickSSH
             };
         }
 
-        private List<Result> HandleCopy(Query query, string search)
-        {
-            var results = new List<Result>();
-            var entries = _profileManager.UserData.Entries;
-
-            // Always show usage hint at the top.
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_title_commandcopy"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandcopy_usage"),
-                IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " copy ",
-                Score = int.MaxValue
-            });
-
-            if (entries.Count == 0)
-            {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandcopy"),
-                    SubTitle = GetTranslation("plugin_quickssh_noprofiles"),
-                    IcoPath = AppIconPath
-                });
-                return results;
-            }
-
-            foreach (var entry in entries)
-            {
-                if (!string.IsNullOrEmpty(search) &&
-                    !entry.Key.ToLowerInvariant().Contains(search.ToLowerInvariant()))
-                    continue;
-
-                var name = entry.Key;
-                var command = entry.Value;
-                results.Add(new Result
-                {
-                    Title = name,
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandcopy") + " " + command,
-                    IcoPath = AppIconGreenPath,
-                    AutoCompleteText = query.ActionKeyword + " copy " + name,
-                    Action = _ =>
-                    {
-                        try
-                        {
-                            System.Windows.Clipboard.SetText(command);
-                        }
-                        catch (Exception)
-                        {
-                            _pluginContext?.API?.ShowMsg("QuickSSH",
-                                GetTranslation("plugin_quickssh_copy_clipboard_error"));
-                        }
-                        return true;
-                    }
-                });
-            }
-
-            return results;
-        }
-
-        private List<Result> HandleRename(Query query, string rest)
-        {
-            var results = new List<Result>();
-            var entries = _profileManager.UserData.Entries;
-
-            var parts = rest.Split(new[] { ' ' }, 2);
-            var oldName = parts[0].Trim();
-            var newName = parts.Length > 1 ? parts[1].Trim() : "";
-
-            if (string.IsNullOrEmpty(oldName))
-            {
-                // Always show usage hint at the top.
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandrename"),
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
-                    IcoPath = AppIconPath,
-                    AutoCompleteText = query.ActionKeyword + " rename ",
-                    Score = int.MaxValue
-                });
-
-                // No name typed yet – show all profiles as suggestions.
-                if (entries.Count == 0)
-                {
-                    results.Add(new Result
-                    {
-                        Title = GetTranslation("plugin_quickssh_title_commandrename"),
-                        SubTitle = GetTranslation("plugin_quickssh_noprofiles"),
-                        IcoPath = AppIconPath
-                    });
-                    return results;
-                }
-
-                foreach (var entry in entries)
-                {
-                    var name = entry.Key;
-                    var autoText = query.ActionKeyword + " rename " + name + " ";
-                    results.Add(new Result
-                    {
-                        Title = name,
-                        SubTitle = entry.Value,
-                        IcoPath = AppIconPath,
-                        AutoCompleteText = autoText,
-                        Action = _ =>
-                        {
-                            _pluginContext?.API?.ChangeQuery(autoText, true);
-                            return false;
-                        }
-                    });
-                }
-                return results;
-            }
-
-            if (!entries.ContainsKey(oldName))
-            {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandrename"),
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
-                    IcoPath = AppIconPath,
-                    AutoCompleteText = query.ActionKeyword + " rename ",
-                    Score = int.MaxValue
-                });
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandrename") + ": " + oldName,
-                    SubTitle = GetTranslation("plugin_quickssh_rename_notfound"),
-                    IcoPath = AppIconRedPath
-                });
-                return results;
-            }
-
-            // Always show usage hint at the top.
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_title_commandrename"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandrename"),
-                IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " rename " + oldName + " ",
-                Score = int.MaxValue
-            });
-
-            if (!string.IsNullOrEmpty(newName))
-            {
-                var cmdValue = entries[oldName];
-                results.Add(new Result
-                {
-                    Title = oldName + " → " + newName,
-                    SubTitle = cmdValue,
-                    IcoPath = AppIconGreenPath,
-                    Action = _ =>
-                    {
-                        var value = entries[oldName];
-                        entries.SetCallback(null);
-                        try
-                        {
-                            entries.Remove(oldName);
-                            entries[newName] = value;
-                        }
-                        finally
-                        {
-                            entries.SetCallback(_profileManager.SaveConfiguration);
-                        }
-                        _profileManager.SaveConfiguration();
-                        return true;
-                    }
-                });
-            }
-
-            return results;
-        }
-
-        private List<Result> HandleExport(Query query, string rest)
-        {
-            var results = new List<Result>();
-            var exportPath = Path.Combine(_dataDir, "profiles_export.json");
-
-            // Always show usage hint at the top.
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_title_commandexport"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandexport_usage"),
-                IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " export ",
-                Score = int.MaxValue
-            });
-
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_title_commandexport"),
-                SubTitle = string.Format(GetTranslation("plugin_quickssh_subtitle_commandexport"), exportPath),
-                IcoPath = AppIconGreenPath,
-                AutoCompleteText = query.ActionKeyword + " export ",
-                Action = _ =>
-                {
-                    try
-                    {
-                        Directory.CreateDirectory(_dataDir);
-                        var entries = _profileManager.UserData.Entries
-                            .ToDictionary(e => e.Key, e => e.Value);
-                        var json = JsonConvert.SerializeObject(entries, Formatting.Indented);
-                        File.WriteAllText(exportPath, json);
-                        _pluginContext.API.ShowMsg("QuickSSH",
-                            string.Format(GetTranslation("plugin_quickssh_export_success"),
-                                entries.Count, exportPath));
-                    }
-                    catch (Exception ex)
-                    {
-                        _pluginContext.API.ShowMsg("QuickSSH", "Error: " + ex.Message);
-                    }
-                    return true;
-                }
-            });
-
-            return results;
-        }
-
-        private List<Result> HandleImport(Query query, string rest)
-        {
-            var results = new List<Result>();
-
-            string[] importFiles = Array.Empty<string>();
-            try
-            {
-                if (Directory.Exists(_dataDir))
-                    importFiles = Directory.GetFiles(_dataDir, "*.json");
-            }
-            catch (UnauthorizedAccessException) { }
-            catch (IOException) { }
-
-            // Always show usage hint at the top.
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_title_commandimport"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandimport_usage"),
-                IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " import ",
-                Score = int.MaxValue
-            });
-
-            if (importFiles.Length == 0)
-            {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandimport"),
-                    SubTitle = string.Format(GetTranslation("plugin_quickssh_import_nofiles"), _dataDir),
-                    IcoPath = AppIconPath,
-                    AutoCompleteText = query.ActionKeyword + " import "
-                });
-                return results;
-            }
-
-            foreach (var file in importFiles)
-            {
-                var fileName = Path.GetFileName(file);
-                if (!string.IsNullOrEmpty(rest) &&
-                    !fileName.ToLowerInvariant().Contains(rest.ToLowerInvariant()))
-                    continue;
-
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandimport") + ": " + fileName,
-                    SubTitle = file,
-                    IcoPath = AppIconGreenPath,
-                    AutoCompleteText = query.ActionKeyword + " import " + fileName,
-                    Action = _ =>
-                    {
-                        try
-                        {
-                            var json = File.ReadAllText(file);
-                            var entries = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                            if (entries == null || entries.Count == 0)
-                            {
-                                _pluginContext.API.ShowMsg("QuickSSH",
-                                    GetTranslation("plugin_quickssh_import_empty"));
-                                return true;
-                            }
-
-                            int imported = 0;
-                            _profileManager.UserData.Entries.SetCallback(null);
-                            try
-                            {
-                                foreach (var entry in entries)
-                                {
-                                    if (!_profileManager.UserData.Entries.ContainsKey(entry.Key))
-                                    {
-                                        _profileManager.UserData.Entries[entry.Key] = entry.Value;
-                                        imported++;
-                                    }
-                                }
-                            }
-                            finally
-                            {
-                                _profileManager.UserData.Entries.SetCallback(_profileManager.SaveConfiguration);
-                            }
-
-                            if (imported > 0)
-                                _profileManager.SaveConfiguration();
-
-                            _pluginContext.API.ShowMsg("QuickSSH",
-                                string.Format(GetTranslation("plugin_quickssh_import_success"), imported));
-                        }
-                        catch (Exception ex)
-                        {
-                            _pluginContext.API.ShowMsg("QuickSSH", "Error: " + ex.Message);
-                        }
-                        return true;
-                    }
-                });
-            }
-
-            return results;
-        }
-
         #endregion
 
-        #region SSH Execution
+        #region SSH / SCP Execution
 
         /// <summary>
-        /// Normalises a raw SSH command string so it is safe to pass to a terminal.
+        /// Normalises a raw SSH or SCP command string so it is safe to pass to a terminal.
         /// <list type="bullet">
         ///   <item>Strips leading Windows cmd.exe-style /flags (e.g. "/c", "/k") that
-        ///   users sometimes accidentally prepend. SSH uses POSIX '-' options, so a
-        ///   leading '/' token is always wrong.</item>
+        ///   users sometimes accidentally prepend.</item>
         ///   <item>Auto-prepends "ssh " when the user supplied only a destination
         ///   (e.g. "user@host" instead of "ssh user@host").</item>
         ///   <item>Removes /flags that appear immediately after the "ssh " prefix for
         ///   the same reason (e.g. "ssh /c user@host" → "ssh user@host").</item>
         /// </list>
+        /// SCP commands ("scp ...") are returned unchanged after /flag stripping.
         /// Returns <see langword="null"/> if nothing valid remains after stripping.
         /// </summary>
         internal static string NormalizeSshCommand(string rawCommand)
@@ -986,6 +1088,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             if (string.IsNullOrEmpty(cmd))
                 return null;
+
+            // SCP commands are returned as-is (after /flag stripping above).
+            if (cmd.StartsWith("scp ", StringComparison.OrdinalIgnoreCase)
+                || cmd.Equals("scp", StringComparison.OrdinalIgnoreCase))
+                return cmd;
 
             // Auto-prepend "ssh " when only a destination was given.
             if (!cmd.StartsWith("ssh ", StringComparison.OrdinalIgnoreCase)
@@ -1064,13 +1171,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
             return hasDot; // must have at least one dot to be unambiguous
         }
 
-        private void RunSshCommand(string sshCommand)
+        private void RunCommand(string command)
         {
-            // Normalise: strip accidental Windows cmd-style /flags and ensure the
-            // command starts with "ssh " so it can always be passed verbatim to a
-            // terminal (cmd.exe /k <sshCommand>).
-            sshCommand = NormalizeSshCommand(sshCommand);
-            if (string.IsNullOrEmpty(sshCommand))
+            // Normalise: strip accidental Windows cmd-style /flags. For SSH commands,
+            // also ensure the "ssh " prefix is present.
+            command = NormalizeSshCommand(command);
+            if (string.IsNullOrEmpty(command))
                 return;
 
             var selectedShell = _profileManager.UserData.SelectedCustomShell;
@@ -1089,7 +1195,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 {
                     // Shell name is the executable
                     fileName = Utils.ResolveExecutable(selectedShell);
-                    arguments = sshCommand;
+                    arguments = command;
                 }
                 else
                 {
@@ -1098,21 +1204,21 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     if (spaceIdx < 0)
                     {
                         fileName = Utils.ResolveExecutable(shellValue);
-                        arguments = sshCommand;
+                        arguments = command;
                     }
                     else
                     {
                         fileName = Utils.ResolveExecutable(shellValue.Substring(0, spaceIdx));
-                        arguments = shellValue.Substring(spaceIdx + 1) + " " + sshCommand;
+                        arguments = shellValue.Substring(spaceIdx + 1) + " " + command;
                     }
                 }
             }
             else
             {
-                // Default: use cmd.exe with /k so the window stays open after SSH exits,
+                // Default: use cmd.exe with /k so the window stays open after SSH/SCP exits,
                 // allowing the user to see any connection-error messages.
                 fileName = GetCmdExePath();
-                arguments = "/k " + sshCommand;
+                arguments = "/k " + command;
             }
 
             // Use the user's home directory as the working directory so SSH can always
@@ -1141,7 +1247,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         using var fallback = Process.Start(new ProcessStartInfo
                         {
                             FileName = GetCmdExePath(),
-                            Arguments = "/k " + sshCommand,
+                            Arguments = "/k " + command,
                             UseShellExecute = true,
                             WorkingDirectory = workingDir
                         });

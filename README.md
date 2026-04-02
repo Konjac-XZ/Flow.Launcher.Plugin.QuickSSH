@@ -1,88 +1,123 @@
 # QuickSSH — Flow Launcher Plugin
 
-Enhanced SSH connection plugin for [Flow Launcher](https://www.flowlauncher.com/) with TAB auto-completion, SSH config import, profile export/import, custom shell support, and fuzzy search.
+Enhanced SSH/SCP connection plugin for [Flow Launcher](https://www.flowlauncher.com/) with TAB auto-completion, structured profile management, SSH config import, human-readable profile export/import, custom shell support, and fuzzy search.
 
 Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Flow.Launcher.Plugin.easyssh).
 
-## Features
+## Command Structure
 
 | Command | Description |
 |---------|-------------|
-| `ssh add <name> <ssh-command>` | Save a new SSH profile |
-| `ssh remove [filter]` | Delete a saved profile |
-| `ssh profiles [filter]` | List, search, and connect to saved profiles |
-| `ssh shell` | Manage custom shell interpreters (add / remove / select) |
+| `ssh profiles [filter]` | Browse saved profiles and connect |
+| `ssh profiles add <name> <ssh-command>` | Save a new SSH or SCP profile |
+| `ssh profiles remove [filter]` | Delete a saved profile |
+| `ssh profiles rename <oldname> <newname>` | Rename an existing profile |
+| `ssh profiles copy [filter]` | Copy an SSH/SCP command to the clipboard |
+| `ssh profiles export` | Export all profiles to a human-readable `.sshconfig` file |
+| `ssh profiles import [filter]` | Import profiles from a `.sshconfig` or legacy `.json` file |
 | `ssh config` | Import hosts from `~/.ssh/config` |
-| `ssh export` | Export all profiles to a JSON file |
-| `ssh import [filter]` | Import profiles from a JSON file |
-| `ssh copy [filter]` | Copy an SSH command to the clipboard |
-| `ssh rename <oldname> <newname>` | Rename an existing profile |
+| `ssh shell` | Manage custom terminal shells (add / remove / select) |
 | `ssh help` | Open plugin documentation |
-| `ssh <destination>` | **Implicit direct connect** — type a destination or SSH options directly without any command prefix |
+| `ssh <destination>` | **Implicit direct connect** — type a destination or SSH options directly |
+
+> **Note for v1 users:** The top-level `add` command (v1: `ssh add <name> <cmd>`) has been moved to `ssh profiles add <name> <cmd>`.
+> Typing `ssh add ...` shows an explicit redirect hint in the UI — it will not silently do something unexpected.
 
 ### Capabilities
 
+- **Structured profile model** — profiles are stored as typed, structured objects (not raw strings); supports SSH, RemoteCommand, port-forwards, SCP, ProxyJump, and more
+- **Human-readable export/import** — profiles are exported and imported in an SSH-config-like text format (`.sshconfig` files)
+- **Legacy migration** — v1 raw-command profiles (JSON) are automatically migrated to the structured format on first load
 - **TAB auto-completion** — press TAB to auto-complete commands and profile names
-- **Shell-like command entry** — typing the first letters of a command filters matching suggestions; selecting a suggestion autocompletes the command into the query (via TAB or Enter) instead of executing it
-- **Exact command view isolation** — once the first token exactly matches a known command (e.g. `rename`, `shell`, `profiles`), only that command's results are shown; unrelated top-level suggestions are never mixed in
-- **Implicit direct SSH input** — type a destination (`user@host`, bare IP/hostname) or SSH options (`-p 22 user@host`, `-i key user@host`) directly without any command prefix; the plugin auto-detects these and opens a direct-connect row
-- **In-line usage hints** — every command view shows a non-actionable usage/help entry pinned to the top of the results list, even in empty states (e.g. no profiles, no shells, no import files). Empty-state info rows appear second. Ordering is enforced via `Result.Score = int.MaxValue` so Flow Launcher's own sorting never reorders the hint below actionable or informational items.
-- **Deterministic shell view ordering** — `ssh shell` always shows: usage hint → selected shell → other shell profiles → action rows (`add` / `remove`)
+- **Implicit direct SSH input** — type a destination (`user@host`, bare IP/hostname) or SSH options (`-p 22 user@host`, `-i key user@host`) directly without any command prefix
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
-- **Profile export / import** — back up and restore profiles as plain JSON files
-- **Proper quoting & escaping** — handles SSH keys and paths with spaces correctly
+- **SCP support** — save SCP upload/download profiles with all SCP options
+- **Tunnel support** — save SSH tunnel profiles with LocalForward, RemoteForward, DynamicForward
+- **RemoteCommand support** — run arbitrary remote commands (e.g. `reboot`, `systemctl restart nginx`)
 - **Fuzzy search** — accent-insensitive search with Damerau-Levenshtein distance
-- **Command normalisation** — auto-prepends `ssh ` when you type only a destination
-- **Custom shells** — use cmd.exe, PowerShell, WSL, Git Bash, Kitty, or any terminal
-- **Multi-language support** — English, Slovak, French, German, Russian, Polish, and Spanish (i18n via Flow Launcher)
+- **Custom shells** — use cmd.exe, PowerShell, WSL, Git Bash, Windows Terminal, or any terminal
+- **Multi-language support** — English, Slovak, French, German, Russian, Polish, and Spanish
 - **Atomic saves** — profile data is written atomically to prevent corruption
-- **Custom-shell fallback** — if the selected shell cannot start, cmd.exe is used automatically
 
 ---
 
 ## Usage Examples
 
-### Add a profile and connect
-
-```
-ssh add myserver ssh user@192.168.1.100
-ssh add production ssh -i "C:\Users\me\.ssh\id_rsa" admin@prod.example.com -p 2222
-ssh add dev-box ssh -p 2222 dev@10.0.0.50
-```
-
-You can also omit the `ssh` prefix — the plugin adds it for you:
-
-```
-ssh add bastion admin@bastion.example.com -p 22222
-```
-
-### List and connect to saved profiles
+### Browse and connect to saved profiles
 
 ```
 ssh profiles           → show all saved profiles
 ssh profiles prod      → filter profiles containing "prod"
 ```
 
+Press Enter on a profile row to launch the connection.
+
+### Add a profile
+
+Profiles are added using standard SSH or SCP command syntax.
+The plugin parses the command into a structured profile automatically.
+
+**SSH — basic login:**
+```
+ssh profiles add myserver ssh root@10.0.0.150
+ssh profiles add dev-box ssh -p 2222 dev@10.0.0.50
+```
+
+**SSH — with identity file:**
+```
+ssh profiles add production ssh -i "C:\Users\me\.ssh\id_rsa" -o IdentitiesOnly=yes admin@prod.example.com
+```
+
+**SSH — run a remote command:**
+```
+ssh profiles add reboot-proxmox ssh -t -t root@10.0.0.150 reboot
+```
+
+**SSH — local port forward (tunnel):**
+```
+ssh profiles add pangolin-tunnel ssh -L 8443:127.0.0.1:443 -L 8080:127.0.0.1:80 root@10.100.100.242
+```
+
+**SSH — SOCKS proxy:**
+```
+ssh profiles add socks-proxy ssh -D 1080 root@jump.example.com
+```
+
+**SSH — ProxyJump:**
+```
+ssh profiles add internal-host ssh -J bastion.example.com root@10.0.0.10
+```
+
+**SCP — upload a file:**
+```
+ssh profiles add upload-index scp -i "~/.ssh/key" "C:\web\index.html" root@10.0.0.1:/var/www/html/index.html
+```
+
+You can also omit the `ssh ` prefix — the plugin adds it automatically:
+```
+ssh profiles add bastion admin@bastion.example.com -p 22222
+```
+
 ### Remove a profile
 
 ```
-ssh remove             → list all profiles for removal
-ssh remove prod        → filter profiles by "prod", then click to delete
-```
-
-### Copy an SSH command to the clipboard
-
-```
-ssh copy               → list all profiles for copying
-ssh copy myserver      → filter by "myserver", then click to copy the SSH command
+ssh profiles remove             → list all profiles for removal
+ssh profiles remove prod        → filter profiles by "prod", then click to delete
 ```
 
 ### Rename a profile
 
 ```
-ssh rename                        → list all profiles to select for renaming
-ssh rename myserver               → pick "myserver" as the source (TAB to auto-complete)
-ssh rename myserver new-name      → rename "myserver" to "new-name"
+ssh profiles rename                      → list all profiles to select for renaming
+ssh profiles rename myserver             → pick "myserver" as the source
+ssh profiles rename myserver new-name    → rename "myserver" to "new-name"
+```
+
+### Copy an SSH command to the clipboard
+
+```
+ssh profiles copy               → list all profiles for copying
+ssh profiles copy myserver      → filter by "myserver", then click to copy
 ```
 
 ### Quick one-time connection (without saving)
@@ -109,27 +144,162 @@ ssh config             → import all Host entries from ~/.ssh/config
 
 Only new hosts are imported — existing profiles are not overwritten.
 
+The parser captures: `HostName`, `User`, `Port`, `IdentityFile`, `IdentitiesOnly`,
+`LocalForward`, `RemoteForward`, `DynamicForward`, `ProxyJump`, `ProxyCommand`.
+
 Example `~/.ssh/config` that is fully supported:
 
 ```
-Host myserver
-    HostName 192.168.1.100
-    User admin
+Host proxmox
+    HostName 10.0.0.150
+    User root
     Port 22
+    IdentityFile ~/.ssh/id_ed25519
 
 Host production
     HostName prod.example.com
     User deploy
     Port 2222
     IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
 
 Host bastion
     HostName bastion.corp.internal
     User ec2-user
     IdentityFile "C:\Users\me\.ssh\corp_key"
+
+Host internal
+    HostName 10.0.0.10
+    ProxyJump bastion
 ```
 
 Wildcard entries (`Host *`) are skipped automatically.
+
+### Export and import profiles
+
+**Export** — saves all current profiles to a human-readable `.sshconfig` file:
+
+```
+ssh profiles export
+```
+
+The file is written to:
+```
+%APPDATA%\FlowLauncher\Plugins\QuickSSH\data\profiles_export.sshconfig
+```
+
+**Import** — loads profiles from any `.sshconfig` file (or legacy `.json` file) placed in the `data\` folder:
+
+```
+ssh profiles import                    → list all importable files
+ssh profiles import mybackup           → filter files containing "mybackup"
+```
+
+Only profiles that do not already exist are added (no overwriting).
+
+### Saved profile format (`.sshconfig`)
+
+Profiles are exported in a human-readable SSH-config-like format.
+This format is intentionally similar to OpenSSH `ssh_config(5)` but is **not** a strict clone —
+it adds QuickSSH-specific fields like `Type`, `RemoteCommand`, `RequestTTY`, `Source`, `Target`, etc.
+
+**SSH profile — normal login:**
+```
+Host Proxmox-Host
+    Type ssh
+    HostName 10.0.0.150
+    User root
+    Port 22
+    IdentityFile ~/.ssh/private_key
+    IdentitiesOnly yes
+```
+
+**SSH profile — remote command with TTY:**
+```
+Host RustDesk-REBOOT
+    Type ssh
+    HostName 10.100.100.110
+    User root
+    Port 22
+    IdentityFile "C:\Users\info\.ssh\private_key"
+    IdentitiesOnly yes
+    RemoteCommand reboot
+    RequestTTY force
+```
+
+**SSH profile — local port forwards (tunnel):**
+```
+Host Pangolin-Tunnel
+    Type ssh
+    HostName 10.100.100.242
+    User root
+    Port 22
+    IdentityFile ~/.ssh/private_key
+    IdentitiesOnly yes
+    LocalForward 8443 127.0.0.1:443
+    LocalForward 8080 127.0.0.1:80
+```
+
+**SCP profile — file upload:**
+```
+Host Homepage-Upload
+    Type scp
+    HostName 10.100.100.241
+    User root
+    Port 22
+    IdentityFile "C:\Users\info\.ssh\private_key"
+    IdentitiesOnly yes
+    Source "C:\web\index.html"
+    Target "/var/www/html/index.html"
+```
+
+### Supported profile fields
+
+**Common fields (SSH and SCP):**
+
+| Field | Description |
+|-------|-------------|
+| `Type` | `ssh` (default) or `scp` |
+| `HostName` | Hostname or IP address |
+| `User` | Remote user name |
+| `Port` | Port number (omitted from command when 22) |
+| `IdentityFile` | Path to private key file |
+| `IdentitiesOnly` | `yes` adds `-o IdentitiesOnly=yes` |
+| `ExtraArgs` | Raw extra arguments (fallback for unparsed flags) |
+
+**SSH-specific fields:**
+
+| Field | Description |
+|-------|-------------|
+| `RemoteCommand` | Command to execute on the remote host |
+| `RequestTTY` | TTY allocation: `force` (-t -t), `yes` (-t), `no` (-T) |
+| `LocalForward` | Local port forward spec, e.g. `8443 127.0.0.1:443` (repeatable) |
+| `RemoteForward` | Remote port forward spec (repeatable) |
+| `DynamicForward` | SOCKS5 proxy port, e.g. `1080` |
+| `ProxyJump` | Jump host(s) for `-J` |
+| `ProxyCommand` | Proxy command string |
+
+**SCP-specific fields:**
+
+| Field | Description |
+|-------|-------------|
+| `Source` | **Bare source path** — local path for upload, remote path for download |
+| `Target` | **Bare target path** — remote path for upload, local path for download |
+| `Recursive` | `yes` adds `-r` |
+| `PreserveTimes` | `yes` adds `-p` |
+| `Compression` | `yes` adds `-C` |
+
+**SCP normalization rule:**  
+`Source` and `Target` always store **bare paths** — no `user@host:` prefix.
+`HostName` and `User` are always in the common structured fields.  
+The command builder determines transfer direction by inspecting the paths:
+
+- **Upload** — `Source` is a Windows local path (e.g. `C:\...`): builds `scp source user@host:target`
+- **Download** — `Target` is a Windows local path: builds `scp user@host:source target`
+- **Ambiguous** (both are Unix-style paths): upload is assumed, Source is treated as local
+
+This means on-disk profiles are always portable and can be re-parsed without data loss.
+Legacy SCP commands with `user@host:path` positionals are automatically normalised on import.
 
 ### Custom shell management
 
@@ -152,56 +322,32 @@ ssh shell remove PowerShell                           → remove a shell entry
 
 Click any shell in the list to **select** it. All SSH connections will then launch through that shell. Click it again to deselect (returns to default `cmd.exe`).
 
-### Export and import profiles
-
-**Export** — saves all current profiles to a JSON file in the plugin data folder:
-
-```
-ssh export
-```
-
-The file is written to:
-
-```
-%APPDATA%\FlowLauncher\Plugins\QuickSSH\data\profiles_export.json
-```
-
-**Import** — loads profiles from any `*.json` file placed in the same `data\` folder:
-
-```
-ssh import                       → list all JSON files available for import
-ssh import mybackup              → filter files containing "mybackup"
-```
-
-Place your backup file in the `data\` folder, then run `ssh import` and click the file.
-Only profiles that do not already exist are added (no overwriting).
-
-Example JSON format accepted by import:
-
-```json
-{
-  "myserver": "ssh user@192.168.1.100",
-  "production": "ssh -i \"C:\\Users\\me\\.ssh\\id_rsa\" admin@prod.example.com -p 2222",
-  "bastion": "ssh -p 22222 ec2-user@bastion.corp.internal"
-}
-```
-
 ---
 
 ## Data Storage
 
 | File | Purpose |
 |------|---------|
-| `~/.ssh/profiles.json` | Main profile and shell database |
-| `%APPDATA%\FlowLauncher\Plugins\QuickSSH\data\*.json` | Import / export files |
+| `~/.ssh/profiles.json` | Main profile and shell database (v2 structured JSON) |
+| `%APPDATA%\FlowLauncher\Plugins\QuickSSH\data\*.sshconfig` | Human-readable export/import files |
+| `%APPDATA%\FlowLauncher\Plugins\QuickSSH\data\*.json` | Legacy import files (v1, still readable) |
 
-### profiles.json schema
+### profiles.json schema (v2)
 
 ```json
 {
-  "PluginVersion": "1.0",
-  "EntriesLists": {
-    "<profile-name>": "<full ssh command>"
+  "PluginVersion": "2.0",
+  "ProfilesLists": {
+    "<profile-name>": {
+      "Type": "ssh",
+      "HostName": "10.0.0.150",
+      "User": "root",
+      "Port": "22",
+      "IdentityFile": "~/.ssh/private_key",
+      "IdentitiesOnly": true,
+      "RemoteCommand": "reboot",
+      "RequestTTY": "force"
+    }
   },
   "CustomShellLists": {
     "<shell-name>": "<executable path + optional args>"
@@ -210,22 +356,42 @@ Example JSON format accepted by import:
 }
 ```
 
-**Example:**
+### Migration from v1
 
+**v1 profiles.json** stored profiles as raw SSH command strings:
 ```json
 {
   "PluginVersion": "1.0",
   "EntriesLists": {
     "myserver": "ssh user@192.168.1.100",
-    "production": "ssh -i \"C:\\Users\\me\\.ssh\\id_rsa\" admin@prod.example.com -p 2222"
-  },
-  "CustomShellLists": {
-    "PowerShell": "",
-    "GitBash": "C:\\Program Files\\Git\\bin\\bash.exe -c"
-  },
-  "SelectedCustomShell": "GitBash"
+    "production": "ssh -i \"C:\\...\\id_rsa\" admin@prod -p 2222"
+  }
 }
 ```
+
+**On first load**, QuickSSH automatically:
+1. Parses each raw command string into a structured `SshProfile`
+2. Stores them in the new `ProfilesLists` format
+3. Clears the legacy `EntriesLists` field from memory
+4. **Immediately persists the v2 format** so the disk file is canonical after the first run
+
+Migration handles:
+- Simple `ssh user@host` → structured with `User`, `HostName`
+- `ssh -p 22 user@host` → structured with `Port`, `User`, `HostName`
+- `ssh -i key -o IdentitiesOnly=yes user@host` → structured with all fields
+- Remote commands after the destination → `RemoteCommand` field
+- Unknown/unsupported flags (e.g. `-X`, `-A`) → stored verbatim in `ExtraArgs`
+- SCP upload `scp C:\file.txt user@host:/path` → `Source` = local bare path, `Target` = remote bare path, `User`/`HostName` extracted safely (Windows drive paths never misidentified as remote specs)
+- SCP download `scp user@host:/remote/file C:\local\file` → `Source` = remote bare path, `Target` = local bare path
+
+**Unparseable flag fallback (ExtraArgs):** SSH has many options. Flags that this plugin does not map to a named structured field are preserved verbatim in the `ExtraArgs` field and appended to the generated command. This means:
+- **No data is silently lost** during migration.
+- The `ExtraArgs` field is round-trip stable: it is included when exporting to `.sshconfig` and is read back unchanged on import.
+- The generated SSH command still includes the flag, so the connection behaviour is preserved.
+
+> **Note:** "profiles import" still accepts legacy `.json` files for backward-compatible migration.
+> JSON is **never written** by this plugin — `.sshconfig` is the canonical export format.
+> Legacy `.json` files are clearly labelled "(legacy)" in the import UI.
 
 ---
 
@@ -305,9 +471,9 @@ To make QuickSSH available via `pm install QuickSSH` in Flow Launcher:
    {
      "ID": "86AC23FE48BC45E5B7E0A94F5847FA83",
      "Name": "QuickSSH",
-     "Description": "Enhanced SSH connection plugin with TAB auto-completion, SSH config support, and improved shell handling",
+     "Description": "Enhanced SSH/SCP connection plugin with TAB auto-completion, structured profiles, SSH config support, and custom shell handling",
      "Author": "Vaso73",
-     "Version": "1.0.13",
+     "Version": "2.0.0",
      "Language": "csharp",
      "MinFlowLauncherVersion": "1.19.0",
      "Website": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
