@@ -170,12 +170,10 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
 
             // Verify the on-disk JSON no longer contains the legacy raw-string field.
             var savedJson = File.ReadAllText(path);
-            Assert.DoesNotContain("EntriesLists", savedJson,
-                "After migration the legacy field must be absent from the saved file.");
+            Assert.DoesNotContain("EntriesLists", savedJson);
 
             // Verify the v2 structured field IS present.
-            Assert.Contains("ProfilesLists", savedJson,
-                "After migration the structured field must be present in the saved file.");
+            Assert.Contains("ProfilesLists", savedJson);
 
             // Reload and verify structured format is readable.
             var pm2 = new ProfileManager(path);
