@@ -31,12 +31,11 @@
     <!-- PROFILES -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles">Gespeicherte Profile</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Verwendung: profiles [Filter]</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandp_usage">Verwendung: p [Filter]</system:String>
 
     <!-- DIRECT CONNECT -->
     <system:String x:Key="plugin_quickssh_title_commanddirect">Direkte Verbindung</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect">Direkte Verbindung:</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandd_usage">Verwendung: d &lt;SSH-Befehl&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect_usage">Verwendung: ssh root@host  |  ssh -p 22 root@host  |  ssh -i "key" root@host</system:String>
 
     <!-- SHELL -->
     <system:String x:Key="plugin_quickssh_title_commandshell">Shell-Verwaltung</system:String>
@@ -44,7 +43,7 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandshell_add_usage">Verwendung: shell add &lt;exe&gt; oder shell add &lt;Name&gt; &lt;exe + Argumente&gt;</system:String>
     <system:String x:Key="plugin_quickssh_title_commandshell_remove">Shell-Profil entfernen</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Verwendung: shell remove [Filter]</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Verwendung: shell add ; remove ; list</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Verwendung: shell add ; remove</system:String>
     <system:String x:Key="plugin_quickssh_shell_selected">(ausgewählt)</system:String>
 
     <!-- CONFIG -->
@@ -82,10 +81,5 @@
     <system:String x:Key="plugin_quickssh_title_commandhelp">Hilfe</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandhelp">Plugin-Dokumentation auf GitHub öffnen.</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandhelp_usage">Verwendung: help</system:String>
-
-    <!-- DOCS (hidden alias for help) -->
-    <system:String x:Key="plugin_quickssh_title_commanddocs">Hilfe</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Plugin-Dokumentation auf GitHub öffnen.</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commanddocs_usage">Verwendung: help</system:String>
 
 </ResourceDictionary>

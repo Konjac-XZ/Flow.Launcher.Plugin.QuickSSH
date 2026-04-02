@@ -10,8 +10,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
     {
         /// <summary>
         /// Commands visible in the autocomplete / suggestion UI.
-        /// Hidden aliases ("p", "d", "docs") are intentionally excluded;
-        /// they still work when typed but are not shown in suggestions.
         /// </summary>
         private static readonly string[] VisibleCommands = new[]
         {
@@ -33,7 +31,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             if (string.IsNullOrEmpty(trimmed))
             {
-                // Show all visible commands (hidden aliases are excluded)
+                // Show all visible commands
                 foreach (var cmd in VisibleCommands)
                 {
                     var autoText = actionKeyword + " " + cmd + " ";
@@ -62,7 +60,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
 
             // Match visible commands that start with the input
-            // (hidden aliases like "p", "d", and "docs" are not shown as suggestions)
             var matchingCommands = VisibleCommands
                 .Where(c => c.StartsWith(trimmed))
                 .ToList();
@@ -84,15 +81,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 });
             }
 
-            // If typing after "profiles" or "p", also suggest profile names.
+            // If typing after "profiles", also suggest profile names.
             // Use TrimStart (not Trim) so a trailing space in "profiles " is preserved
             // and correctly matched by StartsWith("profiles ").
             var prefixCheck = input.TrimStart().ToLowerInvariant();
             bool isProfilesPrefix = prefixCheck.StartsWith("profiles ");
-            bool isPPrefix = !isProfilesPrefix && prefixCheck.StartsWith("p ");
-            if (isProfilesPrefix || isPPrefix)
+            if (isProfilesPrefix)
             {
-                var search = isProfilesPrefix ? prefixCheck.Substring(9) : prefixCheck.Substring(2);
+                var search = prefixCheck.Substring(9);
 
                 if (userData?.Entries != null)
                 {
@@ -129,8 +125,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 "add" => "plugin_quickssh_subtitle_commandadd",
                 "remove" => "plugin_quickssh_subtitle_commandremove",
                 "profiles" => "plugin_quickssh_subtitle_commandprofiles",
-                "p" => "plugin_quickssh_subtitle_commandp_usage",
-                "d" => "plugin_quickssh_subtitle_commandd_usage",
                 "shell" => "plugin_quickssh_subtitle_commandshell_help",
                 "config" => "plugin_quickssh_subtitle_commandconfig_usage",
                 "export" => "plugin_quickssh_subtitle_commandexport_usage",
@@ -138,7 +132,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 "copy" => "plugin_quickssh_subtitle_commandcopy_usage",
                 "rename" => "plugin_quickssh_subtitle_commandrename",
                 "help" => "plugin_quickssh_subtitle_commandhelp_usage",
-                "docs" => "plugin_quickssh_subtitle_commanddocs_usage",
                 _ => null
             };
             return key != null ? QuickSsh.GetTranslation(key) : "";
