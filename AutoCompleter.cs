@@ -39,15 +39,20 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             if (string.IsNullOrEmpty(trimmed))
             {
-                // Show all visible top-level commands
-                foreach (var cmd in VisibleCommands)
+                // Show all visible top-level commands in defined order.
+                // Assign descending scores so Flow Launcher respects the intended order
+                // regardless of its own secondary-sort logic (insertion order alone is
+                // not guaranteed when all scores are equal).
+                for (int i = 0; i < VisibleCommands.Length; i++)
                 {
+                    var cmd = VisibleCommands[i];
                     var autoText = actionKeyword + " " + cmd + " ";
                     results.Add(new Result
                     {
                         Title = cmd,
                         SubTitle = GetCommandDescription(cmd),
                         IcoPath = iconPath,
+                        Score = VisibleCommands.Length - i,
                         Action = _ =>
                         {
                             api?.ChangeQuery(autoText, true);
