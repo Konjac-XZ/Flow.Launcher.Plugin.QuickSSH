@@ -26,6 +26,9 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 > Examples: `ssh profiles a` → **add**; `ssh profiles r` → **remove**, **rename**; `ssh profiles rem` → **remove**; `ssh profiles ren` → **rename**.
 > Single-letter prefixes that match only one subcommand show just that suggestion (e.g. `a` → **add**, `e` → **export**, `i` → **import**, `c` → **copy**).
 
+> **Shell subcommand matching:** Under `ssh shell`, partial subcommand matching works the same way.
+> Examples: `ssh shell a` → **add**; `ssh shell r` → **remove**; `ssh shell rem` → **remove**.
+
 > **Note for v1 users:** The top-level `add` command (v1: `ssh add <name> <cmd>`) has been moved to `ssh profiles add <name> <cmd>`.
 > Typing `ssh add ...` shows an explicit redirect hint in the UI — it will not silently do something unexpected.
 

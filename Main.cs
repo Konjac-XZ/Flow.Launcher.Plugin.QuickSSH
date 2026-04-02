@@ -46,6 +46,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
             ProfilesSubCopy, ProfilesSubExport, ProfilesSubImport
         };
 
+        // Sub-commands of "shell"
+        private static readonly string[] ShellSubCommands = new[]
+        {
+            "add", "remove"
+        };
+
         private const string AppIconPath = "Images\\app.png";
         private const string AppIconGreenPath = "Images\\app-green.png";
         private const string AppIconRedPath = "Images\\app-red.png";
@@ -890,6 +896,19 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     break;
 
                 default:
+                    // Mirror the top-level matching pattern: when the partial input
+                    // is a prefix of one or more sub-commands, delegate to the
+                    // autocompleter so that "shell a" suggests "add" the same way
+                    // "ssh p" suggests "profiles" at the top level.
+                    if (!string.IsNullOrEmpty(subCmd) &&
+                        ShellSubCommands.Any(s => s.StartsWith(subCmd)))
+                    {
+                        return new List<Result>(AutoCompleter.GetSuggestions(
+                            query.ActionKeyword, "shell " + rest,
+                            _profileManager?.UserData, AppIconPath,
+                            _pluginContext?.API));
+                    }
+
                     // Always show "Shell management" hint at the top.
                     results.Add(new Result
                     {
