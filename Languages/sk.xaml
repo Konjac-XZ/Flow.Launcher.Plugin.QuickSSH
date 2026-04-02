@@ -82,4 +82,11 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandhelp">Otvoriť dokumentáciu pluginu na GitHube.</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandhelp_usage">Použitie: help</system:String>
 
+    <!-- Label appended to legacy .json import files -->
+    <system:String x:Key="plugin_quickssh_import_legacy_label">(legacy)</system:String>
+
+    <!-- LEGACY ADD REDIRECT -->
+    <system:String x:Key="plugin_quickssh_title_commandadd_legacy">Command renamed: use "profiles add"</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandadd_legacy">The "add" command is now "profiles add &lt;name&gt; &lt;ssh-command&gt;". Press Enter or Tab to navigate.</system:String>
+
 </ResourceDictionary>

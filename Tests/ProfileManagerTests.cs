@@ -165,13 +165,81 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             }, Formatting.Indented);
             File.WriteAllText(path, v1Json);
 
-            // Load triggers migration and saves
+            // Load must trigger migration AND immediately persist the v2 format to disk.
             _ = new ProfileManager(path);
 
-            // Reload and verify structured format
+            // Verify the on-disk JSON no longer contains the legacy raw-string field.
+            var savedJson = File.ReadAllText(path);
+            Assert.DoesNotContain("EntriesLists", savedJson,
+                "After migration the legacy field must be absent from the saved file.");
+
+            // Verify the v2 structured field IS present.
+            Assert.Contains("ProfilesLists", savedJson,
+                "After migration the structured field must be present in the saved file.");
+
+            // Reload and verify structured format is readable.
             var pm2 = new ProfileManager(path);
             Assert.True(pm2.UserData.Profiles.ContainsKey("srv"));
             Assert.Equal("root", pm2.UserData.Profiles["srv"].User);
+        }
+
+        [Fact]
+        public void LoadConfiguration_V1Migration_ImmediateSave_PreventsReMigrationOnReload()
+        {
+            var path = GetTmpPath();
+
+            var v1Json = JsonConvert.SerializeObject(new
+            {
+                PluginVersion = "1.0",
+                EntriesLists = new Dictionary<string, string> { ["box"] = "ssh deploy@10.0.0.5" },
+                CustomShellLists = new Dictionary<string, string>()
+            }, Formatting.Indented);
+            File.WriteAllText(path, v1Json);
+
+            // First load: migration runs and saves.
+            _ = new ProfileManager(path);
+
+            // Second load: file is already v2, no further migration should occur.
+            // Verify the profile is still correct after a second round-trip.
+            var pm2 = new ProfileManager(path);
+            Assert.True(pm2.UserData.Profiles.ContainsKey("box"));
+            Assert.Equal("deploy", pm2.UserData.Profiles["box"].User);
+            Assert.Equal("10.0.0.5", pm2.UserData.Profiles["box"].HostName);
+        }
+
+        [Fact]
+        public void LoadConfiguration_V1Migration_UnknownFlags_PreservedInExtraArgs()
+        {
+            // Profiles with flags that cannot be represented in structured fields must survive
+            // migration without silent data loss.  Unknown flags are stored in ExtraArgs.
+            var path = GetTmpPath();
+
+            var v1Json = JsonConvert.SerializeObject(new
+            {
+                PluginVersion = "1.0",
+                EntriesLists = new Dictionary<string, string>
+                {
+                    ["x11"] = "ssh -X root@x11host",          // -X (X11 forwarding) is unstructured
+                    ["agent"] = "ssh -A root@agenthost"       // -A (agent forwarding) is unstructured
+                },
+                CustomShellLists = new Dictionary<string, string>()
+            }, Formatting.Indented);
+            File.WriteAllText(path, v1Json);
+
+            var pm = new ProfileManager(path);
+
+            var x11 = pm.UserData.Profiles["x11"];
+            Assert.Equal("root", x11.User);
+            Assert.Equal("x11host", x11.HostName);
+            Assert.NotNull(x11.ExtraArgs);
+            Assert.Contains("-X", x11.ExtraArgs);
+
+            // The generated command must include the preserved flag so behaviour is unchanged.
+            Assert.Contains("-X", x11.ToCommandLine());
+
+            var agent = pm.UserData.Profiles["agent"];
+            Assert.NotNull(agent.ExtraArgs);
+            Assert.Contains("-A", agent.ExtraArgs);
         }
 
         // ── CustomShell ───────────────────────────────────────────────────────────

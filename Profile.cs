@@ -39,14 +39,23 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// Binds auto-save callbacks after construction or deserialization.
         /// Migrates any legacy raw-string profiles to structured <see cref="SshProfile"/> objects.
         /// </summary>
-        public void Attach(Action onChanged)
+        /// <param name="onChanged">Callback invoked on every profile or shell mutation.</param>
+        /// <returns>
+        /// <see langword="true"/> when v1 legacy data was found and migrated;
+        /// the caller should persist immediately so the disk file reflects the new v2 format.
+        /// </returns>
+        public bool Attach(Action onChanged)
         {
             ProfilesLists ??= new Dictionary<string, SshProfile>();
             CustomShellLists ??= new Dictionary<string, string>();
 
-            // One-time migration: convert v1 raw-string entries to structured profiles.
-            // We migrate any EntriesLists entry whose key is not already present in ProfilesLists,
-            // so users who have a mix of v1 legacy data and v2 structured data are handled correctly.
+            bool migrated = false;
+
+            // One-time migration from v1 raw-string storage (EntriesLists) to the canonical
+            // structured model (ProfilesLists).  We only migrate entries that are not already
+            // present in ProfilesLists so a mixed v1/v2 file is handled safely.
+            // Fields that cannot be parsed from the raw command string are preserved verbatim
+            // in SshProfile.ExtraArgs so no data is ever silently lost.
             if (EntriesLists != null && EntriesLists.Count > 0)
             {
                 foreach (var kvp in EntriesLists)
@@ -55,11 +64,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         ProfilesLists[kvp.Key] = SshProfile.ParseFromLegacyCommand(kvp.Value);
                 }
 
-                EntriesLists = null; // Clear legacy field so it is not re-written.
+                // Null out the legacy field so it is absent from the next serialization.
+                EntriesLists = null;
+                migrated = true;
             }
 
             Profiles = new AutoSaveDictionary<string, SshProfile>(ProfilesLists, onChanged);
             CustomShell = new AutoSaveDictionary<string, string>(CustomShellLists, onChanged);
+
+            return migrated;
         }
     }
 
@@ -152,7 +165,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
         {
             var json = File.ReadAllText(_path);
             UserData = JsonConvert.DeserializeObject<UserData>(json) ?? new UserData();
-            UserData.Attach(SaveConfiguration);
+
+            // Attach returns true when v1 raw-string data was migrated.  Persist immediately so
+            // the on-disk file switches to the canonical v2 format after the first load.
+            bool migrated = UserData.Attach(SaveConfiguration);
+            if (migrated)
+                SaveConfiguration();
         }
     }
 }

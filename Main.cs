@@ -29,7 +29,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// </summary>
         private static readonly string[] AllCommandVerbs = new[]
         {
-            CommandProfiles, CommandCustomShell, CommandConfig, CommandHelp
+            CommandProfiles, CommandCustomShell, CommandConfig, CommandHelp, "add"
         };
 
         // Sub-commands of "profiles"
@@ -133,6 +133,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     break;
                 case CommandHelp:
                     results.AddRange(HandleDocs());
+                    break;
+
+                // Legacy top-level "add" is no longer the canonical command.
+                // Show an explicit user-facing redirect so the user is never left confused.
+                case "add":
+                    results.AddRange(HandleLegacyAddRedirect(query, rest));
                     break;
                 default:
                     // Guard: if the verb exactly matches any known command it should have
@@ -247,6 +253,35 @@ namespace Flow.Launcher.Plugin.QuickSSH
             }
 
             return results;
+        }
+
+        // ── legacy "add" redirect ─────────────────────────────────────────────────
+
+        /// <summary>
+        /// The top-level "add" command was removed in v2.  All profile operations are now
+        /// sub-commands of "profiles".  This handler shows an unambiguous user-facing message
+        /// rather than silently falling through to autocomplete or implicit-SSH detection.
+        /// </summary>
+        private List<Result> HandleLegacyAddRedirect(Query query, string rest)
+        {
+            var redirectTarget = query.ActionKeyword + " profiles add " + rest;
+            return new List<Result>
+            {
+                // Pinned hint at the top.
+                new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandadd_legacy"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandadd_legacy"),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = redirectTarget,
+                    Score = int.MaxValue,
+                    Action = _ =>
+                    {
+                        _pluginContext?.API?.ChangeQuery(redirectTarget, true);
+                        return false;
+                    }
+                }
+            };
         }
 
         // ── profiles add ──────────────────────────────────────────────────────────
@@ -612,9 +647,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     !fileName.ToLowerInvariant().Contains(rest.ToLowerInvariant()))
                     continue;
 
+                // Mark legacy .json files clearly in the result title so users understand
+                // that .json is migration-only and the canonical format is .sshconfig.
+                bool isLegacyJson = fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
+                var displayTitle = GetTranslation("plugin_quickssh_title_commandprofiles_import") + ": " + fileName
+                    + (isLegacyJson ? " " + GetTranslation("plugin_quickssh_import_legacy_label") : "");
+
                 results.Add(new Result
                 {
-                    Title = GetTranslation("plugin_quickssh_title_commandprofiles_import") + ": " + fileName,
+                    Title = displayTitle,
                     SubTitle = file,
                     IcoPath = AppIconGreenPath,
                     AutoCompleteText = query.ActionKeyword + " profiles import " + fileName,
@@ -637,9 +678,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
         }
 
         /// <summary>
-        /// Imports profiles from a .sshconfig (new format) or .json (legacy) file.
-        /// Only profiles that do not already exist are added.
+        /// Imports profiles from a file into the structured profile store.
         /// </summary>
+        /// <remarks>
+        /// Canonical import format: <c>.sshconfig</c> (SSH-config-like text, written by "profiles export").
+        /// <para/>
+        /// Migration-only format: <c>.json</c> (v1 raw-command dictionary).
+        /// JSON files are <b>never written</b> by this plugin and are accepted here solely for
+        /// backward-compatibility migration.  They are clearly labelled "(legacy)" in the UI.
+        /// </remarks>
         private void ImportProfilesFromFile(string filePath)
         {
             var text = File.ReadAllText(filePath);
@@ -647,7 +694,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             if (filePath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
-                // Legacy JSON: Dictionary<string, string>
+                // MIGRATION-ONLY PATH: read v1 raw-command JSON (Dictionary<string, string>)
+                // and parse each command into a structured SshProfile.
+                // Unknown flags that cannot be parsed are stored in SshProfile.ExtraArgs
+                // so no information is silently lost.
+                // This path is NOT used for canonical import/export; use .sshconfig files instead.
                 var legacy = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
                 if (legacy == null || legacy.Count == 0)
                 {

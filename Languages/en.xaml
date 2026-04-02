@@ -55,6 +55,13 @@
     <system:String x:Key="plugin_quickssh_import_nofiles">No .sshconfig or .json files found in: {0}</system:String>
     <system:String x:Key="plugin_quickssh_import_success">Imported {0} profile(s) successfully.</system:String>
     <system:String x:Key="plugin_quickssh_import_empty">No profiles found in the selected file.</system:String>
+    <!-- Label appended to legacy .json import files so users understand JSON is migration-only -->
+    <system:String x:Key="plugin_quickssh_import_legacy_label">(legacy)</system:String>
+
+    <!-- LEGACY ADD REDIRECT -->
+    <!-- The top-level "add" command was removed in v2. This entry is shown when the user types "add ..." -->
+    <system:String x:Key="plugin_quickssh_title_commandadd_legacy">Command renamed: use "profiles add"</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandadd_legacy">The "add" command is now "profiles add &lt;name&gt; &lt;ssh-command&gt;". Press Enter or Tab to navigate.</system:String>
 
     <!-- DIRECT CONNECT -->
     <system:String x:Key="plugin_quickssh_title_commanddirect">Direct connect</system:String>

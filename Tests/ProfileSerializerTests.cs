@@ -296,5 +296,71 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.Equal(@"C:\web\index.html", restored["upload"].Source);
             Assert.True(restored["upload"].Recursive);
         }
+
+        [Fact]
+        public void RoundTrip_ProfileWithExtraArgs_PreservesExtraArgs()
+        {
+            // ExtraArgs holds flags that could not be represented as structured fields.
+            // They must survive a full serialize → deserialize cycle unchanged.
+            var original = new SshProfile
+            {
+                Type = "ssh",
+                HostName = "10.0.0.1",
+                User = "root",
+                ExtraArgs = "-X -A"
+            };
+            var profiles = new Dictionary<string, SshProfile> { ["srv"] = original };
+            var text = ProfileSerializer.Serialize(profiles);
+            var restored = ProfileSerializer.Deserialize(text);
+
+            Assert.True(restored.ContainsKey("srv"));
+            Assert.Equal("-X -A", restored["srv"].ExtraArgs);
+        }
+
+        [Fact]
+        public void RoundTrip_ExtraArgs_ThenToCommandLine_IncludesExtraArgs()
+        {
+            // After a serialize → deserialize round-trip, ToCommandLine must still include ExtraArgs.
+            var original = new SshProfile
+            {
+                Type = "ssh",
+                HostName = "host",
+                User = "root",
+                ExtraArgs = "-X"
+            };
+            var profiles = new Dictionary<string, SshProfile> { ["srv"] = original };
+            var text = ProfileSerializer.Serialize(profiles);
+            var restored = ProfileSerializer.Deserialize(text);
+
+            var cmd = restored["srv"].ToCommandLine();
+            Assert.Contains("-X", cmd);
+        }
+
+        [Fact]
+        public void RoundTrip_Deterministic_SecondRoundTripMatchesFirst()
+        {
+            // Parse → serialize → deserialize → serialize must produce the same text.
+            // This verifies there are no fields that expand or collapse on repeated round-trips.
+            var original = new SshProfile
+            {
+                Type = "ssh",
+                HostName = "10.0.0.150",
+                User = "root",
+                Port = "2222",
+                IdentityFile = "~/.ssh/id_rsa",
+                IdentitiesOnly = true,
+                RemoteCommand = "reboot",
+                RequestTTY = "force",
+                LocalForward = new List<string> { "8443 127.0.0.1:443" },
+                ProxyJump = "bastion.example.com"
+            };
+            var profiles = new Dictionary<string, SshProfile> { ["srv"] = original };
+
+            var text1 = ProfileSerializer.Serialize(profiles);
+            var restored1 = ProfileSerializer.Deserialize(text1);
+            var text2 = ProfileSerializer.Serialize(restored1);
+
+            Assert.Equal(text1, text2);
+        }
     }
 }

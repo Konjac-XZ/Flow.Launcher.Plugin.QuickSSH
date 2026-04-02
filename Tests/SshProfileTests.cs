@@ -262,5 +262,62 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.Contains("root@10.0.0.1", rebuilt);
             Assert.Contains("-i /key", rebuilt);
         }
+
+        // ── ExtraArgs: unparseable flag fallback ──────────────────────────────────
+
+        [Fact]
+        public void ParseFromLegacy_UnknownFlag_PreservedInExtraArgs()
+        {
+            // "-X" (X11 forwarding) is not a recognised structured field.
+            var p = SshProfile.ParseFromLegacyCommand("ssh -X root@host");
+            Assert.NotNull(p.ExtraArgs);
+            Assert.Contains("-X", p.ExtraArgs);
+        }
+
+        [Fact]
+        public void ParseFromLegacy_MultipleUnknownFlags_AllPreservedInExtraArgs()
+        {
+            var p = SshProfile.ParseFromLegacyCommand("ssh -A -X root@host");
+            // Both -A (agent forwarding) and -X should end up in ExtraArgs
+            Assert.NotNull(p.ExtraArgs);
+            Assert.Contains("-A", p.ExtraArgs);
+            Assert.Contains("-X", p.ExtraArgs);
+        }
+
+        [Fact]
+        public void ParseFromLegacy_UnknownFlag_NoSilentDegradation_HostNameStillExtracted()
+        {
+            // Even when there are unknown flags, known fields must still be extracted correctly.
+            var p = SshProfile.ParseFromLegacyCommand("ssh -X root@myhost");
+            Assert.Equal("root", p.User);
+            Assert.Equal("myhost", p.HostName);
+            Assert.Contains("-X", p.ExtraArgs);
+        }
+
+        [Fact]
+        public void ToCommandLine_WithExtraArgs_IncludesVerbatimBeforeDestination()
+        {
+            // ExtraArgs must appear verbatim in the generated command, before the destination.
+            var p = new SshProfile { Type = "ssh", HostName = "host", User = "root", ExtraArgs = "-X -A" };
+            var cmd = p.ToCommandLine();
+            Assert.Contains("-X -A", cmd);
+            // ExtraArgs must come before "root@host"
+            int extraArgsIdx = cmd.IndexOf("-X -A", StringComparison.Ordinal);
+            int destIdx = cmd.IndexOf("root@host", StringComparison.Ordinal);
+            Assert.True(extraArgsIdx < destIdx,
+                "ExtraArgs should appear before the destination in the command line.");
+        }
+
+        [Fact]
+        public void ParseFromLegacy_UnknownFlagWithValue_PreservedInExtraArgs()
+        {
+            // "-o ServerAliveInterval=60" uses the -o key=value form; the key is not in our
+            // explicit structured fields so the whole -o option goes into ExtraArgs.
+            var p = SshProfile.ParseFromLegacyCommand("ssh -o ServerAliveInterval=60 root@host");
+            // Either ExtraArgs contains it, or (future enhancement) it's parsed explicitly.
+            // For now the contract is: no data is lost.
+            var cmd = p.ToCommandLine();
+            Assert.Contains("ServerAliveInterval=60", cmd);
+        }
     }
 }

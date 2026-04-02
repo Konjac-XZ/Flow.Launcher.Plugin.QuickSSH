@@ -20,6 +20,9 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 | `ssh help` | Open plugin documentation |
 | `ssh <destination>` | **Implicit direct connect** — type a destination or SSH options directly |
 
+> **Note for v1 users:** The top-level `add` command (v1: `ssh add <name> <cmd>`) has been moved to `ssh profiles add <name> <cmd>`.
+> Typing `ssh add ...` shows an explicit redirect hint in the UI — it will not silently do something unexpected.
+
 ### Capabilities
 
 - **Structured profile model** — profiles are stored as typed, structured objects (not raw strings); supports SSH, RemoteCommand, port-forwards, SCP, ProxyJump, and more
@@ -357,15 +360,24 @@ Click any shell in the list to **select** it. All SSH connections will then laun
 **On first load**, QuickSSH automatically:
 1. Parses each raw command string into a structured `SshProfile`
 2. Stores them in the new `ProfilesLists` format
-3. Clears the legacy `EntriesLists` field
-4. Saves the migrated data
+3. Clears the legacy `EntriesLists` field from memory
+4. **Immediately persists the v2 format** so the disk file is canonical after the first run
 
 Migration handles:
 - Simple `ssh user@host` → structured with `User`, `HostName`
 - `ssh -p 22 user@host` → structured with `Port`, `User`, `HostName`
 - `ssh -i key -o IdentitiesOnly=yes user@host` → structured with all fields
 - Remote commands after the destination → `RemoteCommand` field
-- Unknown flags → stored in `ExtraArgs` (no data loss)
+- Unknown/unsupported flags (e.g. `-X`, `-A`) → stored verbatim in `ExtraArgs`
+
+**Unparseable flag fallback (ExtraArgs):** SSH has many options. Flags that this plugin does not map to a named structured field are preserved verbatim in the `ExtraArgs` field and appended to the generated command. This means:
+- **No data is silently lost** during migration.
+- The `ExtraArgs` field is round-trip stable: it is included when exporting to `.sshconfig` and is read back unchanged on import.
+- The generated SSH command still includes the flag, so the connection behaviour is preserved.
+
+> **Note:** "profiles import" still accepts legacy `.json` files for backward-compatible migration.
+> JSON is **never written** by this plugin — `.sshconfig` is the canonical export format.
+> Legacy `.json` files are clearly labelled "(legacy)" in the import UI.
 
 ---
 
