@@ -13,7 +13,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// </summary>
         private static readonly string[] VisibleCommands = new[]
         {
-            "profiles", "config", "shell", "help"
+            "profiles", "shell", "config", "help"
         };
 
         /// <summary>

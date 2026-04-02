@@ -1,6 +1,6 @@
 # QuickSSH — Flow Launcher Plugin
 
-Enhanced SSH/SCP connection plugin for [Flow Launcher](https://www.flowlauncher.com/) with TAB auto-completion, structured profile management, SSH config import, human-readable profile export/import, custom shell support, and fuzzy search.
+Enhanced SSH/SCP connection plugin for [Flow Launcher](https://www.flowlauncher.com/) with query autocomplete, structured profile management, SSH config import, human-readable profile export/import, custom shell support, and fuzzy search.
 
 Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Flow.Launcher.Plugin.easyssh).
 
@@ -15,8 +15,8 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 | `ssh profiles copy [filter]` | Copy an SSH/SCP command to the clipboard |
 | `ssh profiles export` | Export all profiles to a human-readable `.sshconfig` file |
 | `ssh profiles import [filter]` | Import profiles from a `.sshconfig` or legacy `.json` file |
-| `ssh config` | Import hosts from `~/.ssh/config` |
 | `ssh shell` | Manage custom terminal shells (add / remove / select) |
+| `ssh config` | Import hosts from `~/.ssh/config` |
 | `ssh help` | Open plugin documentation |
 | `ssh <destination>` | **Implicit direct connect** — type a destination or SSH options directly |
 
@@ -28,7 +28,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 - **Structured profile model** — profiles are stored as typed, structured objects (not raw strings); supports SSH, RemoteCommand, port-forwards, SCP, ProxyJump, and more
 - **Human-readable export/import** — profiles are exported and imported in an SSH-config-like text format (`.sshconfig` files)
 - **Legacy migration** — v1 raw-command profiles (JSON) are automatically migrated to the structured format on first load
-- **TAB auto-completion** — press TAB to auto-complete commands and profile names
+- **Query autocomplete** — type partial commands or profile names to see matching suggestions; select a result to expand the query
 - **Implicit direct SSH input** — type a destination (`user@host`, bare IP/hostname) or SSH options (`-p 22 user@host`, `-i key user@host`) directly without any command prefix
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
 - **SCP support** — save SCP upload/download profiles with all SCP options
@@ -471,7 +471,7 @@ To make QuickSSH available via `pm install QuickSSH` in Flow Launcher:
    {
      "ID": "86AC23FE48BC45E5B7E0A94F5847FA83",
      "Name": "QuickSSH",
-     "Description": "Enhanced SSH/SCP connection plugin with TAB auto-completion, structured profiles, SSH config support, and custom shell handling",
+     "Description": "Enhanced SSH/SCP connection plugin with query autocomplete, structured profiles, SSH config support, and custom shell handling",
      "Author": "Vaso73",
      "Version": "2.0.0",
      "Language": "csharp",

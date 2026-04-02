@@ -22,7 +22,7 @@
 
     <!-- PROFILES (list / connect) -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles">Gespeicherte Profile</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Verwendung: profiles [Filter] | add | remove | rename | copy | export | import</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">profiles add &lt;name&gt; &lt;ssh-command&gt;  |  remove [Filter]  |  rename &lt;alt&gt; &lt;neu&gt;  |  copy [Filter]  |  export  |  import [Filter]</system:String>
 
     <!-- PROFILES ADD -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles_add">Profil hinzufügen</system:String>
