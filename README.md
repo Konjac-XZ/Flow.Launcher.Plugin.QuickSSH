@@ -498,13 +498,26 @@ Contributions are welcome! Here is the typical workflow:
 4. If the Pull Request should create a release, add one label: `release:patch`, `release:minor`, or `release:major`.
 5. Open a Pull Request describing your changes.
 
+### Versioning
+
+`plugin.json` is the **single source of truth** for the plugin version. There is no separate version in the project file or any other location. GitHub tags and release names always match the version committed in `plugin.json`.
+
 ### Releasing a new version
 
 1. Open a Pull Request with your changes.
-2. Add one label: `release:patch`, `release:minor`, or `release:major`.
+2. Add **exactly one** release label: `release:patch`, `release:minor`, or `release:major` (or `skip-release` to skip the release entirely).
 3. Merge the Pull Request into `main`.
-4. GitHub Actions automatically builds `QuickSSH.zip`, creates a new tag, and publishes a GitHub Release.
+4. GitHub Actions automatically:
+   - Reads the current version from `plugin.json`
+   - Bumps it according to the label (`patch` → x.y.Z+1, `minor` → x.Y+1.0, `major` → X+1.0.0)
+   - Commits the updated `plugin.json` back to `main`
+   - Builds `QuickSSH.zip` (which includes the bumped `plugin.json`)
+   - Creates a matching git tag and GitHub Release
 5. Update the Plugin Manifest entry in `Flow-Launcher/Flow.Launcher.PluginsManifest` if needed.
+
+No manual version editing is ever required — the workflow fails clearly if no label or multiple conflicting labels are present.
+
+> **Note:** `skip-release` prevents the entire release job from running. It is different from a missing label: a PR without any label at all that is merged to `main` will cause the release job to **fail** with a clear error. Always include either a release label or `skip-release`.
 
 ## License
 
