@@ -117,17 +117,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     }
                 }
 
-                // Suggest profile names (when search is not a sub-command prefix)
-                bool isSubCmdPrefix = ProfilesSubCommands.Any(s => s.StartsWith(search));
+                // Suggest profile names when the search is not an exact sub-command match.
+                // This lets "profiles add" route to the add handler while "profiles wor" still
+                // shows matching profile names.
                 bool isExactSubCmd = ProfilesSubCommands.Any(s => s == search);
-
-                // Show profile names when: empty search, OR not an exact sub-cmd match
-                // and not ambiguously matching only sub-commands.
-                bool showProfiles = string.IsNullOrEmpty(search)
-                    || (!isExactSubCmd && !isSubCmdPrefix)
-                    || (isSubCmdPrefix && search.Length > 0 && !ProfilesSubCommands.Any(s => s == search));
-
-                if (userData?.Profiles != null)
+                if (!isExactSubCmd && userData?.Profiles != null)
                 {
                     foreach (var entry in userData.Profiles)
                     {

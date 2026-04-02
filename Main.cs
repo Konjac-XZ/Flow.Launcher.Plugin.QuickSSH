@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace Flow.Launcher.Plugin.QuickSSH
 {
@@ -647,7 +648,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             if (filePath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
                 // Legacy JSON: Dictionary<string, string>
-                var legacy = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
+                var legacy = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
                 if (legacy == null || legacy.Count == 0)
                 {
                     _pluginContext.API.ShowMsg("QuickSSH",

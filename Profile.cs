@@ -45,10 +45,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
             CustomShellLists ??= new Dictionary<string, string>();
 
             // One-time migration: convert v1 raw-string entries to structured profiles.
-            if (EntriesLists != null && EntriesLists.Count > 0 && ProfilesLists.Count == 0)
+            // We migrate any EntriesLists entry whose key is not already present in ProfilesLists,
+            // so users who have a mix of v1 legacy data and v2 structured data are handled correctly.
+            if (EntriesLists != null && EntriesLists.Count > 0)
             {
                 foreach (var kvp in EntriesLists)
-                    ProfilesLists[kvp.Key] = SshProfile.ParseFromLegacyCommand(kvp.Value);
+                {
+                    if (!ProfilesLists.ContainsKey(kvp.Key))
+                        ProfilesLists[kvp.Key] = SshProfile.ParseFromLegacyCommand(kvp.Value);
+                }
 
                 EntriesLists = null; // Clear legacy field so it is not re-written.
             }
