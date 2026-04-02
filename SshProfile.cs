@@ -198,11 +198,54 @@ namespace Flow.Launcher.Plugin.QuickSSH
             if (!string.IsNullOrEmpty(ExtraArgs))
                 sb.Append(" ").Append(ExtraArgs);
 
-            if (!string.IsNullOrEmpty(Source))
-                sb.Append(" ").Append(SshCommandBuilder.QuoteArgument(Source));
+            // Build the remote-endpoint prefix from structured fields: "user@host:" or "host:".
+            // If HostName is not set the prefix is empty and Source/Target are used verbatim
+            // (backward-compatibility path for profiles that have no extracted host).
+            string remotePrefix = string.Empty;
+            if (!string.IsNullOrEmpty(HostName))
+            {
+                remotePrefix = string.IsNullOrEmpty(User)
+                    ? HostName + ":"
+                    : User + "@" + HostName + ":";
+            }
 
-            if (!string.IsNullOrEmpty(Target))
-                sb.Append(" ").Append(SshCommandBuilder.QuoteArgument(Target));
+            // ── SCP normalization rule ────────────────────────────────────────────
+            //
+            // Source and Target store BARE paths (no user@host: prefix).
+            // HostName + User hold the remote server identity.
+            //
+            // Direction is determined by examining which path is a Windows local path:
+            //   Upload   (Source is local):  scp [flags] source  user@host:target
+            //   Download (Target is local):  scp [flags] user@host:source  target
+            //
+            // If neither path has a Windows drive prefix (ambiguous, e.g. both are Unix
+            // paths), upload is assumed: Source is treated as local, Target as remote.
+            // This covers the typical on-Windows use case where the remote side is always
+            // a Linux/Unix path.
+            bool download = IsWindowsLocalPath(Target) && !IsWindowsLocalPath(Source);
+
+            if (download)
+            {
+                // Download: user@host:source  target
+                var remoteSrc = !string.IsNullOrEmpty(remotePrefix)
+                    ? remotePrefix + (Source ?? "")
+                    : (Source ?? "");
+                if (!string.IsNullOrEmpty(remoteSrc))
+                    sb.Append(" ").Append(SshCommandBuilder.QuoteArgument(remoteSrc));
+                if (!string.IsNullOrEmpty(Target))
+                    sb.Append(" ").Append(SshCommandBuilder.QuoteArgument(Target));
+            }
+            else
+            {
+                // Upload (or ambiguous → assume upload): source  user@host:target
+                if (!string.IsNullOrEmpty(Source))
+                    sb.Append(" ").Append(SshCommandBuilder.QuoteArgument(Source));
+                var remoteTgt = !string.IsNullOrEmpty(remotePrefix)
+                    ? remotePrefix + (Target ?? "")
+                    : (Target ?? "");
+                if (!string.IsNullOrEmpty(remoteTgt))
+                    sb.Append(" ").Append(SshCommandBuilder.QuoteArgument(remoteTgt));
+            }
 
             return sb.ToString();
         }
@@ -363,16 +406,31 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 i++;
             }
 
-            if (positional.Count >= 1) profile.Source = positional[0];
-            if (positional.Count >= 2) profile.Target = positional[1];
-
-            // Extract user@host from the remote path (whichever positional has a colon)
-            foreach (var pos in positional)
+            // ── Remote endpoint detection ──────────────────────────────────────────
+            //
+            // A remote SCP positional has the form [user@]host:path.
+            // Windows drive paths (e.g. C:\...) must be treated as LOCAL even though
+            // they contain a colon — they are detected and excluded by IsRemoteScpEndpoint.
+            //
+            // For each of the (at most) two positionals:
+            //   - If it is a remote spec, extract User+HostName and store the BARE path.
+            //   - If it is a local path, leave it unchanged.
+            //
+            // After normalisation Source and Target hold bare paths only; User and HostName
+            // hold the remote server identity — consistent with the canonical structured model.
+            for (int j = 0; j < positional.Count && j < 2; j++)
             {
-                int colon = pos.LastIndexOf(':');
-                if (colon > 0)
+                var pos = positional[j];
+                if (!IsRemoteScpEndpoint(pos))
+                    continue;
+
+                int colon = pos.IndexOf(':');
+                var hostPart = pos.Substring(0, colon);
+                var bareRemotePath = pos.Substring(colon + 1);
+
+                // Only set User/HostName once (the first remote positional wins).
+                if (string.IsNullOrEmpty(profile.HostName))
                 {
-                    var hostPart = pos.Substring(0, colon);
                     if (hostPart.Contains('@'))
                     {
                         int at = hostPart.IndexOf('@');
@@ -383,14 +441,56 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     {
                         profile.HostName = hostPart;
                     }
-                    break;
                 }
+
+                // Replace the full "user@host:path" token with just the bare path.
+                positional[j] = bareRemotePath;
             }
+
+            if (positional.Count >= 1) profile.Source = positional[0];
+            if (positional.Count >= 2) profile.Target = positional[1];
 
             if (extraArgsList.Count > 0)
                 profile.ExtraArgs = string.Join(" ", extraArgsList);
 
             return profile;
+        }
+
+        /// <summary>
+        /// Returns <see langword="true"/> when <paramref name="token"/> is a remote SCP endpoint
+        /// in the form <c>[user@]host:path</c>.
+        /// <para/>
+        /// Windows drive paths (e.g. <c>C:\...</c> or <c>D:/...</c>) are explicitly excluded
+        /// because their drive letter is a single character followed immediately by a colon,
+        /// which would otherwise be misidentified as <c>host:path</c>.
+        /// </summary>
+        private static bool IsRemoteScpEndpoint(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return false;
+
+            // Windows absolute path: single letter followed by ':' → always local.
+            if (token.Length >= 2 && char.IsLetter(token[0]) && token[1] == ':')
+                return false;
+
+            // Any other colon → remote endpoint in [user@]host:path form.
+            return token.IndexOf(':') > 0;
+        }
+
+        /// <summary>
+        /// Returns <see langword="true"/> when <paramref name="path"/> is a Windows absolute path,
+        /// i.e. starts with a drive letter followed by <c>:\</c> or <c>:/</c>
+        /// (e.g. <c>C:\web\file.html</c> or <c>D:/uploads/</c>).
+        /// </summary>
+        private static bool IsWindowsLocalPath(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return false;
+
+            return path.Length >= 3
+                && char.IsLetter(path[0])
+                && path[1] == ':'
+                && (path[2] == '\\' || path[2] == '/');
         }
 
         // ── Shell tokenizer ───────────────────────────────────────────────────────

@@ -298,6 +298,80 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         }
 
         [Fact]
+        public void RoundTrip_ScpProfile_HostNameAndUserPreserved()
+        {
+            // HostName and User must survive a full serialize → deserialize cycle
+            // because BuildScpCommand() needs them to construct the remote endpoint.
+            var original = new SshProfile
+            {
+                Type = "scp",
+                HostName = "10.100.100.241",
+                User = "root",
+                Source = @"C:\web\index.html",
+                Target = "/var/www/html/index.html"
+            };
+            var profiles = new Dictionary<string, SshProfile> { ["upload"] = original };
+            var text = ProfileSerializer.Serialize(profiles);
+            var restored = ProfileSerializer.Deserialize(text);
+
+            Assert.Equal("10.100.100.241", restored["upload"].HostName);
+            Assert.Equal("root", restored["upload"].User);
+        }
+
+        [Fact]
+        public void RoundTrip_ScpReadmeCanonicalExample_CommandContainsRemoteEndpoint()
+        {
+            // Verify that the canonical SCP example from the README survives a full
+            // serialize → deserialize cycle and produces a correct SCP command.
+            // README example:
+            //   Host Homepage-Upload
+            //       Type scp
+            //       HostName 10.100.100.241
+            //       User root
+            //       Source "C:\web\index.html"
+            //       Target "/var/www/html/index.html"
+            var original = new SshProfile
+            {
+                Type = "scp",
+                HostName = "10.100.100.241",
+                User = "root",
+                Source = @"C:\web\index.html",
+                Target = "/var/www/html/index.html"
+            };
+            var profiles = new Dictionary<string, SshProfile> { ["Homepage-Upload"] = original };
+
+            var text = ProfileSerializer.Serialize(profiles);
+            var restored = ProfileSerializer.Deserialize(text);
+            var cmd = restored["Homepage-Upload"].ToCommandLine();
+
+            Assert.StartsWith("scp", cmd);
+            // Remote target must include user@host: prefix — built from canonical structured fields
+            Assert.Contains("root@10.100.100.241:/var/www/html/index.html", cmd);
+        }
+
+        [Fact]
+        public void RoundTrip_ScpDownloadProfile_CommandContainsRemoteSource()
+        {
+            // Download profile: Source is bare remote path, Target is Windows local path.
+            var original = new SshProfile
+            {
+                Type = "scp",
+                HostName = "10.0.0.1",
+                User = "root",
+                Source = "/var/log/app.log",
+                Target = @"C:\logs\app.log"
+            };
+            var profiles = new Dictionary<string, SshProfile> { ["download"] = original };
+            var text = ProfileSerializer.Serialize(profiles);
+            var restored = ProfileSerializer.Deserialize(text);
+            var cmd = restored["download"].ToCommandLine();
+
+            Assert.StartsWith("scp", cmd);
+            // Remote source must include user@host: prefix
+            Assert.Contains("root@10.0.0.1:/var/log/app.log", cmd);
+        }
+
+        [Fact]
         public void RoundTrip_ProfileWithExtraArgs_PreservesExtraArgs()
         {
             // ExtraArgs holds flags that could not be represented as structured fields.

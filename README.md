@@ -283,11 +283,23 @@ Host Homepage-Upload
 
 | Field | Description |
 |-------|-------------|
-| `Source` | Source path (local or `user@host:/path`) |
-| `Target` | Target path (local or `user@host:/path`) |
+| `Source` | **Bare source path** — local path for upload, remote path for download |
+| `Target` | **Bare target path** — remote path for upload, local path for download |
 | `Recursive` | `yes` adds `-r` |
 | `PreserveTimes` | `yes` adds `-p` |
 | `Compression` | `yes` adds `-C` |
+
+**SCP normalization rule:**  
+`Source` and `Target` always store **bare paths** — no `user@host:` prefix.
+`HostName` and `User` are always in the common structured fields.  
+The command builder determines transfer direction by inspecting the paths:
+
+- **Upload** — `Source` is a Windows local path (e.g. `C:\...`): builds `scp source user@host:target`
+- **Download** — `Target` is a Windows local path: builds `scp user@host:source target`
+- **Ambiguous** (both are Unix-style paths): upload is assumed, Source is treated as local
+
+This means on-disk profiles are always portable and can be re-parsed without data loss.
+Legacy SCP commands with `user@host:path` positionals are automatically normalised on import.
 
 ### Custom shell management
 
@@ -369,6 +381,8 @@ Migration handles:
 - `ssh -i key -o IdentitiesOnly=yes user@host` → structured with all fields
 - Remote commands after the destination → `RemoteCommand` field
 - Unknown/unsupported flags (e.g. `-X`, `-A`) → stored verbatim in `ExtraArgs`
+- SCP upload `scp C:\file.txt user@host:/path` → `Source` = local bare path, `Target` = remote bare path, `User`/`HostName` extracted safely (Windows drive paths never misidentified as remote specs)
+- SCP download `scp user@host:/remote/file C:\local\file` → `Source` = remote bare path, `Target` = local bare path
 
 **Unparseable flag fallback (ExtraArgs):** SSH has many options. Flags that this plugin does not map to a named structured field are preserved verbatim in the `ExtraArgs` field and appended to the generated command. This means:
 - **No data is silently lost** during migration.

@@ -249,6 +249,135 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.True(p.Recursive);
         }
 
+        // ── SCP: Windows-path safety ──────────────────────────────────────────────
+
+        [Fact]
+        public void ParseFromLegacy_ScpUpload_WindowsLocalSource_NotMisdetectedAsRemote()
+        {
+            // C:\file.txt has a colon but must NOT be treated as a remote SCP endpoint.
+            // The remote spec is the second positional (root@host:/path).
+            var p = SshProfile.ParseFromLegacyCommand(@"scp C:\file.txt root@host:/remote/file.txt");
+            Assert.Equal("scp", p.Type);
+            Assert.Equal("host", p.HostName);
+            Assert.Equal("root", p.User);
+            // Source is the bare local path; it must not contain 'host' or 'root@'
+            Assert.Equal(@"C:\file.txt", p.Source);
+            // Target is the bare remote path (no user@host: prefix)
+            Assert.Equal("/remote/file.txt", p.Target);
+        }
+
+        [Fact]
+        public void ParseFromLegacy_ScpUpload_WindowsSourceWithSpaces_NotMisdetectedAsRemote()
+        {
+            var p = SshProfile.ParseFromLegacyCommand(@"scp ""C:\My Documents\file.txt"" root@host:/remote/");
+            Assert.Equal("host", p.HostName);
+            Assert.Equal(@"C:\My Documents\file.txt", p.Source);
+            Assert.Equal("/remote/", p.Target);
+        }
+
+        [Fact]
+        public void ParseFromLegacy_ScpDownload_WindowsLocalTarget_ExtractsUserHostFromSource()
+        {
+            // Download: remote spec is the first positional, local Windows path is second.
+            var p = SshProfile.ParseFromLegacyCommand(@"scp root@host:/remote/file.txt C:\local\file.txt");
+            Assert.Equal("scp", p.Type);
+            Assert.Equal("host", p.HostName);
+            Assert.Equal("root", p.User);
+            // Source is the bare remote path (no user@host: prefix)
+            Assert.Equal("/remote/file.txt", p.Source);
+            // Target is the local Windows path, unchanged
+            Assert.Equal(@"C:\local\file.txt", p.Target);
+        }
+
+        [Fact]
+        public void ParseFromLegacy_ScpUpload_ExtractsUserHostFromTargetPositional()
+        {
+            // Upload: local source is first, remote spec is second.
+            var p = SshProfile.ParseFromLegacyCommand("scp /local/file.txt admin@10.0.0.50:/remote/");
+            Assert.Equal("10.0.0.50", p.HostName);
+            Assert.Equal("admin", p.User);
+            Assert.Equal("/local/file.txt", p.Source);
+            Assert.Equal("/remote/", p.Target);
+        }
+
+        // ── ToCommandLine — SCP canonical model ───────────────────────────────────
+
+        [Fact]
+        public void ToCommandLine_ScpCanonicalUpload_BuildsRemoteTarget()
+        {
+            // Canonical upload: Source is local Windows path, Target is bare remote path.
+            // Command must be: scp source user@host:target
+            var p = new SshProfile
+            {
+                Type = "scp",
+                User = "root",
+                HostName = "10.0.0.1",
+                Source = @"C:\web\index.html",
+                Target = "/var/www/html/index.html"
+            };
+            var cmd = p.ToCommandLine();
+            Assert.StartsWith("scp", cmd);
+            // Remote target must include user@host: prefix
+            Assert.Contains("root@10.0.0.1:/var/www/html/index.html", cmd);
+            // Source must appear verbatim (without host prefix)
+            Assert.DoesNotContain("root@10.0.0.1:/web", cmd);
+        }
+
+        [Fact]
+        public void ToCommandLine_ScpCanonicalDownload_BuildsRemoteSource()
+        {
+            // Canonical download: Target is local Windows path, Source is bare remote path.
+            // Command must be: scp user@host:source target
+            var p = new SshProfile
+            {
+                Type = "scp",
+                User = "root",
+                HostName = "10.0.0.1",
+                Source = "/remote/data.tar.gz",
+                Target = @"C:\downloads\data.tar.gz"
+            };
+            var cmd = p.ToCommandLine();
+            Assert.StartsWith("scp", cmd);
+            // Remote source must include user@host: prefix
+            Assert.Contains("root@10.0.0.1:/remote/data.tar.gz", cmd);
+        }
+
+        [Fact]
+        public void ToCommandLine_ScpCanonicalUpload_UserAndHostInRemoteTarget()
+        {
+            // Verify the remote endpoint is exactly user@host:target (not bare target).
+            var p = new SshProfile
+            {
+                Type = "scp",
+                User = "deploy",
+                HostName = "srv.example.com",
+                Source = @"C:\build\app.zip",
+                Target = "/opt/deploy/app.zip"
+            };
+            var cmd = p.ToCommandLine();
+            Assert.Contains("deploy@srv.example.com:/opt/deploy/app.zip", cmd);
+        }
+
+        [Fact]
+        public void ToCommandLine_ScpLegacyParsed_ThenBuildCommand_RoundTripPreservesIntent()
+        {
+            // Parse a legacy upload command → canonical model → rebuild command.
+            // The rebuilt command must be semantically equivalent.
+            var p = SshProfile.ParseFromLegacyCommand(@"scp C:\web\index.html root@10.0.0.1:/var/www/html/index.html");
+            var cmd = p.ToCommandLine();
+            Assert.StartsWith("scp", cmd);
+            Assert.Contains("root@10.0.0.1:/var/www/html/index.html", cmd);
+        }
+
+        [Fact]
+        public void ToCommandLine_ScpLegacyDownload_ThenBuildCommand_RoundTripPreservesIntent()
+        {
+            var p = SshProfile.ParseFromLegacyCommand(@"scp root@10.0.0.1:/var/log/app.log C:\logs\app.log");
+            var cmd = p.ToCommandLine();
+            Assert.StartsWith("scp", cmd);
+            Assert.Contains("root@10.0.0.1:/var/log/app.log", cmd);
+        }
+
         // ── Round-trip: parse legacy → ToCommandLine ──────────────────────────────
 
         [Fact]
