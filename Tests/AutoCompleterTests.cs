@@ -26,11 +26,12 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.Contains("import", titles);
             Assert.Contains("copy", titles);
             Assert.Contains("rename", titles);
-            Assert.Contains("docs", titles);
+            Assert.Contains("help", titles);
 
             // Hidden aliases must NOT appear in suggestions.
             Assert.DoesNotContain("p", titles);
             Assert.DoesNotContain("d", titles);
+            Assert.DoesNotContain("docs", titles);
         }
 
         [Fact]

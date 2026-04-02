@@ -26,7 +26,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private const string CommandConfig = "config";
         private const string CommandExport = "export";
         private const string CommandImport = "import";
-        private const string CommandDocs = "docs";
+        private const string CommandHelp = "help";
+        private const string CommandDocs = "docs";  // hidden alias for "help"
         private const string CommandCopy = "copy";
         private const string CommandRename = "rename";
 
@@ -131,6 +132,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 case CommandImport:
                     results.AddRange(HandleImport(query, rest));
                     break;
+                case CommandHelp:
                 case CommandDocs:
                     results.AddRange(HandleDocs());
                     break;
@@ -578,15 +580,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 // Always show usage hint at the top.
                 new Result
                 {
-                    Title = GetTranslation("plugin_quickssh_title_commanddocs"),
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddocs_usage"),
+                    Title = GetTranslation("plugin_quickssh_title_commandhelp"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandhelp_usage"),
                     IcoPath = AppIconPath,
                     Score = int.MaxValue
                 },
                 new Result
                 {
-                    Title = GetTranslation("plugin_quickssh_title_commanddocs"),
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commanddocs"),
+                    Title = GetTranslation("plugin_quickssh_title_commandhelp"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandhelp"),
                     IcoPath = AppIconGreenPath,
                     Action = _ =>
                     {

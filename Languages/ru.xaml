@@ -78,9 +78,14 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandrename">Использование: rename &lt;старое имя&gt; &lt;новое имя&gt;</system:String>
     <system:String x:Key="plugin_quickssh_rename_notfound">Профиль не найден.</system:String>
 
-    <!-- DOCS -->
-    <system:String x:Key="plugin_quickssh_title_commanddocs">Документация</system:String>
+    <!-- HELP -->
+    <system:String x:Key="plugin_quickssh_title_commandhelp">Помощь</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandhelp">Открыть документацию плагина на GitHub.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandhelp_usage">Использование: help</system:String>
+
+    <!-- DOCS (hidden alias for help) -->
+    <system:String x:Key="plugin_quickssh_title_commanddocs">Помощь</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Открыть документацию плагина на GitHub.</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commanddocs_usage">Использование: docs</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddocs_usage">Использование: help</system:String>
 
 </ResourceDictionary>

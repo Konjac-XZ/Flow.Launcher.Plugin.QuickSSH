@@ -17,7 +17,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 | `ssh import [filter]` | Import profiles from a JSON file |
 | `ssh copy [filter]` | Copy an SSH command to the clipboard |
 | `ssh rename <oldname> <newname>` | Rename an existing profile |
-| `ssh docs` | Open plugin documentation |
+| `ssh help` | Open plugin documentation |
 
 ### Capabilities
 
@@ -98,6 +98,7 @@ The following short aliases are supported for backward compatibility but are **n
 |-------|-------------------|
 | `ssh p [filter]` | `ssh profiles [filter]` |
 | `ssh d <ssh-command>` | Direct SSH connection (no full-name equivalent) |
+| `ssh docs` | `ssh help` |
 
 ### Import hosts from `~/.ssh/config`
 
