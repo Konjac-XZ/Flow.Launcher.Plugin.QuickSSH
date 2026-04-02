@@ -210,6 +210,53 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.DoesNotContain(results, r => r.Title == "home");
         }
 
+        // ── "shell " sub-command suggestions ─────────────────────────────────────
+
+        [Fact]
+        public void GetSuggestions_ShellSpace_SuggestsSubCommands()
+        {
+            var results = AutoCompleter.GetSuggestions("ssh", "shell ", null, "icon.png");
+            var titles = new HashSet<string>();
+            foreach (var r in results) titles.Add(r.Title);
+
+            Assert.Contains("add", titles);
+            Assert.Contains("remove", titles);
+        }
+
+        [Theory]
+        [InlineData("a",      new[] { "add" })]
+        [InlineData("ad",     new[] { "add" })]
+        [InlineData("add",    new[] { "add" })]
+        [InlineData("r",      new[] { "remove" })]
+        [InlineData("re",     new[] { "remove" })]
+        [InlineData("rem",    new[] { "remove" })]
+        [InlineData("remo",   new[] { "remove" })]
+        [InlineData("remov",  new[] { "remove" })]
+        [InlineData("remove", new[] { "remove" })]
+        public void GetSuggestions_ShellPartialPrefix_ShowsMatchingSubCommands(
+            string partial, string[] expected)
+        {
+            var results = AutoCompleter.GetSuggestions("ssh", "shell " + partial, null, "icon.png");
+            var subCommandTitles = results
+                .Select(r => r.Title)
+                .Where(t => t == "add" || t == "remove")
+                .ToHashSet();
+
+            foreach (var e in expected)
+                Assert.Contains(e, subCommandTitles);
+            Assert.Equal(expected.Length, subCommandTitles.Count);
+        }
+
+        [Theory]
+        [InlineData("ad",    "remove")]
+        [InlineData("rem",   "add")]
+        public void GetSuggestions_ShellPartialSubCommand_DoesNotSuggestNonMatchingSubCommands(
+            string partial, string notExpected)
+        {
+            var results = AutoCompleter.GetSuggestions("ssh", "shell " + partial, null, "icon.png");
+            Assert.DoesNotContain(results, r => r.Title == notExpected);
+        }
+
         // ── Exact command match — must return empty (command handler owns the view) ──
 
         [Theory]

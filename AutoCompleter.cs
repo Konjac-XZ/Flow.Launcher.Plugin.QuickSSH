@@ -25,6 +25,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
         };
 
         /// <summary>
+        /// Sub-commands of "shell" that appear in suggestions after "shell ".
+        /// </summary>
+        private static readonly string[] ShellSubCommands = new[]
+        {
+            "add", "remove"
+        };
+
+        /// <summary>
         /// Returns auto-completion suggestions for the given partial input.
         /// </summary>
         public static List<Result> GetSuggestions(
@@ -154,6 +162,33 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 }
             }
 
+            // After "shell " suggest sub-commands.
+            bool isShellPrefix = prefixCheck.StartsWith("shell ");
+            if (isShellPrefix)
+            {
+                var search = prefixCheck.Substring(6); // length of "shell "
+
+                foreach (var sub in ShellSubCommands)
+                {
+                    if (string.IsNullOrEmpty(search) || sub.StartsWith(search))
+                    {
+                        var autoText = actionKeyword + " shell " + sub + " ";
+                        results.Add(new Result
+                        {
+                            Title = sub,
+                            SubTitle = GetShellSubCommandDescription(sub),
+                            IcoPath = iconPath,
+                            Action = _ =>
+                            {
+                                api?.ChangeQuery(autoText, true);
+                                return false;
+                            },
+                            AutoCompleteText = autoText
+                        });
+                    }
+                }
+            }
+
             return results;
         }
 
@@ -180,6 +215,17 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 "copy"   => "plugin_quickssh_subtitle_commandprofiles_copy_usage",
                 "export" => "plugin_quickssh_subtitle_commandprofiles_export_usage",
                 "import" => "plugin_quickssh_subtitle_commandprofiles_import_usage",
+                _ => null
+            };
+            return key != null ? QuickSsh.GetTranslation(key) : "";
+        }
+
+        private static string GetShellSubCommandDescription(string subCmd)
+        {
+            var key = subCmd switch
+            {
+                "add"    => "plugin_quickssh_subtitle_commandshell_add_usage",
+                "remove" => "plugin_quickssh_subtitle_commandshell_remove",
                 _ => null
             };
             return key != null ? QuickSsh.GetTranslation(key) : "";
