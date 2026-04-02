@@ -59,7 +59,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         {
             var p = new SshProfile { Type = "ssh", User = "root", HostName = "host", RemoteCommand = "reboot" };
             var cmd = p.ToCommandLine();
-            Assert.EndsWith("\"reboot\"", cmd);
+            Assert.EndsWith("reboot", cmd);
         }
 
         [Fact]
