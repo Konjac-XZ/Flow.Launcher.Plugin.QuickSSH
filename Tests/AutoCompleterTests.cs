@@ -160,11 +160,11 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         [InlineData("copy")]
         [InlineData("rename")]
         [InlineData("help")]
-        public void GetSuggestions_ExactCommandName_ReturnsEmpty(string exactCommand)
+        public void GetSuggestions_ExactCommandName_NoTrailingSpace_ReturnsEmpty(string exactCommand)
         {
-            // When the first token exactly matches a known command, the Query() switch
-            // routes to that command's handler. AutoCompleter must return no suggestions
-            // to avoid polluting the command-specific result view.
+            // When the first token exactly matches a known command (no trailing space),
+            // the Query() switch routes to that command's handler. AutoCompleter must
+            // return no suggestions to avoid polluting the command-specific result view.
             var results = AutoCompleter.GetSuggestions("ssh", exactCommand, null, "icon.png");
             Assert.Empty(results);
         }
@@ -175,6 +175,20 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             // Exact-match guard should be case-insensitive (verb is always ToLowerInvariant).
             var results = AutoCompleter.GetSuggestions("ssh", "RENAME", null, "icon.png");
             Assert.Empty(results);
+        }
+
+        [Fact]
+        public void GetSuggestions_ExactCommandName_WithTrailingSpace_IsNotBlocked()
+        {
+            // "profiles " (with trailing space) means the user pressed space after the command
+            // and is about to type an argument. The guard must NOT block this — profile names
+            // should still be suggested.
+            var userData = new UserData();
+            userData.Attach(() => { });
+            userData.Entries["dev"] = "ssh dev@host";
+
+            var results = AutoCompleter.GetSuggestions("ssh", "profiles ", userData, "icon.png");
+            Assert.Contains(results, r => r.Title == "dev");
         }
 
         // ── Partial names just before exact match still return suggestions ─────────
