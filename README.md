@@ -20,6 +20,12 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 | `ssh help` | Open plugin documentation |
 | `ssh <destination>` | **Implicit direct connect** — type a destination or SSH options directly |
 
+> **Suggestion order:** Typing bare `ssh` (with no arguments) shows top-level suggestions in this order: **profiles**, **shell**, **config**, **help**.
+
+> **Partial subcommand prefixes:** Under `ssh profiles`, you can type a unique prefix instead of the full subcommand name:
+> `ad` → add, `rem` → remove, `ren` → rename, `cop` → copy, `expor` → export, `impor` → import.
+> Ambiguous prefixes (e.g. `r` or `re`) fall through to the profile list.
+
 > **Note for v1 users:** The top-level `add` command (v1: `ssh add <name> <cmd>`) has been moved to `ssh profiles add <name> <cmd>`.
 > Typing `ssh add ...` shows an explicit redirect hint in the UI — it will not silently do something unexpected.
 
