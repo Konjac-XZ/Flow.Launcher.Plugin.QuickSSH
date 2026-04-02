@@ -53,6 +53,13 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
             }
 
+            // When the input exactly matches a known command, return no suggestions.
+            // The Query() switch will have already entered that command's dedicated handler,
+            // which owns the result list for that view. Returning an autocomplete suggestion
+            // here would pollute the command-specific results with an unrelated entry.
+            if (System.Array.IndexOf(VisibleCommands, trimmed) >= 0)
+                return results;
+
             // Match visible commands that start with the input
             // (hidden aliases like "p", "d", and "docs" are not shown as suggestions)
             var matchingCommands = VisibleCommands

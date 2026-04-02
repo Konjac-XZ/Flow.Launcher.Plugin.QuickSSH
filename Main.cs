@@ -31,6 +31,18 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private const string CommandCopy = "copy";
         private const string CommandRename = "rename";
 
+        /// <summary>
+        /// All recognised command verbs (visible + hidden aliases).
+        /// Used in the Query default case to prevent exact command names from
+        /// accidentally being routed to the autocomplete / implicit-SSH paths.
+        /// </summary>
+        private static readonly string[] AllCommandVerbs = new[]
+        {
+            CommandAdd, CommandRemove, CommandProfiles, CommandProfilesShort,
+            CommandDirectConnect, CommandCustomShell, CommandConfig, CommandExport,
+            CommandImport, CommandHelp, CommandDocs, CommandCopy, CommandRename
+        };
+
         private const string AppIconPath = "Images\\app.png";
         private const string AppIconGreenPath = "Images\\app-green.png";
         private const string AppIconRedPath = "Images\\app-red.png";
@@ -143,6 +155,13 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     results.AddRange(HandleRename(query, rest));
                     break;
                 default:
+                    // Guard: if the verb exactly matches any known command it should have
+                    // been handled by one of the cases above. Reaching here means either a
+                    // future refactoring gap or an unexpected call path. Return empty to
+                    // prevent unrelated top-level suggestions from appearing in a command view.
+                    if (System.Array.IndexOf(AllCommandVerbs, verb) >= 0)
+                        break;
+
                     // If the input looks like a direct SSH destination or option string,
                     // treat it as an implicit direct-connect (without requiring the "d" prefix).
                     if (IsImplicitSshInput(input))
