@@ -7,17 +7,25 @@ using Newtonsoft.Json;
 namespace Flow.Launcher.Plugin.QuickSSH
 {
     /// <summary>
-    /// Persisted plugin data: SSH profiles, custom shells, and selected shell.
+    /// Persisted plugin data: SSH/SCP profiles, custom shells, and selected shell.
     /// </summary>
     public class UserData
     {
-        public string PluginVersion { get; set; } = "1.0";
+        public string PluginVersion { get; set; } = "2.0";
+
+        // ── Structured profiles (canonical format, v2+) ────────────────────────────
 
         [JsonProperty]
-        private Dictionary<string, string> EntriesLists { get; set; } = new();
+        private Dictionary<string, SshProfile> ProfilesLists { get; set; } = new();
 
         [JsonIgnore]
-        public AutoSaveDictionary<string, string> Entries { get; private set; }
+        public AutoSaveDictionary<string, SshProfile> Profiles { get; private set; }
+
+        // ── Legacy raw-string profiles (v1, migration source only) ─────────────────
+        // Kept as nullable so that newly created files never write this field.
+
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        private Dictionary<string, string> EntriesLists { get; set; }
 
         [JsonProperty]
         private Dictionary<string, string> CustomShellLists { get; set; } = new();
@@ -29,12 +37,23 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         /// <summary>
         /// Binds auto-save callbacks after construction or deserialization.
+        /// Migrates any legacy raw-string profiles to structured <see cref="SshProfile"/> objects.
         /// </summary>
         public void Attach(Action onChanged)
         {
-            EntriesLists ??= new Dictionary<string, string>();
+            ProfilesLists ??= new Dictionary<string, SshProfile>();
             CustomShellLists ??= new Dictionary<string, string>();
-            Entries = new AutoSaveDictionary<string, string>(EntriesLists, onChanged);
+
+            // One-time migration: convert v1 raw-string entries to structured profiles.
+            if (EntriesLists != null && EntriesLists.Count > 0 && ProfilesLists.Count == 0)
+            {
+                foreach (var kvp in EntriesLists)
+                    ProfilesLists[kvp.Key] = SshProfile.ParseFromLegacyCommand(kvp.Value);
+
+                EntriesLists = null; // Clear legacy field so it is not re-written.
+            }
+
+            Profiles = new AutoSaveDictionary<string, SshProfile>(ProfilesLists, onChanged);
             CustomShell = new AutoSaveDictionary<string, string>(CustomShellLists, onChanged);
         }
     }

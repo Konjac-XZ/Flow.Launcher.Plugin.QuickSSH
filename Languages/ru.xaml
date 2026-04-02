@@ -4,82 +4,82 @@
 
     <!-- Plugin meta -->
     <system:String x:Key="plugin_quickssh_plugin_name">QuickSSH</system:String>
-    <system:String x:Key="plugin_quickssh_plugin_description">Быстро сохраняйте и запускайте SSH-подключения из Flow Launcher.</system:String>
+    <system:String x:Key="plugin_quickssh_plugin_description">Быстро сохраняйте и запускайте SSH/SCP-соединения из Flow Launcher.</system:String>
 
     <!-- Health / status messages -->
     <system:String x:Key="plugin_quickssh_sshnotinstalled_title">QuickSSH</system:String>
-    <system:String x:Key="plugin_quickssh_sshnotinstalled_subtitle">Клиент OpenSSH не найден в этой системе.</system:String>
+    <system:String x:Key="plugin_quickssh_sshnotinstalled_subtitle">OpenSSH client not found on this system.</system:String>
 
     <system:String x:Key="plugin_quickssh_databasenotcreated_title">QuickSSH</system:String>
-    <system:String x:Key="plugin_quickssh_databasenotcreated_subtitle">Не удалось создать базу данных профилей.</system:String>
+    <system:String x:Key="plugin_quickssh_databasenotcreated_subtitle">Profiles database could not be created.</system:String>
 
     <!-- Shared / common -->
-    <system:String x:Key="plugin_quickssh_noprofiles">Профили не сохранены.</system:String>
-    <system:String x:Key="plugin_quickssh_noshells">Профили оболочек не сохранены.</system:String>
-    <system:String x:Key="plugin_quickssh_save_label">Сохранить:</system:String>
-    <system:String x:Key="plugin_quickssh_connect_label">Подключить:</system:String>
-    <system:String x:Key="plugin_quickssh_addshell_label">Добавить оболочку:</system:String>
+    <system:String x:Key="plugin_quickssh_noprofiles">No profiles saved.</system:String>
+    <system:String x:Key="plugin_quickssh_noshells">No shell profiles saved.</system:String>
+    <system:String x:Key="plugin_quickssh_save_label">Save:</system:String>
+    <system:String x:Key="plugin_quickssh_connect_label">Connect:</system:String>
+    <system:String x:Key="plugin_quickssh_addshell_label">Add shell:</system:String>
 
-    <!-- ADD -->
-    <system:String x:Key="plugin_quickssh_title_commandadd">Добавить профиль</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandadd">Использование: add &lt;имя&gt; &lt;ssh-команда&gt;</system:String>
+    <!-- PROFILES (list / connect) -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles">Saved profiles</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Использование: profiles [фильтр] | add | remove | rename | copy | export | import</system:String>
 
-    <!-- REMOVE -->
-    <system:String x:Key="plugin_quickssh_title_commandremove">Удалить профиль</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandremove">Использование: remove [фильтр]</system:String>
+    <!-- PROFILES ADD -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles_add">Добавить профиль</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_add">Использование: profiles add &lt;имя&gt; &lt;ssh-команда&gt;</system:String>
 
-    <!-- PROFILES -->
-    <system:String x:Key="plugin_quickssh_title_commandprofiles">Сохранённые профили</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Использование: profiles [фильтр]</system:String>
+    <!-- PROFILES REMOVE -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles_remove">Удалить профиль</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_remove">Использование: profiles remove [фильтр]</system:String>
+
+    <!-- PROFILES RENAME -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles_rename">Переименовать профиль</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_rename">Использование: profiles rename &lt;старое имя&gt; &lt;новое имя&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_rename_notfound">Profile not found.</system:String>
+
+    <!-- PROFILES COPY -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles_copy">Скопировать SSH-команду</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy">Копировать:</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy_usage">Использование: profiles copy [фильтр]</system:String>
+    <system:String x:Key="plugin_quickssh_copy_clipboard_error">Could not copy to clipboard. Ensure Flow Launcher is running on the UI thread.</system:String>
+
+    <!-- PROFILES EXPORT -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles_export">Экспорт профилей</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_export">Экспортировать профили в: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_export_usage">Использование: profiles export</system:String>
+    <system:String x:Key="plugin_quickssh_export_success">Exported {0} profile(s) to {1}</system:String>
+
+    <!-- PROFILES IMPORT -->
+    <system:String x:Key="plugin_quickssh_title_commandprofiles_import">Импорт профилей</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_import_usage">Использование: profiles import [фильтр]</system:String>
+    <system:String x:Key="plugin_quickssh_import_nofiles">Файлы .sshconfig или .json не найдены в: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_import_success">Imported {0} profile(s) successfully.</system:String>
+    <system:String x:Key="plugin_quickssh_import_empty">No profiles found in the selected file.</system:String>
 
     <!-- DIRECT CONNECT -->
-    <system:String x:Key="plugin_quickssh_title_commanddirect">Прямое подключение</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect">Прямое подключение:</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect_usage">Использование: ssh root@host  |  ssh -p 22 root@host  |  ssh -i "key" root@host</system:String>
+    <system:String x:Key="plugin_quickssh_title_commanddirect">Direct connect</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect">Direct connect:</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddirectconnect_usage">Usage: ssh root@host  |  ssh -p 22 root@host  |  ssh -i "key" root@host</system:String>
 
     <!-- SHELL -->
-    <system:String x:Key="plugin_quickssh_title_commandshell">Управление оболочками</system:String>
-    <system:String x:Key="plugin_quickssh_title_commandshell_add">Добавить профиль оболочки</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandshell_add_usage">Использование: shell add &lt;exe&gt; или shell add &lt;имя&gt; &lt;exe + аргументы&gt;</system:String>
-    <system:String x:Key="plugin_quickssh_title_commandshell_remove">Удалить профиль оболочки</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Использование: shell remove [фильтр]</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Использование: shell add ; remove</system:String>
-    <system:String x:Key="plugin_quickssh_shell_selected">(выбрано)</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandshell">Shell management</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandshell_add">Add shell profile</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_add_usage">Usage: shell add &lt;exe&gt; or shell add &lt;name&gt; &lt;exe + args&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandshell_remove">Remove shell profile</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_remove">Usage: shell remove [filter]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandshell_help">Usage: shell add ; remove</system:String>
+    <system:String x:Key="plugin_quickssh_shell_selected">(selected)</system:String>
 
     <!-- CONFIG -->
-    <system:String x:Key="plugin_quickssh_title_commandconfig">Импорт SSH-конфига</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandconfig">Импортировать хосты из файла ~/.ssh/config.</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandconfig_usage">Использование: config</system:String>
-    <system:String x:Key="plugin_quickssh_config_imported">Импортировано {0} хост(ов) из SSH-конфига.</system:String>
-    <system:String x:Key="plugin_quickssh_config_notfound">Файл SSH-конфига не найден по пути ~/.ssh/config.</system:String>
-
-    <!-- EXPORT -->
-    <system:String x:Key="plugin_quickssh_title_commandexport">Экспорт профилей</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandexport">Экспортировать SSH-профили в: {0}</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandexport_usage">Использование: export</system:String>
-    <system:String x:Key="plugin_quickssh_export_success">Экспортировано {0} профиль(ей) в {1}</system:String>
-
-    <!-- IMPORT -->
-    <system:String x:Key="plugin_quickssh_title_commandimport">Импорт профилей</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandimport_usage">Использование: import [фильтр]</system:String>
-    <system:String x:Key="plugin_quickssh_import_nofiles">JSON-файлы не найдены в: {0}</system:String>
-    <system:String x:Key="plugin_quickssh_import_success">Импортировано {0} профиль(ей) успешно.</system:String>
-    <system:String x:Key="plugin_quickssh_import_empty">В выбранном файле профили не найдены.</system:String>
-
-    <!-- COPY -->
-    <system:String x:Key="plugin_quickssh_title_commandcopy">Копировать SSH-команду</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandcopy">Копировать:</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandcopy_usage">Использование: copy &lt;существующий&gt; &lt;новое-имя&gt;</system:String>
-    <system:String x:Key="plugin_quickssh_copy_clipboard_error">Не удалось скопировать в буфер обмена. Убедитесь, что Flow Launcher запущен в потоке UI.</system:String>
-
-    <!-- RENAME -->
-    <system:String x:Key="plugin_quickssh_title_commandrename">Переименовать профиль</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandrename">Использование: rename &lt;старое имя&gt; &lt;новое имя&gt;</system:String>
-    <system:String x:Key="plugin_quickssh_rename_notfound">Профиль не найден.</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandconfig">Import SSH config</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandconfig">Import hosts from ~/.ssh/config file.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandconfig_usage">Использование: config  (импорт из ~/.ssh/config)</system:String>
+    <system:String x:Key="plugin_quickssh_config_imported">Imported {0} host(s) from SSH config.</system:String>
+    <system:String x:Key="plugin_quickssh_config_notfound">SSH config file not found at ~/.ssh/config.</system:String>
 
     <!-- HELP -->
-    <system:String x:Key="plugin_quickssh_title_commandhelp">Помощь</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandhelp">Открыть документацию плагина на GitHub.</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandhelp_usage">Использование: help</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandhelp">Help</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandhelp">Open plugin documentation on GitHub.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandhelp_usage">Usage: help</system:String>
 
 </ResourceDictionary>

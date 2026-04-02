@@ -1,10 +1,18 @@
 namespace Flow.Launcher.Plugin.QuickSSH
 {
     /// <summary>
-    /// Builds SSH command strings with proper quoting and escaping.
+    /// Builds SSH/SCP command strings with proper quoting and escaping.
     /// </summary>
     public static class SshCommandBuilder
     {
+        /// <summary>
+        /// Delegates to <see cref="SshProfile.ToCommandLine"/> to build a complete
+        /// command string from a structured profile.
+        /// </summary>
+        public static string BuildFromProfile(SshProfile profile)
+            => profile?.ToCommandLine() ?? string.Empty;
+
+
         /// <summary>
         /// Wraps <paramref name="arg"/> in double-quotes if it contains spaces
         /// or other characters that need quoting.

@@ -20,7 +20,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
                 File.Delete(_tmpFile);
         }
 
-        private Dictionary<string, string> ParseConfig(string content)
+        private Dictionary<string, SshProfile> ParseConfig(string content)
         {
             File.WriteAllText(_tmpFile, content);
             return SshConfigParser.Parse(_tmpFile);
@@ -55,7 +55,8 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             var config = "Host myserver\n    HostName 192.168.1.10\n    User admin\n";
             var result = ParseConfig(config);
             Assert.True(result.ContainsKey("myserver"));
-            Assert.Contains("admin@192.168.1.10", result["myserver"]);
+            Assert.Equal("admin", result["myserver"].User);
+            Assert.Equal("192.168.1.10", result["myserver"].HostName);
         }
 
         [Fact]
@@ -64,7 +65,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             var config = "Host myserver\n    HostName 192.168.1.10\n    Port 2222\n";
             var result = ParseConfig(config);
             Assert.True(result.ContainsKey("myserver"));
-            Assert.Contains("-p 2222", result["myserver"]);
+            Assert.Equal("2222", result["myserver"].Port);
         }
 
         [Fact]
@@ -73,25 +74,26 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             var config = "Host myserver\n    HostName 192.168.1.10\n    Port 22\n";
             var result = ParseConfig(config);
             Assert.True(result.ContainsKey("myserver"));
-            Assert.DoesNotContain("-p", result["myserver"]);
+            Assert.Null(result["myserver"].Port);
         }
 
         [Fact]
-        public void Parse_HostWithIdentityFile_IncludesFlag()
+        public void Parse_HostWithIdentityFile_CapturesIt()
         {
             var config = "Host myserver\n    HostName 192.168.1.10\n    IdentityFile /home/user/.ssh/id_rsa\n";
             var result = ParseConfig(config);
             Assert.True(result.ContainsKey("myserver"));
-            Assert.Contains("-i /home/user/.ssh/id_rsa", result["myserver"]);
+            Assert.Equal("/home/user/.ssh/id_rsa", result["myserver"].IdentityFile);
         }
 
         [Fact]
-        public void Parse_HostNoHostName_UsesAliasAsTarget()
+        public void Parse_HostNoHostName_UsesAliasAsHostName()
         {
             var config = "Host myserver\n    User alice\n";
             var result = ParseConfig(config);
             Assert.True(result.ContainsKey("myserver"));
-            Assert.Contains("alice@myserver", result["myserver"]);
+            Assert.Equal("myserver", result["myserver"].HostName);
+            Assert.Equal("alice", result["myserver"].User);
         }
 
         [Fact]
@@ -115,6 +117,44 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.False(result.ContainsKey("*"));
         }
 
+        // ── Advanced SSH config fields ────────────────────────────────────────────
+
+        [Fact]
+        public void Parse_LocalForward_Captured()
+        {
+            var config = "Host proxy\n    HostName 10.0.0.1\n    LocalForward 8443 127.0.0.1:443\n";
+            var result = ParseConfig(config);
+            Assert.NotNull(result["proxy"].LocalForward);
+            Assert.Contains("8443 127.0.0.1:443", result["proxy"].LocalForward);
+        }
+
+        [Fact]
+        public void Parse_MultipleLocalForwards_AllCaptured()
+        {
+            var config =
+                "Host proxy\n    HostName 10.0.0.1\n" +
+                "    LocalForward 8443 127.0.0.1:443\n" +
+                "    LocalForward 8080 127.0.0.1:80\n";
+            var result = ParseConfig(config);
+            Assert.Equal(2, result["proxy"].LocalForward.Count);
+        }
+
+        [Fact]
+        public void Parse_ProxyJump_Captured()
+        {
+            var config = "Host internal\n    HostName 10.0.0.1\n    ProxyJump bastion.example.com\n";
+            var result = ParseConfig(config);
+            Assert.Equal("bastion.example.com", result["internal"].ProxyJump);
+        }
+
+        [Fact]
+        public void Parse_IdentitiesOnly_Captured()
+        {
+            var config = "Host myserver\n    HostName 10.0.0.1\n    IdentitiesOnly yes\n";
+            var result = ParseConfig(config);
+            Assert.True(result["myserver"].IdentitiesOnly);
+        }
+
         // ── = separator support ───────────────────────────────────────────────────
 
         [Fact]
@@ -123,7 +163,8 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             var config = "Host=myserver\n    HostName=192.168.1.10\n    User=alice\n";
             var result = ParseConfig(config);
             Assert.True(result.ContainsKey("myserver"));
-            Assert.Contains("alice@192.168.1.10", result["myserver"]);
+            Assert.Equal("alice", result["myserver"].User);
+            Assert.Equal("192.168.1.10", result["myserver"].HostName);
         }
 
         [Fact]
@@ -132,18 +173,8 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             var config = "Host = myserver\n    HostName = 192.168.1.10\n    Port = 2222\n";
             var result = ParseConfig(config);
             Assert.True(result.ContainsKey("myserver"));
-            Assert.Contains("-p 2222", result["myserver"]);
-            Assert.Contains("192.168.1.10", result["myserver"]);
-        }
-
-        [Fact]
-        public void Parse_MixedSeparators_ParsesCorrectly()
-        {
-            var config = "Host myserver\n    HostName=10.0.0.1\n    User alice\n    Port=2222\n";
-            var result = ParseConfig(config);
-            Assert.True(result.ContainsKey("myserver"));
-            Assert.Contains("alice@10.0.0.1", result["myserver"]);
-            Assert.Contains("-p 2222", result["myserver"]);
+            Assert.Equal("2222", result["myserver"].Port);
+            Assert.Equal("192.168.1.10", result["myserver"].HostName);
         }
 
         // ── Multiple aliases per Host line ────────────────────────────────────────
@@ -159,11 +190,11 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         }
 
         [Fact]
-        public void Parse_MultipleAliases_AllShareSameCommand()
+        public void Parse_MultipleAliases_AllShareSameHostName()
         {
             var config = "Host web1 web2\n    HostName 10.0.0.1\n    User deploy\n";
             var result = ParseConfig(config);
-            Assert.Equal(result["web1"], result["web2"]);
+            Assert.Equal(result["web1"].HostName, result["web2"].HostName);
         }
 
         [Fact]
@@ -194,17 +225,26 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             var config = "Host final\n    HostName 10.0.0.99\n    User root";
             var result = ParseConfig(config);
             Assert.True(result.ContainsKey("final"));
-            Assert.Contains("root@10.0.0.99", result["final"]);
+            Assert.Equal("root", result["final"].User);
+            Assert.Equal("10.0.0.99", result["final"].HostName);
         }
 
-        // ── Generated command format ──────────────────────────────────────────────
+        // ── ToCommandLine consistency ─────────────────────────────────────────────
 
         [Fact]
-        public void Parse_FullEntry_CommandStartsWithSsh()
+        public void Parse_SimpleHost_CommandLineStartsWithSsh()
         {
             var config = "Host myserver\n    HostName example.com\n    User alice\n    Port 2222\n";
             var result = ParseConfig(config);
-            Assert.StartsWith("ssh", result["myserver"]);
+            Assert.StartsWith("ssh", result["myserver"].ToCommandLine());
+        }
+
+        [Fact]
+        public void Parse_HostWithPort_CommandLineContainsPort()
+        {
+            var config = "Host myserver\n    HostName example.com\n    Port 2222\n";
+            var result = ParseConfig(config);
+            Assert.Contains("-p 2222", result["myserver"].ToCommandLine());
         }
     }
 }

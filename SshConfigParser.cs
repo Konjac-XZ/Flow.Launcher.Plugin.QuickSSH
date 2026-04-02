@@ -6,26 +6,26 @@ using System.Linq;
 namespace Flow.Launcher.Plugin.QuickSSH
 {
     /// <summary>
-    /// Parses ~/.ssh/config and extracts Host entries.
+    /// Parses ~/.ssh/config and extracts Host entries as structured <see cref="SshProfile"/> objects.
     /// </summary>
     public static class SshConfigParser
     {
         /// <summary>
-        /// Parses the SSH config file and returns a dictionary of Host alias → ssh command string.
+        /// Parses the SSH config file and returns a dictionary of Host alias → <see cref="SshProfile"/>.
         /// Wildcard patterns (containing * or ?) are skipped.
         /// Supports both space-separated and '='-separated key/value pairs as per ssh_config(5).
         /// Multiple host aliases on a single Host line are each stored as separate entries.
         /// </summary>
-        public static Dictionary<string, string> Parse(string? configPath = null)
+        public static Dictionary<string, SshProfile> Parse(string? configPath = null)
         {
             configPath ??= Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".ssh", "config");
 
-            var hosts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var profiles = new Dictionary<string, SshProfile>(StringComparer.OrdinalIgnoreCase);
 
             if (!File.Exists(configPath))
-                return hosts;
+                return profiles;
 
             // Current Host block state
             var currentAliases = new List<string>();
@@ -33,6 +33,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
             string? user = null;
             string? port = null;
             string? identityFile = null;
+            bool identitiesOnly = false;
+            var localForwards = new List<string>();
+            var remoteForwards = new List<string>();
+            string? dynamicForward = null;
+            string? proxyJump = null;
+            string? proxyCommand = null;
 
             foreach (var rawLine in File.ReadLines(configPath))
             {
@@ -40,8 +46,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 if (string.IsNullOrEmpty(line) || line.StartsWith("#"))
                     continue;
 
-                // SSH config allows both "Key Value" and "Key=Value" (with optional whitespace
-                // around the '=').  Find the first separator character to split key from value.
                 if (!TrySplitKeyValue(line, out var key, out var value))
                     continue;
 
@@ -51,15 +55,19 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     if (currentAliases.Count > 0)
                     {
                         foreach (var alias in currentAliases)
-                            AddHostEntry(hosts, alias, hostName, user, port, identityFile);
+                            AddEntry(profiles, alias, hostName, user, port, identityFile,
+                                identitiesOnly, localForwards, remoteForwards, dynamicForward,
+                                proxyJump, proxyCommand);
                     }
 
+                    // Reset block state
                     currentAliases.Clear();
-                    hostName = user = port = identityFile = null;
+                    hostName = user = port = identityFile = dynamicForward =
+                        proxyJump = proxyCommand = null;
+                    identitiesOnly = false;
+                    localForwards = new List<string>();
+                    remoteForwards = new List<string>();
 
-                    // A single Host line may declare multiple space-separated aliases,
-                    // e.g. "Host web1 web2 web3".  Wildcard aliases (*) cause the whole
-                    // block to be skipped because they represent catch-all rules.
                     var aliases = value.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
                     if (aliases.Any(a => a.Contains('*') || a.Contains('?')))
                         continue; // skip wildcard blocks
@@ -68,14 +76,21 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 }
                 else if (currentAliases.Count > 0)
                 {
-                    if (key.Equals("HostName", StringComparison.OrdinalIgnoreCase))
-                        hostName = value;
-                    else if (key.Equals("User", StringComparison.OrdinalIgnoreCase))
-                        user = value;
-                    else if (key.Equals("Port", StringComparison.OrdinalIgnoreCase))
-                        port = value;
-                    else if (key.Equals("IdentityFile", StringComparison.OrdinalIgnoreCase))
-                        identityFile = value;
+                    switch (key.ToLowerInvariant())
+                    {
+                        case "hostname":       hostName = value;       break;
+                        case "user":           user = value;           break;
+                        case "port":           port = value;           break;
+                        case "identityfile":   identityFile = value;   break;
+                        case "identitiesonly":
+                            identitiesOnly = value.Equals("yes", StringComparison.OrdinalIgnoreCase);
+                            break;
+                        case "localforward":   localForwards.Add(value);  break;
+                        case "remoteforward":  remoteForwards.Add(value); break;
+                        case "dynamicforward": dynamicForward = value;    break;
+                        case "proxyjump":      proxyJump = value;         break;
+                        case "proxycommand":   proxyCommand = value;      break;
+                    }
                 }
             }
 
@@ -83,17 +98,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
             if (currentAliases.Count > 0)
             {
                 foreach (var alias in currentAliases)
-                    AddHostEntry(hosts, alias, hostName, user, port, identityFile);
+                    AddEntry(profiles, alias, hostName, user, port, identityFile,
+                        identitiesOnly, localForwards, remoteForwards, dynamicForward,
+                        proxyJump, proxyCommand);
             }
 
-            return hosts;
+            return profiles;
         }
 
-        /// <summary>
-        /// Splits a config line into key and value.
-        /// Accepts both "Key Value" and "Key=Value" (with optional whitespace around '=').
-        /// Returns false if no separator is found.
-        /// </summary>
         private static bool TrySplitKeyValue(string line, out string key, out string value)
         {
             var eqIdx = line.IndexOf('=');
@@ -129,29 +141,36 @@ namespace Flow.Launcher.Plugin.QuickSSH
             return !string.IsNullOrEmpty(key);
         }
 
-        private static void AddHostEntry(
-            Dictionary<string, string> hosts,
+        private static void AddEntry(
+            Dictionary<string, SshProfile> profiles,
             string alias,
             string? hostName,
             string? user,
             string? port,
-            string? identityFile)
+            string? identityFile,
+            bool identitiesOnly,
+            List<string> localForwards,
+            List<string> remoteForwards,
+            string? dynamicForward,
+            string? proxyJump,
+            string? proxyCommand)
         {
-            var target = hostName ?? alias;
-            var cmd = "ssh";
+            var profile = new SshProfile
+            {
+                Type = "ssh",
+                HostName = hostName ?? alias,
+                User = string.IsNullOrEmpty(user) ? null : user,
+                Port = string.IsNullOrEmpty(port) || port == "22" ? null : port,
+                IdentityFile = string.IsNullOrEmpty(identityFile) ? null : identityFile,
+                IdentitiesOnly = identitiesOnly,
+                LocalForward = localForwards.Count > 0 ? new List<string>(localForwards) : null,
+                RemoteForward = remoteForwards.Count > 0 ? new List<string>(remoteForwards) : null,
+                DynamicForward = string.IsNullOrEmpty(dynamicForward) ? null : dynamicForward,
+                ProxyJump = string.IsNullOrEmpty(proxyJump) ? null : proxyJump,
+                ProxyCommand = string.IsNullOrEmpty(proxyCommand) ? null : proxyCommand,
+            };
 
-            if (!string.IsNullOrEmpty(identityFile))
-                cmd += " -i " + SshCommandBuilder.QuoteArgument(identityFile);
-
-            if (!string.IsNullOrEmpty(port) && port != "22")
-                cmd += " -p " + port;
-
-            if (!string.IsNullOrEmpty(user))
-                cmd += " " + user + "@" + target;
-            else
-                cmd += " " + target;
-
-            hosts[alias] = cmd;
+            profiles[alias] = profile;
         }
     }
 }

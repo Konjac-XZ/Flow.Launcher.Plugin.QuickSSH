@@ -9,11 +9,19 @@ namespace Flow.Launcher.Plugin.QuickSSH
     public class AutoCompleter
     {
         /// <summary>
-        /// Commands visible in the autocomplete / suggestion UI.
+        /// Top-level commands visible in the autocomplete / suggestion UI.
         /// </summary>
         private static readonly string[] VisibleCommands = new[]
         {
-            "add", "remove", "profiles", "shell", "config", "export", "import", "copy", "rename", "help"
+            "profiles", "config", "shell", "help"
+        };
+
+        /// <summary>
+        /// Sub-commands of "profiles" that appear in suggestions after "profiles ".
+        /// </summary>
+        private static readonly string[] ProfilesSubCommands = new[]
+        {
+            "add", "remove", "rename", "copy", "export", "import"
         };
 
         /// <summary>
@@ -31,7 +39,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             if (string.IsNullOrEmpty(trimmed))
             {
-                // Show all visible commands
+                // Show all visible top-level commands
                 foreach (var cmd in VisibleCommands)
                 {
                     var autoText = actionKeyword + " " + cmd + " ";
@@ -51,15 +59,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
             }
 
-            // When the input is exactly a known command name with no trailing space or arguments,
-            // return no suggestions. The Query() switch routes that verb to its dedicated handler,
-            // which owns the result list. "profiles " (with trailing space) is intentionally
-            // excluded from this guard — it signals the user is about to type arguments and
-            // profile-name suggestions should still appear.
+            // When the input is exactly a known top-level command name with no trailing space
+            // or arguments, return no suggestions. The Query() switch routes that verb to its
+            // dedicated handler, which owns the result list.
+            // "profiles " (with trailing space) is intentionally excluded from this guard —
+            // it signals the user is about to type a sub-command or profile name.
             if (!input.TrimStart().Contains(' ') && System.Array.IndexOf(VisibleCommands, trimmed) >= 0)
                 return results;
 
-            // Match visible commands that start with the input
+            // Match visible top-level commands that start with the input
             var matchingCommands = VisibleCommands
                 .Where(c => c.StartsWith(trimmed))
                 .ToList();
@@ -81,27 +89,59 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 });
             }
 
-            // If typing after "profiles", also suggest profile names.
-            // Use TrimStart (not Trim) so a trailing space in "profiles " is preserved
-            // and correctly matched by StartsWith("profiles ").
+            // After "profiles " suggest sub-commands and profile names.
             var prefixCheck = input.TrimStart().ToLowerInvariant();
             bool isProfilesPrefix = prefixCheck.StartsWith("profiles ");
             if (isProfilesPrefix)
             {
-                var search = prefixCheck.Substring(9);
+                var search = prefixCheck.Substring(9); // length of "profiles "
 
-                if (userData?.Entries != null)
+                // Suggest matching sub-commands first
+                foreach (var sub in ProfilesSubCommands)
                 {
-                    foreach (var entry in userData.Entries)
+                    if (string.IsNullOrEmpty(search) || sub.StartsWith(search))
                     {
-                        if (string.IsNullOrEmpty(search) ||
-                            entry.Key.ToLowerInvariant().Contains(search))
+                        var autoText = actionKeyword + " profiles " + sub + " ";
+                        results.Add(new Result
                         {
-                            var autoText = actionKeyword + " profiles " + entry.Key;
+                            Title = sub,
+                            SubTitle = GetProfilesSubCommandDescription(sub),
+                            IcoPath = iconPath,
+                            Action = _ =>
+                            {
+                                api?.ChangeQuery(autoText, true);
+                                return false;
+                            },
+                            AutoCompleteText = autoText
+                        });
+                    }
+                }
+
+                // Suggest profile names (when search is not a sub-command prefix)
+                bool isSubCmdPrefix = ProfilesSubCommands.Any(s => s.StartsWith(search));
+                bool isExactSubCmd = ProfilesSubCommands.Any(s => s == search);
+
+                // Show profile names when: empty search, OR not an exact sub-cmd match
+                // and not ambiguously matching only sub-commands.
+                bool showProfiles = string.IsNullOrEmpty(search)
+                    || (!isExactSubCmd && !isSubCmdPrefix)
+                    || (isSubCmdPrefix && search.Length > 0 && !ProfilesSubCommands.Any(s => s == search));
+
+                if (userData?.Profiles != null)
+                {
+                    foreach (var entry in userData.Profiles)
+                    {
+                        var profileName = entry.Key;
+                        var profileDisplay = entry.Value?.ToDisplayString() ?? "";
+
+                        if (string.IsNullOrEmpty(search) ||
+                            profileName.ToLowerInvariant().Contains(search))
+                        {
+                            var autoText = actionKeyword + " profiles " + profileName;
                             results.Add(new Result
                             {
-                                Title = entry.Key,
-                                SubTitle = entry.Value,
+                                Title = profileName,
+                                SubTitle = profileDisplay,
                                 IcoPath = iconPath,
                                 Action = _ =>
                                 {
@@ -122,16 +162,25 @@ namespace Flow.Launcher.Plugin.QuickSSH
         {
             var key = command switch
             {
-                "add" => "plugin_quickssh_subtitle_commandadd",
-                "remove" => "plugin_quickssh_subtitle_commandremove",
                 "profiles" => "plugin_quickssh_subtitle_commandprofiles",
-                "shell" => "plugin_quickssh_subtitle_commandshell_help",
-                "config" => "plugin_quickssh_subtitle_commandconfig_usage",
-                "export" => "plugin_quickssh_subtitle_commandexport_usage",
-                "import" => "plugin_quickssh_subtitle_commandimport_usage",
-                "copy" => "plugin_quickssh_subtitle_commandcopy_usage",
-                "rename" => "plugin_quickssh_subtitle_commandrename",
-                "help" => "plugin_quickssh_subtitle_commandhelp_usage",
+                "config"   => "plugin_quickssh_subtitle_commandconfig_usage",
+                "shell"    => "plugin_quickssh_subtitle_commandshell_help",
+                "help"     => "plugin_quickssh_subtitle_commandhelp_usage",
+                _ => null
+            };
+            return key != null ? QuickSsh.GetTranslation(key) : "";
+        }
+
+        private static string GetProfilesSubCommandDescription(string subCmd)
+        {
+            var key = subCmd switch
+            {
+                "add"    => "plugin_quickssh_subtitle_commandprofiles_add",
+                "remove" => "plugin_quickssh_subtitle_commandprofiles_remove",
+                "rename" => "plugin_quickssh_subtitle_commandprofiles_rename",
+                "copy"   => "plugin_quickssh_subtitle_commandprofiles_copy_usage",
+                "export" => "plugin_quickssh_subtitle_commandprofiles_export_usage",
+                "import" => "plugin_quickssh_subtitle_commandprofiles_import_usage",
                 _ => null
             };
             return key != null ? QuickSsh.GetTranslation(key) : "";
