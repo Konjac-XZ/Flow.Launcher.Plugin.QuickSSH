@@ -10,8 +10,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 |---------|-------------|
 | `ssh add <name> <ssh-command>` | Save a new SSH profile |
 | `ssh remove [filter]` | Delete a saved profile |
-| `ssh profiles [filter]` / `ssh p [filter]` | List, search, and connect to saved profiles |
-| `ssh d <ssh-command>` | Direct SSH connection without saving |
+| `ssh profiles [filter]` | List, search, and connect to saved profiles |
 | `ssh shell` | Manage custom shell interpreters (add / remove / select) |
 | `ssh config` | Import hosts from `~/.ssh/config` |
 | `ssh export` | Export all profiles to a JSON file |
@@ -23,6 +22,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 ### Capabilities
 
 - **TAB auto-completion** — press TAB to auto-complete commands and profile names
+- **Shell-like command entry** — typing the first letters of a command filters matching suggestions; selecting a suggestion autocompletes the command into the query (via TAB or Enter) instead of executing it. Only the 10 primary commands (`add`, `remove`, `profiles`, `shell`, `config`, `export`, `import`, `copy`, `rename`, `docs`) appear in the suggestion list. Short aliases (`p`, `d`) still work when typed but are hidden from the UI.
 - **In-line usage hints** — every command view shows a non-actionable usage/help entry pinned to the top of the results list, even in empty states (e.g. no profiles, no shells, no import files). Empty-state info rows appear second. Ordering is enforced via `Result.Score = int.MaxValue` so Flow Launcher's own sorting never reorders the hint below actionable or informational items.
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
 - **Profile export / import** — back up and restore profiles as plain JSON files
@@ -56,10 +56,10 @@ ssh add bastion admin@bastion.example.com -p 22222
 
 ```
 ssh profiles           → show all saved profiles
-ssh p                  → shorthand for ssh profiles
-ssh p myserver         → fuzzy-search for "myserver"; press Enter to connect
 ssh profiles prod      → filter profiles containing "prod"
 ```
+
+> **Tip:** The short alias `ssh p` still works as a shorthand for `ssh profiles`.
 
 ### Remove a profile
 
@@ -84,6 +84,8 @@ ssh rename myserver new-name      → rename "myserver" to "new-name"
 ```
 
 ### Quick one-time connection (without saving)
+
+> **Note:** The `d` (direct connect) command works as a hidden alias. Type `ssh d` followed by a destination to connect without saving a profile.
 
 ```
 ssh d root@10.0.0.1
