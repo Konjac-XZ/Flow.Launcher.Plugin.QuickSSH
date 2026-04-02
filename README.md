@@ -10,19 +10,20 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 |---------|-------------|
 | `ssh add <name> <ssh-command>` | Save a new SSH profile |
 | `ssh remove [filter]` | Delete a saved profile |
-| `ssh profiles [filter]` / `ssh p [filter]` | List, search, and connect to saved profiles |
-| `ssh d <ssh-command>` | Direct SSH connection without saving |
+| `ssh profiles [filter]` | List, search, and connect to saved profiles |
 | `ssh shell` | Manage custom shell interpreters (add / remove / select) |
 | `ssh config` | Import hosts from `~/.ssh/config` |
 | `ssh export` | Export all profiles to a JSON file |
 | `ssh import [filter]` | Import profiles from a JSON file |
 | `ssh copy [filter]` | Copy an SSH command to the clipboard |
 | `ssh rename <oldname> <newname>` | Rename an existing profile |
-| `ssh docs` | Open plugin documentation |
+| `ssh help` | Open plugin documentation |
 
 ### Capabilities
 
 - **TAB auto-completion** — press TAB to auto-complete commands and profile names
+- **Shell-like command entry** — typing the first letters of a command filters matching suggestions; selecting a suggestion autocompletes the command into the query (via TAB or Enter) instead of executing it
+- **Hidden aliases** — short aliases `p` (profiles), `d` (direct connect), and `docs` (help) are accepted when typed but are hidden from the autocomplete UI to keep the suggestion list clean
 - **In-line usage hints** — every command view shows a non-actionable usage/help entry pinned to the top of the results list, even in empty states (e.g. no profiles, no shells, no import files). Empty-state info rows appear second. Ordering is enforced via `Result.Score = int.MaxValue` so Flow Launcher's own sorting never reorders the hint below actionable or informational items.
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
 - **Profile export / import** — back up and restore profiles as plain JSON files
@@ -56,8 +57,6 @@ ssh add bastion admin@bastion.example.com -p 22222
 
 ```
 ssh profiles           → show all saved profiles
-ssh p                  → shorthand for ssh profiles
-ssh p myserver         → fuzzy-search for "myserver"; press Enter to connect
 ssh profiles prod      → filter profiles containing "prod"
 ```
 
@@ -90,6 +89,16 @@ ssh d root@10.0.0.1
 ssh d ssh -p 2222 deploy@staging.example.com
 ssh d user@host        → "ssh " prefix is added automatically
 ```
+
+### Hidden aliases
+
+The following short aliases are supported for backward compatibility but are **not shown** in the autocomplete suggestion list:
+
+| Alias | Equivalent command |
+|-------|-------------------|
+| `ssh p [filter]` | `ssh profiles [filter]` |
+| `ssh d <ssh-command>` | Direct SSH connection (no full-name equivalent) |
+| `ssh docs` | `ssh help` |
 
 ### Import hosts from `~/.ssh/config`
 

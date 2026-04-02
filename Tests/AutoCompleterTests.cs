@@ -13,18 +13,25 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             var results = AutoCompleter.GetSuggestions("ssh", "", null, "icon.png");
 
             Assert.NotEmpty(results);
-            // All standard commands must be present.
+            // All visible commands must be present.
             var titles = new HashSet<string>();
             foreach (var r in results) titles.Add(r.Title);
 
             Assert.Contains("add", titles);
             Assert.Contains("remove", titles);
             Assert.Contains("profiles", titles);
-            Assert.Contains("d", titles);
             Assert.Contains("shell", titles);
+            Assert.Contains("config", titles);
+            Assert.Contains("export", titles);
+            Assert.Contains("import", titles);
             Assert.Contains("copy", titles);
             Assert.Contains("rename", titles);
-            Assert.Contains("docs", titles);
+            Assert.Contains("help", titles);
+
+            // Hidden aliases must NOT appear in suggestions.
+            Assert.DoesNotContain("p", titles);
+            Assert.DoesNotContain("d", titles);
+            Assert.DoesNotContain("docs", titles);
         }
 
         [Fact]

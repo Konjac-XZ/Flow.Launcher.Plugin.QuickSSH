@@ -78,9 +78,14 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandrename">Použitie: rename &lt;starý názov&gt; &lt;nový názov&gt;</system:String>
     <system:String x:Key="plugin_quickssh_rename_notfound">Profil sa nenašiel.</system:String>
 
-    <!-- DOCS -->
-    <system:String x:Key="plugin_quickssh_title_commanddocs">Dokumentácia</system:String>
+    <!-- HELP -->
+    <system:String x:Key="plugin_quickssh_title_commandhelp">Pomoc</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandhelp">Otvoriť dokumentáciu pluginu na GitHube.</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandhelp_usage">Použitie: help</system:String>
+
+    <!-- DOCS (hidden alias for help) -->
+    <system:String x:Key="plugin_quickssh_title_commanddocs">Pomoc</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commanddocs">Otvoriť dokumentáciu pluginu na GitHube.</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commanddocs_usage">Použitie: docs</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commanddocs_usage">Použitie: help</system:String>
 
 </ResourceDictionary>
