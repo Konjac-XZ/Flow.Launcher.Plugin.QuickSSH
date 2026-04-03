@@ -58,5 +58,37 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             // with no other score values between them.
             Assert.Equal(QuickSsh.ScoreSubMenuManagement - 1, QuickSsh.ScoreBackNavigation);
         }
+
+        // ── config submenu back-navigation ────────────────────────────────────────
+
+        [Fact]
+        public void ConfigSubmenu_BackNavScoreGuaranteesSecondRowPosition()
+        {
+            // The config submenu must display:
+            //   1. management row  (ScoreSubMenuManagement)
+            //   2. back-nav row    (ScoreBackNavigation)
+            //   3. config action   (no explicit Score, defaults to 0)
+            // The back-nav score must be below management but above 0 (default).
+            Assert.True(QuickSsh.ScoreBackNavigation < QuickSsh.ScoreSubMenuManagement,
+                "Config back-nav must be below the management row.");
+            Assert.True(QuickSsh.ScoreBackNavigation > 0,
+                "Config back-nav must be above the config action row (Score = 0 default).");
+        }
+
+        // ── help submenu back-navigation ──────────────────────────────────────────
+
+        [Fact]
+        public void HelpSubmenu_BackNavScoreGuaranteesSecondRowPosition()
+        {
+            // The help submenu must display:
+            //   1. management row  (ScoreSubMenuManagement)
+            //   2. back-nav row    (ScoreBackNavigation)
+            //   3. help action     (no explicit Score, defaults to 0)
+            // The back-nav score must be below management but above 0 (default).
+            Assert.True(QuickSsh.ScoreBackNavigation < QuickSsh.ScoreSubMenuManagement,
+                "Help back-nav must be below the management row.");
+            Assert.True(QuickSsh.ScoreBackNavigation > 0,
+                "Help back-nav must be above the help action row (Score = 0 default).");
+        }
     }
 }
