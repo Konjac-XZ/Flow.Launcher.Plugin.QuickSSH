@@ -61,6 +61,11 @@ ssh profiles prod      → filter saved profiles containing "prod"
 
 Press Enter on a profile row to launch the connection.
 
+> **Display order** — `ssh profiles` always shows results in a fixed, stable order regardless of fuzzy-match scoring:
+> 1. **Správa profilov / Profile management** (usage hint, always pinned at the top)
+> 2. **Action rows** as one continuous block: Add profile → Remove profile → Rename profile → Copy SSH command → Export profiles → Import profiles
+> 3. **Saved profiles** (filtered / sorted by relevance when a search term is given)
+
 ### Add a profile
 
 Profiles are added using standard SSH or SCP command syntax.

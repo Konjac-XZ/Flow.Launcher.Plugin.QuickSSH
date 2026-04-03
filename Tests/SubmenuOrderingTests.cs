@@ -9,6 +9,13 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
     ///   2. action rows
     ///   3. saved items
     /// must be enforced through the Score constants alone.
+    ///
+    /// Root cause of the original profiles ordering bug:
+    ///   Action row scores were 10-60 and saved profiles used Score=0.  Flow Launcher's
+    ///   built-in fuzzy-match bonus can boost a Score=0 result by hundreds of points,
+    ///   pushing saved profiles above the "Import profiles" action row (Score=10).
+    ///   The fix mirrors the shell submenu: action rows use the 1010-1060 range and
+    ///   saved profiles decrement from 500, matching the scale used by ScoreShellOtherStart.
     /// </summary>
     public class SubmenuOrderingTests
     {
@@ -38,6 +45,18 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.True(QuickSsh.ScoreProfilesActionRename > QuickSsh.ScoreProfilesActionCopy);
             Assert.True(QuickSsh.ScoreProfilesActionCopy   > QuickSsh.ScoreProfilesActionExport);
             Assert.True(QuickSsh.ScoreProfilesActionExport > QuickSsh.ScoreProfilesActionImport);
+        }
+
+        [Fact]
+        public void ProfilesSubmenu_ActionRowScoresAreSafeAboveSavedItemBase()
+        {
+            // The gap between the lowest action row (import) and the highest possible saved
+            // profile score (ScoreProfilesSavedItem, used as the decrement start) must be
+            // large enough that Flow Launcher's fuzzy-match bonus cannot bridge it.
+            // A gap > 500 is considered safe based on observed Flow Launcher scoring.
+            int gap = QuickSsh.ScoreProfilesActionImport - QuickSsh.ScoreProfilesSavedItem;
+            Assert.True(gap > 500,
+                $"Import action score must exceed saved item base by > 500 (actual gap: {gap}).");
         }
 
         // ── shell submenu ─────────────────────────────────────────────────────────
@@ -86,6 +105,17 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         {
             // The management row constant is used identically in both submenus.
             Assert.Equal(int.MaxValue, QuickSsh.ScoreSubMenuManagement);
+        }
+
+        [Fact]
+        public void BothSubmenus_ActionRowScoresAreOnTheSameScale()
+        {
+            // Both submenus must use the 1000+ range for action rows so the ordering
+            // invariant holds regardless of Flow Launcher's internal fuzzy-match bonus.
+            Assert.True(QuickSsh.ScoreProfilesActionImport >= 1000,
+                "Profiles import action score must be >= 1000 to be safe from fuzzy boosting.");
+            Assert.True(QuickSsh.ScoreShellActionRemove >= 1000,
+                "Shell remove action score must be >= 1000 to be safe from fuzzy boosting.");
         }
     }
 }
