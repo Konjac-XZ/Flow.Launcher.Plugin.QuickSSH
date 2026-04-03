@@ -1,0 +1,91 @@
+using Xunit;
+
+namespace Flow.Launcher.Plugin.QuickSSH.Tests
+{
+    /// <summary>
+    /// Verifies the submenu score invariants that drive consistent display ordering.
+    /// Flow Launcher sorts Result objects by Score descending, so the required layout:
+    ///   1. management row
+    ///   2. action rows
+    ///   3. saved items
+    /// must be enforced through the Score constants alone.
+    /// </summary>
+    public class SubmenuOrderingTests
+    {
+        // ── profiles submenu ──────────────────────────────────────────────────────
+
+        [Fact]
+        public void ProfilesSubmenu_ManagementRowIsAboveAllActionRows()
+        {
+            Assert.True(QuickSsh.ScoreSubMenuManagement > QuickSsh.ScoreProfilesActionAdd,
+                "Management row must outrank every profiles action row.");
+        }
+
+        [Fact]
+        public void ProfilesSubmenu_AllActionRowsAreAboveSavedItems()
+        {
+            // The lowest-priority action row (import) must still beat a saved profile entry.
+            Assert.True(QuickSsh.ScoreProfilesActionImport > QuickSsh.ScoreProfilesSavedItem,
+                "The import action row (lowest action score) must appear above saved profiles.");
+        }
+
+        [Fact]
+        public void ProfilesSubmenu_ActionRowScoresAreInDescendingOrder()
+        {
+            // add > remove > rename > copy > export > import
+            Assert.True(QuickSsh.ScoreProfilesActionAdd    > QuickSsh.ScoreProfilesActionRemove);
+            Assert.True(QuickSsh.ScoreProfilesActionRemove > QuickSsh.ScoreProfilesActionRename);
+            Assert.True(QuickSsh.ScoreProfilesActionRename > QuickSsh.ScoreProfilesActionCopy);
+            Assert.True(QuickSsh.ScoreProfilesActionCopy   > QuickSsh.ScoreProfilesActionExport);
+            Assert.True(QuickSsh.ScoreProfilesActionExport > QuickSsh.ScoreProfilesActionImport);
+        }
+
+        // ── shell submenu ─────────────────────────────────────────────────────────
+
+        [Fact]
+        public void ShellSubmenu_ManagementRowIsAboveAllActionRows()
+        {
+            Assert.True(QuickSsh.ScoreSubMenuManagement > QuickSsh.ScoreShellActionAdd,
+                "Management row must outrank every shell action row.");
+        }
+
+        [Fact]
+        public void ShellSubmenu_AllActionRowsAreAboveSelectedShell()
+        {
+            // The lower-priority action row (remove) must still beat the selected shell entry.
+            Assert.True(QuickSsh.ScoreShellActionRemove > QuickSsh.ScoreShellSelected,
+                "The remove action row must appear above the selected shell entry.");
+        }
+
+        [Fact]
+        public void ShellSubmenu_AllActionRowsAreAboveOtherShells()
+        {
+            // "other shells" start at ScoreShellOtherStart and decrement; the action rows
+            // must exceed even the maximum (first) other-shell score.
+            Assert.True(QuickSsh.ScoreShellActionRemove > QuickSsh.ScoreShellOtherStart,
+                "The remove action row must appear above the highest-scored non-selected shell.");
+        }
+
+        [Fact]
+        public void ShellSubmenu_SelectedShellIsAboveOtherShells()
+        {
+            Assert.True(QuickSsh.ScoreShellSelected > QuickSsh.ScoreShellOtherStart,
+                "The selected shell must appear above other (non-selected) shells.");
+        }
+
+        [Fact]
+        public void ShellSubmenu_ActionRowAddIsAboveActionRowRemove()
+        {
+            Assert.True(QuickSsh.ScoreShellActionAdd > QuickSsh.ScoreShellActionRemove);
+        }
+
+        // ── cross-submenu consistency ─────────────────────────────────────────────
+
+        [Fact]
+        public void BothSubmenus_ShareTheSameManagementRowScore()
+        {
+            // The management row constant is used identically in both submenus.
+            Assert.Equal(int.MaxValue, QuickSsh.ScoreSubMenuManagement);
+        }
+    }
+}

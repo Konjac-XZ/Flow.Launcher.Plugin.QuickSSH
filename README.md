@@ -313,7 +313,7 @@ Legacy SCP commands with `user@host:path` positionals are automatically normalis
 ### Custom shell management
 
 ```
-ssh shell                                             → list shells; click one to select
+ssh shell                                             → shell management view: action rows + saved shells
 ssh shell add PowerShell                              → add PowerShell (found via PATH)
 ssh shell add GitBash "C:\Program Files\Git\bin\bash.exe" --login -i -c
 ssh shell add WSL wsl.exe --

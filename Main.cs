@@ -56,6 +56,28 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private const string AppIconGreenPath = "Images\\app-green.png";
         private const string AppIconRedPath = "Images\\app-red.png";
 
+        // ── Submenu ordering scores (Flow Launcher sorts higher score first) ──────
+        // Consistent layout for every submenu:
+        //   1. management/usage row  (ScoreSubMenuManagement = int.MaxValue)
+        //   2. action rows           (ScoreXxxAction* range)
+        //   3. saved items           (ScoreXxxSavedItem = 0)
+        internal const int ScoreSubMenuManagement   = int.MaxValue;
+
+        // "profiles" submenu
+        internal const int ScoreProfilesActionAdd    = 60;
+        internal const int ScoreProfilesActionRemove = 50;
+        internal const int ScoreProfilesActionRename = 40;
+        internal const int ScoreProfilesActionCopy   = 30;
+        internal const int ScoreProfilesActionExport = 20;
+        internal const int ScoreProfilesActionImport = 10;
+        internal const int ScoreProfilesSavedItem    = 0;
+
+        // "shell" submenu — action rows must be strictly above any shell entry
+        internal const int ScoreShellActionAdd    = 1100;
+        internal const int ScoreShellActionRemove = 1050;
+        internal const int ScoreShellSelected     = 1000;
+        internal const int ScoreShellOtherStart   = 500; // decremented per additional shell
+
         private string _databasePath;
         private string _dataDir;
         private bool _isSshInstalled = true;
@@ -214,25 +236,58 @@ namespace Flow.Launcher.Plugin.QuickSSH
             var results = new List<Result>();
             var profiles = _profileManager.UserData.Profiles;
 
-            // Always show management hint at the top.
+            // 1. Management/usage hint — always pinned at the top.
             results.Add(new Result
             {
                 Title = GetTranslation("plugin_quickssh_title_commandprofiles"),
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles"),
                 IcoPath = AppIconPath,
                 AutoCompleteText = query.ActionKeyword + " profiles ",
-                Score = int.MaxValue
+                Score = ScoreSubMenuManagement
             });
 
+            // 2. Action rows — always above saved profiles.
+            //    Only shown when no search text is active (user is browsing, not filtering).
+            if (string.IsNullOrEmpty(search))
+            {
+                var profileSubCmds = new[]
+                {
+                    ("add",    GetTranslation("plugin_quickssh_title_commandprofiles_add"),    GetTranslation("plugin_quickssh_subtitle_commandprofiles_add"),          ScoreProfilesActionAdd),
+                    ("remove", GetTranslation("plugin_quickssh_title_commandprofiles_remove"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_remove"),       ScoreProfilesActionRemove),
+                    ("rename", GetTranslation("plugin_quickssh_title_commandprofiles_rename"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_rename"),       ScoreProfilesActionRename),
+                    ("copy",   GetTranslation("plugin_quickssh_title_commandprofiles_copy"),   GetTranslation("plugin_quickssh_subtitle_commandprofiles_copy_usage"),   ScoreProfilesActionCopy),
+                    ("export", GetTranslation("plugin_quickssh_title_commandprofiles_export"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_export_usage"), ScoreProfilesActionExport),
+                    ("import", GetTranslation("plugin_quickssh_title_commandprofiles_import"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_import_usage"), ScoreProfilesActionImport),
+                };
+                foreach (var (scName, scTitle, scSubTitle, scScore) in profileSubCmds)
+                {
+                    var autoText = query.ActionKeyword + " profiles " + scName + " ";
+                    results.Add(new Result
+                    {
+                        Title = scTitle,
+                        SubTitle = scSubTitle,
+                        IcoPath = AppIconPath,
+                        AutoCompleteText = autoText,
+                        Score = scScore,
+                        Action = _ =>
+                        {
+                            _pluginContext?.API?.ChangeQuery(autoText, true);
+                            return false;
+                        }
+                    });
+                }
+            }
+
+            // 3. Saved profiles — always below action rows.
             if (profiles.Count == 0)
             {
                 results.Add(new Result
                 {
                     Title = GetTranslation("plugin_quickssh_title_commandprofiles"),
                     SubTitle = GetTranslation("plugin_quickssh_noprofiles"),
-                    IcoPath = AppIconPath
+                    IcoPath = AppIconPath,
+                    Score = ScoreProfilesSavedItem
                 });
-                // Fall through to show action rows even when no profiles exist.
             }
             else
             {
@@ -263,45 +318,13 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         Title = name,
                         SubTitle = cmd,
                         IcoPath = AppIconGreenPath,
-                        Score = 0,
+                        Score = ScoreProfilesSavedItem,
                         Action = _ =>
                         {
                             RunCommand(cmd);
                             return true;
                         },
                         AutoCompleteText = query.ActionKeyword + " profiles " + name
-                    });
-                }
-            }
-
-            // Sub-command action rows — shown between the management row and saved profile
-            // entries, only when no search text is active (mirroring the shell sub-command layout).
-            if (string.IsNullOrEmpty(search))
-            {
-                var profileSubCmds = new[]
-                {
-                    ("add",    GetTranslation("plugin_quickssh_title_commandprofiles_add"),    GetTranslation("plugin_quickssh_subtitle_commandprofiles_add"),         60),
-                    ("remove", GetTranslation("plugin_quickssh_title_commandprofiles_remove"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_remove"),      50),
-                    ("rename", GetTranslation("plugin_quickssh_title_commandprofiles_rename"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_rename"),      40),
-                    ("copy",   GetTranslation("plugin_quickssh_title_commandprofiles_copy"),   GetTranslation("plugin_quickssh_subtitle_commandprofiles_copy_usage"),  30),
-                    ("export", GetTranslation("plugin_quickssh_title_commandprofiles_export"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_export_usage"), 20),
-                    ("import", GetTranslation("plugin_quickssh_title_commandprofiles_import"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_import_usage"), 10),
-                };
-                foreach (var (scName, scTitle, scSubTitle, scScore) in profileSubCmds)
-                {
-                    var autoText = query.ActionKeyword + " profiles " + scName + " ";
-                    results.Add(new Result
-                    {
-                        Title = scTitle,
-                        SubTitle = scSubTitle,
-                        IcoPath = AppIconPath,
-                        AutoCompleteText = autoText,
-                        Score = scScore,
-                        Action = _ =>
-                        {
-                            _pluginContext?.API?.ChangeQuery(autoText, true);
-                            return false;
-                        }
                     });
                 }
             }
@@ -951,63 +974,22 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         SubTitle = GetTranslation("plugin_quickssh_subtitle_commandshell_help"),
                         IcoPath = AppIconPath,
                         AutoCompleteText = query.ActionKeyword + " shell ",
-                        Score = int.MaxValue
+                        Score = ScoreSubMenuManagement
                     });
 
                     // List shells in deterministic order:
-                    //   1. selected shell  (Score 1000)
-                    //   2. other shells    (decreasing from 500)
-                    //   3. action rows     (10 = add, 5 = remove)
+                    //   1. management row  (ScoreSubMenuManagement = int.MaxValue)
+                    //   2. action rows     (ScoreShellActionAdd = 1100, ScoreShellActionRemove = 1050)
+                    //   3. selected shell  (ScoreShellSelected = 1000)
+                    //   4. other shells    (decreasing from ScoreShellOtherStart = 500)
                     var allShells = _profileManager.UserData.CustomShell;
                     var selected = _profileManager.UserData.SelectedCustomShell;
 
-                    // Selected shell (if any) — pinned just below the usage hint.
-                    if (!string.IsNullOrEmpty(selected) && allShells.ContainsKey(selected))
-                    {
-                        var shellVal = allShells[selected];
-                        results.Add(new Result
-                        {
-                            Title = selected + " " + GetTranslation("plugin_quickssh_shell_selected"),
-                            SubTitle = string.IsNullOrEmpty(shellVal) ? selected : shellVal,
-                            IcoPath = AppIconGreenPath,
-                            AutoCompleteText = query.ActionKeyword + " shell " + selected,
-                            Score = 1000,
-                            Action = _ =>
-                            {
-                                _profileManager.UserData.SelectedCustomShell = selected;
-                                _profileManager.SaveConfiguration();
-                                return true;
-                            }
-                        });
-                    }
-
-                    // Remaining (non-selected) shell profiles.
-                    int otherShellScore = 500;
-                    foreach (var shell in allShells)
-                    {
-                        if (shell.Key == selected)
-                            continue;
-                        results.Add(new Result
-                        {
-                            Title = shell.Key,
-                            SubTitle = string.IsNullOrEmpty(shell.Value) ? shell.Key : shell.Value,
-                            IcoPath = AppIconGreenPath,
-                            AutoCompleteText = query.ActionKeyword + " shell " + shell.Key,
-                            Score = otherShellScore--,
-                            Action = _ =>
-                            {
-                                _profileManager.UserData.SelectedCustomShell = shell.Key;
-                                _profileManager.SaveConfiguration();
-                                return true;
-                            }
-                        });
-                    }
-
-                    // Sub-command action rows (add / remove) — always below shell entries.
+                    // Sub-command action rows (add / remove) — always above saved shell entries.
                     var shellSubCmds = new[]
                     {
-                        ("add",    GetTranslation("plugin_quickssh_title_commandshell_add"),    GetTranslation("plugin_quickssh_subtitle_commandshell_add_usage"),    10),
-                        ("remove", GetTranslation("plugin_quickssh_title_commandshell_remove"), GetTranslation("plugin_quickssh_subtitle_commandshell_remove"),        5),
+                        ("add",    GetTranslation("plugin_quickssh_title_commandshell_add"),    GetTranslation("plugin_quickssh_subtitle_commandshell_add_usage"),    ScoreShellActionAdd),
+                        ("remove", GetTranslation("plugin_quickssh_title_commandshell_remove"), GetTranslation("plugin_quickssh_subtitle_commandshell_remove"),        ScoreShellActionRemove),
                     };
                     foreach (var (scName, scTitle, scSubTitle, scScore) in shellSubCmds)
                     {
@@ -1028,6 +1010,48 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                 }
                             });
                         }
+                    }
+
+                    // Selected shell (if any) — pinned just below the action rows.
+                    if (!string.IsNullOrEmpty(selected) && allShells.ContainsKey(selected))
+                    {
+                        var shellVal = allShells[selected];
+                        results.Add(new Result
+                        {
+                            Title = selected + " " + GetTranslation("plugin_quickssh_shell_selected"),
+                            SubTitle = string.IsNullOrEmpty(shellVal) ? selected : shellVal,
+                            IcoPath = AppIconGreenPath,
+                            AutoCompleteText = query.ActionKeyword + " shell " + selected,
+                            Score = ScoreShellSelected,
+                            Action = _ =>
+                            {
+                                _profileManager.UserData.SelectedCustomShell = selected;
+                                _profileManager.SaveConfiguration();
+                                return true;
+                            }
+                        });
+                    }
+
+                    // Remaining (non-selected) shell profiles.
+                    int otherShellScore = ScoreShellOtherStart;
+                    foreach (var shell in allShells)
+                    {
+                        if (shell.Key == selected)
+                            continue;
+                        results.Add(new Result
+                        {
+                            Title = shell.Key,
+                            SubTitle = string.IsNullOrEmpty(shell.Value) ? shell.Key : shell.Value,
+                            IcoPath = AppIconGreenPath,
+                            AutoCompleteText = query.ActionKeyword + " shell " + shell.Key,
+                            Score = otherShellScore--,
+                            Action = _ =>
+                            {
+                                _profileManager.UserData.SelectedCustomShell = shell.Key;
+                                _profileManager.SaveConfiguration();
+                                return true;
+                            }
+                        });
                     }
                     break;
             }
