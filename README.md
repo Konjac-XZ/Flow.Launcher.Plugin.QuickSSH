@@ -67,7 +67,7 @@ Press Enter on a profile row to launch the connection.
 > 3. **Action rows** as one continuous block: Add profile → Remove profile → Rename profile → Copy SSH command → Export profiles → Import profiles
 > 4. **Saved profiles** (filtered / sorted by relevance when a search term is given)
 
-Sub-command views (e.g. `ssh profiles add`, `ssh shell remove`) also show a back-navigation row immediately below their usage hint so you can press Enter to return to the parent level.
+Sub-command views (e.g. `ssh profiles add`, `ssh shell remove`) and single-action views (`ssh config`, `ssh help`) also show a back-navigation row immediately below their usage hint so you can press Enter to return to the parent level.
 
 ### Add a profile
 
