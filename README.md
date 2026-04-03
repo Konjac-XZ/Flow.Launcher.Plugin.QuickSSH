@@ -62,9 +62,12 @@ ssh profiles prod      → filter saved profiles containing "prod"
 Press Enter on a profile row to launch the connection.
 
 > **Display order** — `ssh profiles` always shows results in a fixed, stable order regardless of fuzzy-match scoring:
-> 1. **Správa profilov / Profile management** (usage hint, always pinned at the top)
-> 2. **Action rows** as one continuous block: Add profile → Remove profile → Rename profile → Copy SSH command → Export profiles → Import profiles
-> 3. **Saved profiles** (filtered / sorted by relevance when a search term is given)
+> 1. **Profile management** (usage hint, always pinned at the top)
+> 2. **← Back to ssh** (back-navigation row — press Enter to return to the top-level command list)
+> 3. **Action rows** as one continuous block: Add profile → Remove profile → Rename profile → Copy SSH command → Export profiles → Import profiles
+> 4. **Saved profiles** (filtered / sorted by relevance when a search term is given)
+
+Sub-command views (e.g. `ssh profiles add`, `ssh shell remove`) also show a back-navigation row immediately below their usage hint so you can press Enter to return to the parent level.
 
 ### Add a profile
 

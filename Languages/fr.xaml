@@ -89,4 +89,7 @@
     <system:String x:Key="plugin_quickssh_title_commandadd_legacy">Command renamed: use "profiles add"</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandadd_legacy">The "add" command is now "profiles add &lt;name&gt; &lt;ssh-command&gt;". Press Enter or Tab to navigate.</system:String>
 
+    <!-- BACK NAVIGATION -->
+    <system:String x:Key="plugin_quickssh_back_nav_title">← Retour à {0}</system:String>
+
 </ResourceDictionary>
