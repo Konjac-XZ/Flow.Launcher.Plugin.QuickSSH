@@ -59,18 +59,21 @@ namespace Flow.Launcher.Plugin.QuickSSH
         // ── Submenu ordering scores (Flow Launcher sorts higher score first) ──────
         // Consistent layout for every submenu:
         //   1. management/usage row  (ScoreSubMenuManagement = int.MaxValue)
-        //   2. action rows           (ScoreXxxAction* range)
-        //   3. saved items           (ScoreXxxSavedItem = 0)
+        //   2. action rows           (ScoreXxxAction* range, ≥ 1010)
+        //   3. saved items           (starting from ScoreXxxSavedItem = 500, decremented per entry)
+        //
+        // Action row scores must be in the 1000+ range so they cannot be bridged by
+        // Flow Launcher's built-in fuzzy-match bonus that can boost Score=0 results.
         internal const int ScoreSubMenuManagement   = int.MaxValue;
 
-        // "profiles" submenu
-        internal const int ScoreProfilesActionAdd    = 60;
-        internal const int ScoreProfilesActionRemove = 50;
-        internal const int ScoreProfilesActionRename = 40;
-        internal const int ScoreProfilesActionCopy   = 30;
-        internal const int ScoreProfilesActionExport = 20;
-        internal const int ScoreProfilesActionImport = 10;
-        internal const int ScoreProfilesSavedItem    = 0;
+        // "profiles" submenu — mirrors the scale used by the "shell" submenu.
+        internal const int ScoreProfilesActionAdd    = 1060;
+        internal const int ScoreProfilesActionRemove = 1050;
+        internal const int ScoreProfilesActionRename = 1040;
+        internal const int ScoreProfilesActionCopy   = 1030;
+        internal const int ScoreProfilesActionExport = 1020;
+        internal const int ScoreProfilesActionImport = 1010;
+        internal const int ScoreProfilesSavedItem    = 500;  // decremented per additional profile
 
         // "shell" submenu — action rows must be strictly above any shell entry
         internal const int ScoreShellActionAdd    = 1100;
@@ -279,6 +282,10 @@ namespace Flow.Launcher.Plugin.QuickSSH
             }
 
             // 3. Saved profiles — always below action rows.
+            //    Use a decremented score (starting from ScoreProfilesSavedItem) so each
+            //    profile has a distinct, explicit value — mirroring how the shell submenu
+            //    uses ScoreShellOtherStart--. This prevents Flow Launcher's fuzzy-match
+            //    bonus from boosting any profile above the action rows.
             if (profiles.Count == 0)
             {
                 results.Add(new Result
@@ -308,6 +315,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     }
                 }
 
+                int profileScore = ScoreProfilesSavedItem;
                 foreach (var item in scored.OrderBy(s => s.score))
                 {
                     var name = item.name;
@@ -318,7 +326,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         Title = name,
                         SubTitle = cmd,
                         IcoPath = AppIconGreenPath,
-                        Score = ScoreProfilesSavedItem,
+                        Score = profileScore--,
                         Action = _ =>
                         {
                             RunCommand(cmd);
