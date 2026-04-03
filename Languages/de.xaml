@@ -21,8 +21,8 @@
     <system:String x:Key="plugin_quickssh_addshell_label">Shell hinzufügen:</system:String>
 
     <!-- PROFILES (list / connect) -->
-    <system:String x:Key="plugin_quickssh_title_commandprofiles">Gespeicherte Profile</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">profiles add &lt;name&gt; &lt;ssh-command&gt;  |  remove [Filter]  |  rename &lt;alt&gt; &lt;neu&gt;  |  copy [Filter]  |  export  |  import [Filter]</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandprofiles">Profilverwaltung</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Verwendung: profiles add | remove | rename | copy | export | import</system:String>
 
     <!-- PROFILES ADD -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles_add">Profil hinzufügen</system:String>

@@ -55,8 +55,8 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 ### Browse and connect to saved profiles
 
 ```
-ssh profiles           → show all saved profiles
-ssh profiles prod      → filter profiles containing "prod"
+ssh profiles           → profile management view: action rows + saved profiles
+ssh profiles prod      → filter saved profiles containing "prod"
 ```
 
 Press Enter on a profile row to launch the connection.

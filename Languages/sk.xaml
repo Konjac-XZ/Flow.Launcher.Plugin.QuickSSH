@@ -21,8 +21,8 @@
     <system:String x:Key="plugin_quickssh_addshell_label">Pridať shell:</system:String>
 
     <!-- PROFILES (list / connect) -->
-    <system:String x:Key="plugin_quickssh_title_commandprofiles">Uložené profily</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">profiles add &lt;name&gt; &lt;ssh-command&gt;  |  remove [filter]  |  rename &lt;old&gt; &lt;new&gt;  |  copy [filter]  |  export  |  import [filter]</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandprofiles">Správa profilov</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandprofiles">Použitie: profiles add | remove | rename | copy | export | import</system:String>
 
     <!-- PROFILES ADD -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles_add">Pridať profil</system:String>
