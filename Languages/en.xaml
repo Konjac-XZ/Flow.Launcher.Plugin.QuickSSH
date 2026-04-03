@@ -89,4 +89,7 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandhelp">Open plugin documentation on GitHub.</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandhelp_usage">Usage: help</system:String>
 
+    <!-- BACK NAVIGATION -->
+    <system:String x:Key="plugin_quickssh_back_nav_title">← Back to {0}</system:String>
+
 </ResourceDictionary>

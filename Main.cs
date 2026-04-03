@@ -66,6 +66,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
         // Flow Launcher's built-in fuzzy-match bonus that can boost Score=0 results.
         internal const int ScoreSubMenuManagement   = int.MaxValue;
 
+        // Back-navigation row — always pinned directly below the usage/management hint and
+        // above every action row.  Allows users to return to the parent command level by
+        // pressing Enter on the first actionable row instead of manually clearing text.
+        internal const int ScoreBackNavigation = int.MaxValue - 1;
+
         // "profiles" submenu — mirrors the scale used by the "shell" submenu.
         internal const int ScoreProfilesActionAdd    = 1060;
         internal const int ScoreProfilesActionRemove = 1050;
@@ -249,7 +254,10 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 Score = ScoreSubMenuManagement
             });
 
-            // 2. Action rows — always above saved profiles.
+            // 2. Back-navigation row — returns to top-level command list.
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " ", query.ActionKeyword));
+
+            // 3. Action rows — always above saved profiles.
             //    Only shown when no search text is active (user is browsing, not filtering).
             if (string.IsNullOrEmpty(search))
             {
@@ -281,7 +289,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 }
             }
 
-            // 3. Saved profiles — always below action rows.
+            // 4. Saved profiles — always below action rows.
             //    Use a decremented score (starting from ScoreProfilesSavedItem) so each
             //    profile has a distinct, explicit value — mirroring how the shell submenu
             //    uses ScoreShellOtherStart--. This prevents Flow Launcher's fuzzy-match
@@ -383,6 +391,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 AutoCompleteText = query.ActionKeyword + " profiles add ",
                 Score = int.MaxValue
             });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " profiles ", query.ActionKeyword + " profiles"));
 
             if (string.IsNullOrEmpty(rest))
                 return results;
@@ -431,6 +440,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 AutoCompleteText = query.ActionKeyword + " profiles remove ",
                 Score = int.MaxValue
             });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " profiles ", query.ActionKeyword + " profiles"));
 
             if (profiles.Count == 0)
             {
@@ -488,6 +498,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     AutoCompleteText = query.ActionKeyword + " profiles rename ",
                     Score = int.MaxValue
                 });
+                results.Add(MakeBackNavResult(query, query.ActionKeyword + " profiles ", query.ActionKeyword + " profiles"));
 
                 if (profiles.Count == 0)
                 {
@@ -530,6 +541,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     AutoCompleteText = query.ActionKeyword + " profiles rename ",
                     Score = int.MaxValue
                 });
+                results.Add(MakeBackNavResult(query, query.ActionKeyword + " profiles ", query.ActionKeyword + " profiles"));
                 results.Add(new Result
                 {
                     Title = GetTranslation("plugin_quickssh_title_commandprofiles_rename") + ": " + oldName,
@@ -547,6 +559,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 AutoCompleteText = query.ActionKeyword + " profiles rename " + oldName + " ",
                 Score = int.MaxValue
             });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " profiles ", query.ActionKeyword + " profiles"));
 
             if (!string.IsNullOrEmpty(newName))
             {
@@ -593,6 +606,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 AutoCompleteText = query.ActionKeyword + " profiles copy ",
                 Score = int.MaxValue
             });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " profiles ", query.ActionKeyword + " profiles"));
 
             if (profiles.Count == 0)
             {
@@ -653,6 +667,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 AutoCompleteText = query.ActionKeyword + " profiles export ",
                 Score = int.MaxValue
             });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " profiles ", query.ActionKeyword + " profiles"));
 
             results.Add(new Result
             {
@@ -712,6 +727,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 AutoCompleteText = query.ActionKeyword + " profiles import ",
                 Score = int.MaxValue
             });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " profiles ", query.ActionKeyword + " profiles"));
 
             if (importFiles.Length == 0)
             {
@@ -886,6 +902,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         IcoPath = AppIconPath,
                         Score = int.MaxValue
                     });
+                    results.Add(MakeBackNavResult(query, query.ActionKeyword + " shell ", query.ActionKeyword + " shell"));
                     if (!string.IsNullOrEmpty(subRest))
                     {
                         var (name, value) = ParseShellAddArgs(subRest);
@@ -921,6 +938,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         AutoCompleteText = query.ActionKeyword + " shell remove ",
                         Score = int.MaxValue
                     });
+                    results.Add(MakeBackNavResult(query, query.ActionKeyword + " shell ", query.ActionKeyword + " shell"));
                     if (shells.Count == 0)
                     {
                         results.Add(new Result
@@ -985,11 +1003,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         Score = ScoreSubMenuManagement
                     });
 
+                    // Back-navigation row — returns to top-level command list.
+                    results.Add(MakeBackNavResult(query, query.ActionKeyword + " ", query.ActionKeyword));
+
                     // List shells in deterministic order:
-                    //   1. management row  (ScoreSubMenuManagement = int.MaxValue)
-                    //   2. action rows     (ScoreShellActionAdd = 1100, ScoreShellActionRemove = 1050)
-                    //   3. selected shell  (ScoreShellSelected = 1000)
-                    //   4. other shells    (decreasing from ScoreShellOtherStart = 500)
+                    //   1. management row     (ScoreSubMenuManagement = int.MaxValue)
+                    //   2. back-nav row       (ScoreBackNavigation = int.MaxValue - 1)
+                    //   3. action rows        (ScoreShellActionAdd = 1100, ScoreShellActionRemove = 1050)
+                    //   4. selected shell     (ScoreShellSelected = 1000)
+                    //   5. other shells       (decreasing from ScoreShellOtherStart = 500)
                     var allShells = _profileManager.UserData.CustomShell;
                     var selected = _profileManager.UserData.SelectedCustomShell;
 
@@ -1148,6 +1170,40 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         });
                         return true;
                     }
+                }
+            };
+        }
+
+        #endregion
+
+        #region Navigation Helpers
+
+        /// <summary>
+        /// Creates a back-navigation result that navigates the query up one command level.
+        /// The result is scored at <see cref="ScoreBackNavigation"/> so it always appears
+        /// immediately below the pinned usage-hint row.
+        /// </summary>
+        /// <param name="query">The current Flow Launcher query (for the action keyword).</param>
+        /// <param name="parentQueryText">
+        /// The full query text to restore, e.g. <c>"ssh profiles "</c>.
+        /// Should end with a trailing space so the user can continue typing.
+        /// </param>
+        /// <param name="parentLabel">
+        /// Human-readable name of the parent level shown in the result title,
+        /// e.g. <c>"ssh"</c> or <c>"ssh profiles"</c>.
+        /// </param>
+        private Result MakeBackNavResult(Query query, string parentQueryText, string parentLabel)
+        {
+            return new Result
+            {
+                Title = string.Format(GetTranslation("plugin_quickssh_back_nav_title"), parentLabel),
+                IcoPath = AppIconPath,
+                Score = ScoreBackNavigation,
+                AutoCompleteText = parentQueryText,
+                Action = _ =>
+                {
+                    _pluginContext?.API?.ChangeQuery(parentQueryText, true);
+                    return false;
                 }
             };
         }
