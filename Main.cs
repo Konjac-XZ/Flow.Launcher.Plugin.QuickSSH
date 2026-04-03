@@ -253,7 +253,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     }
                 }
 
-                int profileScore = 500;
                 foreach (var item in scored.OrderBy(s => s.score))
                 {
                     var name = item.name;
@@ -264,7 +263,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         Title = name,
                         SubTitle = cmd,
                         IcoPath = AppIconGreenPath,
-                        Score = string.IsNullOrEmpty(search) ? profileScore-- : 0,
+                        Score = 0,
                         Action = _ =>
                         {
                             RunCommand(cmd);
@@ -275,8 +274,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 }
             }
 
-            // Sub-command action rows — always below profile entries, only shown when
-            // no search text is active (mirroring the shell sub-command layout).
+            // Sub-command action rows — shown between the management row and saved profile
+            // entries, only when no search text is active (mirroring the shell sub-command layout).
             if (string.IsNullOrEmpty(search))
             {
                 var profileSubCmds = new[]
