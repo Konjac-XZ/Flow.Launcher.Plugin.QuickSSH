@@ -4,7 +4,7 @@
     "Name": "QuickSSH",
     "Description": "SSH/SCP plugin with structured profiles, SSH-config-like import/export, direct SSH, custom shell management, and query autocomplete via suggestions",
     "Author": "Vaso73",
-    "Version": "3.0.5",
+    "Version": "3.1.0",
     "Language": "csharp",
     "Website": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
     "IcoPath": "Images\\app.png",

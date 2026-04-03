@@ -490,7 +490,7 @@ To make QuickSSH available via `pm install QuickSSH` in Flow Launcher:
      "Name": "QuickSSH",
      "Description": "Enhanced SSH/SCP connection plugin with query autocomplete, structured profiles, SSH config support, and custom shell handling",
      "Author": "Vaso73",
-     "Version": "3.0.5",
+     "Version": "3.1.0",
      "Language": "csharp",
      "MinFlowLauncherVersion": "1.19.0",
      "Website": "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
