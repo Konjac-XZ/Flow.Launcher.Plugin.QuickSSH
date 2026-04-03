@@ -168,7 +168,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     results.AddRange(HandleConfig(query, rest));
                     break;
                 case CommandHelp:
-                    results.AddRange(HandleDocs());
+                    results.AddRange(HandleDocs(query));
                     break;
 
                 // Legacy top-level "add" is no longer the canonical command.
@@ -1094,15 +1094,20 @@ namespace Flow.Launcher.Plugin.QuickSSH
             // Both "config" and "config import" trigger the same import action.
             var results = new List<Result>();
 
+            // 1. Management/usage hint — always pinned at the top.
             results.Add(new Result
             {
                 Title = GetTranslation("plugin_quickssh_title_commandconfig"),
                 SubTitle = GetTranslation("plugin_quickssh_subtitle_commandconfig_usage"),
                 IcoPath = AppIconPath,
                 AutoCompleteText = query.ActionKeyword + " config ",
-                Score = int.MaxValue
+                Score = ScoreSubMenuManagement
             });
 
+            // 2. Back-navigation row — returns to top-level command list.
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " ", query.ActionKeyword));
+
+            // 3. Config action row.
             results.Add(new Result
             {
                 Title = GetTranslation("plugin_quickssh_title_commandconfig"),
@@ -1144,18 +1149,21 @@ namespace Flow.Launcher.Plugin.QuickSSH
             return results;
         }
 
-        private List<Result> HandleDocs()
+        private List<Result> HandleDocs(Query query)
         {
             return new List<Result>
             {
-                // Always show usage hint at the top.
+                // 1. Management/usage hint — always pinned at the top.
                 new Result
                 {
                     Title = GetTranslation("plugin_quickssh_title_commandhelp"),
                     SubTitle = GetTranslation("plugin_quickssh_subtitle_commandhelp_usage"),
                     IcoPath = AppIconPath,
-                    Score = int.MaxValue
+                    Score = ScoreSubMenuManagement
                 },
+                // 2. Back-navigation row — returns to top-level command list.
+                MakeBackNavResult(query, query.ActionKeyword + " ", query.ActionKeyword),
+                // 3. Help action row.
                 new Result
                 {
                     Title = GetTranslation("plugin_quickssh_title_commandhelp"),

@@ -154,6 +154,19 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.True(configScore   > helpScore,   "config must outrank help");
         }
 
+        [Fact]
+        public void GetSuggestions_EmptyInput_SortedByScoreDescending_YieldsExactOrder()
+        {
+            // When sorted by Score descending (as Flow Launcher does at runtime),
+            // the top-level commands must appear in exactly this order:
+            //   1. profiles, 2. shell, 3. config, 4. help
+            var results = AutoCompleter.GetSuggestions("ssh", "", null, "icon.png");
+
+            var ordered = results.OrderByDescending(r => r.Score).Select(r => r.Title).ToList();
+
+            Assert.Equal(new[] { "profiles", "shell", "config", "help" }, ordered);
+        }
+
         // ── Partial "profiles <prefix>" sub-command suggestions ───────────────────
 
         [Theory]
