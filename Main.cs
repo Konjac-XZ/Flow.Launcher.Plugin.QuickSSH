@@ -214,7 +214,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             var results = new List<Result>();
             var profiles = _profileManager.UserData.Profiles;
 
-            // Always show usage hint at the top.
+            // Always show management hint at the top.
             results.Add(new Result
             {
                 Title = GetTranslation("plugin_quickssh_title_commandprofiles"),
@@ -232,43 +232,79 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     SubTitle = GetTranslation("plugin_quickssh_noprofiles"),
                     IcoPath = AppIconPath
                 });
-                return results;
+                // Fall through to show action rows even when no profiles exist.
             }
-
-            var scored = new List<(int score, string name, SshProfile profile)>();
-
-            foreach (var entry in profiles)
+            else
             {
-                var displayCmd = entry.Value?.ToDisplayString() ?? "";
-                if (string.IsNullOrEmpty(search))
-                {
-                    scored.Add((0, entry.Key, entry.Value));
-                }
-                else
-                {
-                    int score = ScoreProfile(search, entry.Key, displayCmd);
-                    if (score < int.MaxValue)
-                        scored.Add((score, entry.Key, entry.Value));
-                }
-            }
+                var scored = new List<(int score, string name, SshProfile profile)>();
 
-            foreach (var item in scored.OrderBy(s => s.score))
-            {
-                var name = item.name;
-                var profile = item.profile;
-                var cmd = profile?.ToCommandLine() ?? "";
-                results.Add(new Result
+                foreach (var entry in profiles)
                 {
-                    Title = name,
-                    SubTitle = cmd,
-                    IcoPath = AppIconGreenPath,
-                    Action = _ =>
+                    var displayCmd = entry.Value?.ToDisplayString() ?? "";
+                    if (string.IsNullOrEmpty(search))
                     {
-                        RunCommand(cmd);
-                        return true;
-                    },
-                    AutoCompleteText = query.ActionKeyword + " profiles " + name
-                });
+                        scored.Add((0, entry.Key, entry.Value));
+                    }
+                    else
+                    {
+                        int score = ScoreProfile(search, entry.Key, displayCmd);
+                        if (score < int.MaxValue)
+                            scored.Add((score, entry.Key, entry.Value));
+                    }
+                }
+
+                int profileScore = 500;
+                foreach (var item in scored.OrderBy(s => s.score))
+                {
+                    var name = item.name;
+                    var profile = item.profile;
+                    var cmd = profile?.ToCommandLine() ?? "";
+                    results.Add(new Result
+                    {
+                        Title = name,
+                        SubTitle = cmd,
+                        IcoPath = AppIconGreenPath,
+                        Score = string.IsNullOrEmpty(search) ? profileScore-- : 0,
+                        Action = _ =>
+                        {
+                            RunCommand(cmd);
+                            return true;
+                        },
+                        AutoCompleteText = query.ActionKeyword + " profiles " + name
+                    });
+                }
+            }
+
+            // Sub-command action rows — always below profile entries, only shown when
+            // no search text is active (mirroring the shell sub-command layout).
+            if (string.IsNullOrEmpty(search))
+            {
+                var profileSubCmds = new[]
+                {
+                    ("add",    GetTranslation("plugin_quickssh_title_commandprofiles_add"),    GetTranslation("plugin_quickssh_subtitle_commandprofiles_add"),         60),
+                    ("remove", GetTranslation("plugin_quickssh_title_commandprofiles_remove"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_remove"),      50),
+                    ("rename", GetTranslation("plugin_quickssh_title_commandprofiles_rename"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_rename"),      40),
+                    ("copy",   GetTranslation("plugin_quickssh_title_commandprofiles_copy"),   GetTranslation("plugin_quickssh_subtitle_commandprofiles_copy_usage"),  30),
+                    ("export", GetTranslation("plugin_quickssh_title_commandprofiles_export"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_export_usage"), 20),
+                    ("import", GetTranslation("plugin_quickssh_title_commandprofiles_import"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_import_usage"), 10),
+                };
+                foreach (var (scName, scTitle, scSubTitle, scScore) in profileSubCmds)
+                {
+                    var autoText = query.ActionKeyword + " profiles " + scName + " ";
+                    results.Add(new Result
+                    {
+                        Title = scTitle,
+                        SubTitle = scSubTitle,
+                        IcoPath = AppIconPath,
+                        AutoCompleteText = autoText,
+                        Score = scScore,
+                        Action = _ =>
+                        {
+                            _pluginContext?.API?.ChangeQuery(autoText, true);
+                            return false;
+                        }
+                    });
+                }
             }
 
             return results;
