@@ -101,8 +101,6 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_generate">Použitie: keys generate &lt;alias&gt;</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_confirm">Generovať: {0}</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_subtitle">{0} → {1} (bez hesla)</system:String>
-    <system:String x:Key="plugin_quickssh_keys_generate_custom_path">Použiť vlastnú cestu…</system:String>
-    <system:String x:Key="plugin_quickssh_keys_generate_custom_path_hint">Predvolený adresár: {0} — podpora vlastnej cesty bude čoskoro</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_invalid_alias">Neplatný alias — obsahuje len neplatné znaky.</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_duplicate">Alias už existuje: {0}</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_file_exists">Súbor kľúča už existuje: {0}</system:String>

@@ -175,7 +175,6 @@ ssh keys generate                            → usage hint
 ssh keys generate mykey                      → shows actionable rows:
                                                 ● Generate ed25519 (recommended default)
                                                 ● Generate RSA 4096
-                                                ● Use custom path… (placeholder)
 ```
 
 **Row-driven UX:** After typing the alias, you choose the algorithm by clicking a row — no need to type `ed25519` or `rsa` as arguments.

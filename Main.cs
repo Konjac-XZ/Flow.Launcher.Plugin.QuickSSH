@@ -1360,7 +1360,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// <list type="bullet">
         ///   <item><c>keys generate</c> — usage hint only</item>
         ///   <item><c>keys generate &lt;alias&gt;</c> — show actionable rows:
-        ///     ed25519 (default), RSA 4096, custom path hint</item>
+        ///     ed25519 (default), RSA 4096</item>
         /// </list>
         /// Passphrase is intentionally NOT supported in this PR — keys are generated
         /// with <c>-N ""</c> (empty passphrase).  Interactive passphrase flow will be
@@ -1448,13 +1448,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, defaultKeyPath)
             });
 
-            // Row 3: Custom path hint — navigates to deeper level (future extension point)
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_keys_generate_custom_path"),
-                SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_custom_path_hint"), sshDir),
-                IcoPath = AppIconPath
-            });
 
             return results;
         }

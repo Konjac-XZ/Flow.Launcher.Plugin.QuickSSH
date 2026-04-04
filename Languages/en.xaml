@@ -101,8 +101,6 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_generate">Usage: keys generate &lt;alias&gt;</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_confirm">Generate: {0}</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_subtitle">{0} → {1} (no passphrase)</system:String>
-    <system:String x:Key="plugin_quickssh_keys_generate_custom_path">Use custom path…</system:String>
-    <system:String x:Key="plugin_quickssh_keys_generate_custom_path_hint">Default directory: {0} — custom path support coming soon</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_invalid_alias">Invalid alias — contains only invalid characters.</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_duplicate">Alias already exists: {0}</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_file_exists">Key file already exists: {0}</system:String>
