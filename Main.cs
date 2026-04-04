@@ -112,13 +112,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
         internal const int ScoreTopLevelHelp     = 100_000;
 
         // "keys" submenu — action rows above saved key entries
-        internal const int ScoreKeysActionAdd      = 1170;
-        internal const int ScoreKeysActionGenerate = 1160;
-        internal const int ScoreKeysActionRemove   = 1150;
-        internal const int ScoreKeysActionRename   = 1140;
-        internal const int ScoreKeysActionCopyPath = 1130;
-        internal const int ScoreKeysActionCopyPub  = 1120;
-        internal const int ScoreKeysActionScan     = 1110;
+        // Gaps of 1000 prevent Flow Launcher's usage-history bonus from reordering rows.
+        internal const int ScoreKeysActionAdd      = 8000;
+        internal const int ScoreKeysActionGenerate = 7000;
+        internal const int ScoreKeysActionRemove   = 6000;
+        internal const int ScoreKeysActionRename   = 5000;
+        internal const int ScoreKeysActionCopyPath = 4000;
+        internal const int ScoreKeysActionCopyPub  = 3000;
+        internal const int ScoreKeysActionScan     = 2000;
         internal const int ScoreKeysSavedItem      = 500;  // decremented per additional key
 
         private string _databasePath;
