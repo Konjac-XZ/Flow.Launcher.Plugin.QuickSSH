@@ -880,5 +880,93 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), expanded);
             Assert.EndsWith(@"\.ssh\custom_key", expanded);
         }
+
+        // ── ParseGenerateArgs ────────────────────────────────────────────────────
+
+        [Fact]
+        public void ParseGenerateArgs_RuntimeBugRepro_AliasAndCustomPathSplitCorrectly()
+        {
+            // Exact runtime repro: "skuska C:\Users\info\.ssh\custom\skuska"
+            // must yield alias="skuska", customPath=@"C:\Users\info\.ssh\custom\skuska"
+            // and NOT treat the whole string as the alias.
+            var (alias, customPath) = Utils.ParseGenerateArgs(
+                @"skuska C:\Users\info\.ssh\custom\skuska");
+
+            Assert.Equal("skuska", alias);
+            Assert.Equal(@"C:\Users\info\.ssh\custom\skuska", customPath);
+
+            // Verify alias is clean — SanitizeKeyFileName should NOT corrupt it.
+            Assert.Equal("skuska", Utils.SanitizeKeyFileName(alias));
+        }
+
+        [Fact]
+        public void ParseGenerateArgs_NonBreakingSpace_SplitsCorrectly()
+        {
+            // If Flow Launcher passes a non-breaking space (U+00A0) between
+            // alias and path, the parser must still split correctly.
+            var rest = "skuska\u00A0C:\\Users\\info\\.ssh\\custom\\skuska";
+            var (alias, customPath) = Utils.ParseGenerateArgs(rest);
+
+            Assert.Equal("skuska", alias);
+            Assert.Equal(@"C:\Users\info\.ssh\custom\skuska", customPath);
+        }
+
+        [Fact]
+        public void ParseGenerateArgs_DefaultFlow_AliasOnly()
+        {
+            // Default flow: only alias, no custom path.
+            var (alias, customPath) = Utils.ParseGenerateArgs("skuska");
+
+            Assert.Equal("skuska", alias);
+            Assert.Equal("", customPath);
+        }
+
+        [Fact]
+        public void ParseGenerateArgs_QuotedPathWithSpaces()
+        {
+            // Quoted custom path with spaces must be stripped and preserved.
+            var (alias, customPath) = Utils.ParseGenerateArgs(
+                "mykey \"C:\\My Keys\\special key\"");
+
+            Assert.Equal("mykey", alias);
+            Assert.Equal(@"C:\My Keys\special key", customPath);
+        }
+
+        [Fact]
+        public void ParseGenerateArgs_EmptyInput_ReturnsBothEmpty()
+        {
+            var (alias, customPath) = Utils.ParseGenerateArgs("");
+            Assert.Equal("", alias);
+            Assert.Equal("", customPath);
+        }
+
+        [Fact]
+        public void ParseGenerateArgs_NullInput_ReturnsBothEmpty()
+        {
+            var (alias, customPath) = Utils.ParseGenerateArgs(null);
+            Assert.Equal("", alias);
+            Assert.Equal("", customPath);
+        }
+
+        [Fact]
+        public void ParseGenerateArgs_BugRepro_SanitizeOnWholeStringProducesWrongPath()
+        {
+            // This test documents the exact bug: if the parser fails to split,
+            // SanitizeKeyFileName on the whole string produces a mangled filename
+            // like "skuska_CUsersinfo.sshcustomskuska" instead of using the
+            // custom path directly.
+            var wholeString = @"skuska C:\Users\info\.ssh\custom\skuska";
+            var sanitized = Utils.SanitizeKeyFileName(wholeString);
+
+            // Sanitize strips path separators and colons — wrong for a custom path.
+            Assert.Contains("CUsersinfo", sanitized);
+
+            // The correct behavior via ParseGenerateArgs:
+            var (alias, customPath) = Utils.ParseGenerateArgs(wholeString);
+            Assert.Equal("skuska", alias);
+            Assert.Equal(@"C:\Users\info\.ssh\custom\skuska", customPath);
+            // Sanitize on just the alias is correct.
+            Assert.Equal("skuska", Utils.SanitizeKeyFileName(alias));
+        }
     }
 }

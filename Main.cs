@@ -1387,14 +1387,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
 
             // Split rest into <alias> and optional <custom-path>.
-            var genParts = rest.Split(new[] { ' ' }, 2);
-            var alias = genParts[0];
-            var customPathRaw = genParts.Length > 1 ? genParts[1].Trim() : "";
-
-            // Strip surrounding quotes from the custom path.
-            if (customPathRaw.Length >= 2 && customPathRaw.StartsWith("\"") && customPathRaw.EndsWith("\""))
-                customPathRaw = customPathRaw.Substring(1, customPathRaw.Length - 2);
-
+            // Uses Char.IsWhiteSpace so non-breaking spaces and other
+            // Unicode whitespace are handled correctly.
+            var (alias, customPathRaw) = Utils.ParseGenerateArgs(rest);
             bool hasCustomPath = !string.IsNullOrEmpty(customPathRaw);
 
             // Sanitise alias for use as a file name (only used for the default-path branch)
