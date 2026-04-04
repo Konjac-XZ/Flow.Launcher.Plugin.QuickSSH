@@ -98,13 +98,16 @@
     <system:String x:Key="plugin_quickssh_title_commandkeys_add">Enregistrer une clé SSH</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Utilisation : keys add &lt;alias&gt; &lt;chemin-clé&gt;</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_generate">Générer une paire de clés SSH</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_generate">Utilisation : keys generate &lt;alias&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_generate">Utilisation : keys generate &lt;alias&gt; [chemin-personnalisé]</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_confirm">Générer : {0}</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_subtitle">{0} → {1} (sans phrase secrète)</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_invalid_alias">Alias invalide — ne contient que des caractères non valides.</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_duplicate">L'alias existe déjà : {0}</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_file_exists">Le fichier de clé existe déjà : {0}</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_invalid_path">Chemin invalide : {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_path_is_directory">Le chemin est un répertoire, pas un fichier de clé : {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_custom_path_title">Chemin personnalisé…</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_custom_path_hint">Tapez : {0} keys generate {1} C:\chemin\vers\clé</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_no_keygen">ssh-keygen introuvable. Installez OpenSSH pour générer des clés.</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_success">Clé '{0}' générée et enregistrée avec succès.</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_failed">Génération de clé annulée ou échouée.</system:String>
