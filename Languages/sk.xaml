@@ -94,9 +94,21 @@
 
     <!-- KEYS (SSH key management) -->
     <system:String x:Key="plugin_quickssh_title_commandkeys">Správa SSH kľúčov</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Použitie: keys add | remove | rename | copy-path | copy-pub | scan</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Použitie: keys add | generate | remove | rename | copy-path | copy-pub | scan</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_add">Registrovať SSH kľúč</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Použitie: keys add &lt;alias&gt; &lt;cesta-ku-kľúču&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_generate">Generovať SSH kľúčový pár</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_generate">Použitie: keys generate &lt;alias&gt; [ed25519|rsa] [cesta]</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_confirm">Generovať: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_subtitle">{0} → {1} (heslo zadajte v termináli)</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_invalid_alias">Neplatný alias — obsahuje len neplatné znaky.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_duplicate">Alias už existuje: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_file_exists">Súbor kľúča už existuje: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_invalid_path">Neplatná cesta: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_no_keygen">ssh-keygen sa nenašiel. Nainštalujte OpenSSH na generovanie kľúčov.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_success">Kľúč '{0}' bol úspešne vygenerovaný a zaregistrovaný.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_failed">Generovanie kľúča bolo zrušené alebo zlyhalo.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_failed_detail">Generovanie kľúča zlyhalo: {0}</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_remove">Odstrániť SSH kľúč</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_remove">Použitie: keys remove [filter]</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_rename">Premenovať alias kľúča</system:String>

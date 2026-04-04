@@ -35,6 +35,24 @@ namespace Flow.Launcher.Plugin.QuickSSH
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
+        /// <summary>
+        /// Key algorithm (e.g. "ed25519", "rsa").  Populated by generate or scan.
+        /// </summary>
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string Algorithm { get; set; }
+
+        /// <summary>
+        /// How this key was registered (e.g. "generated", "manual", "scanned").
+        /// </summary>
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string Source { get; set; }
+
+        /// <summary>
+        /// ISO 8601 UTC timestamp of when this entry was created.
+        /// </summary>
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string CreatedAt { get; set; }
+
         /// <summary>Returns a display-friendly summary of this key entry.</summary>
         public string ToDisplayString()
         {

@@ -46,6 +46,63 @@ namespace Flow.Launcher.Plugin.QuickSSH
         }
 
         /// <summary>
+        /// Checks whether ssh-keygen is available on the system.
+        /// </summary>
+        public static bool IsSshKeygenInstalled()
+        {
+            // Check the default Windows built-in OpenSSH location first.
+            var systemDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            if (File.Exists(Path.Combine(systemDir, "OpenSSH", "ssh-keygen.exe")))
+                return true;
+
+            // Fallback: search PATH via the 'where' command.
+            try
+            {
+                using var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "where",
+                        Arguments = "ssh-keygen",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                process.Start();
+                process.StandardOutput.ReadToEnd();
+                process.StandardError.ReadToEnd();
+                process.WaitForExit();
+                return process.ExitCode == 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Sanitises an alias string so it is safe to use as a file name.
+        /// Replaces spaces with underscores and removes characters that are
+        /// illegal in Windows file names.
+        /// Returns <see langword="null"/> if the result is empty.
+        /// </summary>
+        public static string SanitizeKeyFileName(string alias)
+        {
+            if (string.IsNullOrWhiteSpace(alias))
+                return null;
+
+            var name = alias.Trim().Replace(' ', '_');
+
+            var invalid = Path.GetInvalidFileNameChars();
+            foreach (var c in invalid)
+                name = name.Replace(c.ToString(), "");
+
+            return string.IsNullOrEmpty(name) ? null : name;
+        }
+
+        /// <summary>
         /// Checks whether an SSH client is installed on the system.
         /// </summary>
         public static bool IsSshInstalled()
