@@ -162,6 +162,8 @@ ssh keys add dev "C:\Users\me\.ssh\dev_key"  → register key alias "dev" (quote
 ssh keys remove prod                         → remove key alias "prod"
 ```
 
+> **Display order** — `ssh keys` always shows action rows in a fixed, stable order: **add** → **generate** → **remove** → **rename** → **copy-path** → **copy-pub** → **scan**, followed by registered key entries.
+
 > **Security note:** QuickSSH stores only the alias and the file path — **never** the private key content. The key file is accessed by SSH at connection time, not by the plugin.
 
 > **Key file validation:** When browsing registered keys, QuickSSH checks whether the key file exists on disk and shows a warning icon if it is missing.
