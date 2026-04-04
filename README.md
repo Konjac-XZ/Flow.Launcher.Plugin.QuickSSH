@@ -188,7 +188,7 @@ ssh keys generate mykey C:\keys\mykey        → custom path flow:
 **Default behaviour:**
 - **Algorithm:** ed25519 (recommended). RSA 4096 is available as an alternative row.
 - **Output path:** `%USERPROFILE%\.ssh\<alias>` — the file name is derived from the alias with unsafe characters removed.
-- **Custom path:** Append a path after the alias to generate the keypair at a custom location (e.g. `ssh keys generate mykey D:\keys\mykey`). Quoted paths with spaces are supported.
+- **Custom path:** Append a path after the alias to generate the keypair at a custom location (e.g. `ssh keys generate mykey D:\keys\mykey`). Quoted paths with spaces are supported (e.g. `ssh keys generate mykey "C:\My Keys\mykey"`). The alias and path are separated using Unicode-aware whitespace parsing, so the custom path is never mangled through alias sanitisation.
 - **Passphrase:** Not supported in this version — keys are generated with an empty passphrase (`-N ""`). Interactive passphrase support will be added in a future release.
 
 **What happens on click:**
