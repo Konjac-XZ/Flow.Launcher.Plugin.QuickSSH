@@ -92,4 +92,15 @@
     <!-- BACK NAVIGATION -->
     <system:String x:Key="plugin_quickssh_back_nav_title">← Назад к {0}</system:String>
 
+    <!-- KEYS (SSH key management) -->
+    <system:String x:Key="plugin_quickssh_title_commandkeys">Управление SSH-ключами</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Использование: keys add | remove</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_add">Зарегистрировать SSH-ключ</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Использование: keys add &lt;псевдоним&gt; &lt;путь-к-ключу&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_remove">Удалить SSH-ключ</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_remove">Использование: keys remove [фильтр]</system:String>
+    <system:String x:Key="plugin_quickssh_nokeys">Нет зарегистрированных SSH-ключей.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_file_missing">(файл не найден)</system:String>
+    <system:String x:Key="plugin_quickssh_keys_identity">Файл идентификации:</system:String>
+
 </ResourceDictionary>

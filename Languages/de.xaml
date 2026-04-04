@@ -92,4 +92,15 @@
     <!-- BACK NAVIGATION -->
     <system:String x:Key="plugin_quickssh_back_nav_title">← Zurück zu {0}</system:String>
 
+    <!-- KEYS (SSH key management) -->
+    <system:String x:Key="plugin_quickssh_title_commandkeys">SSH-Schlüsselverwaltung</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Verwendung: keys add | remove</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_add">SSH-Schlüssel registrieren</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Verwendung: keys add &lt;Alias&gt; &lt;Pfad-zum-Schlüssel&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_remove">SSH-Schlüssel entfernen</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_remove">Verwendung: keys remove [Filter]</system:String>
+    <system:String x:Key="plugin_quickssh_nokeys">Keine SSH-Schlüssel registriert.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_file_missing">(Datei nicht gefunden)</system:String>
+    <system:String x:Key="plugin_quickssh_keys_identity">Identitätsdatei:</system:String>
+
 </ResourceDictionary>

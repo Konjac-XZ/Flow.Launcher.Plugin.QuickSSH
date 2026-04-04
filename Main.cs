@@ -19,6 +19,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         private const string CommandProfiles = "profiles";
         private const string CommandCustomShell = "shell";
+        private const string CommandKeys = "keys";
         private const string CommandConfig = "config";
         private const string CommandHelp = "help";
 
@@ -29,7 +30,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// </summary>
         private static readonly string[] AllCommandVerbs = new[]
         {
-            CommandProfiles, CommandCustomShell, CommandConfig, CommandHelp, "add"
+            CommandProfiles, CommandCustomShell, CommandKeys, CommandConfig, CommandHelp, "add"
         };
 
         // Sub-commands of "profiles"
@@ -50,6 +51,15 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private static readonly string[] ShellSubCommands = new[]
         {
             "add", "remove"
+        };
+
+        // Sub-commands of "keys"
+        private const string KeysSubAdd    = "add";
+        private const string KeysSubRemove = "remove";
+
+        private static readonly string[] KeysSubCommands = new[]
+        {
+            KeysSubAdd, KeysSubRemove
         };
 
         private const string AppIconPath = "Images\\app.png";
@@ -85,6 +95,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
         internal const int ScoreShellActionRemove = 1050;
         internal const int ScoreShellSelected     = 1000;
         internal const int ScoreShellOtherStart   = 500; // decremented per additional shell
+
+        // "keys" submenu — action rows above saved key entries
+        internal const int ScoreKeysActionAdd     = 1100;
+        internal const int ScoreKeysActionRemove  = 1050;
+        internal const int ScoreKeysSavedItem     = 500;  // decremented per additional key
 
         private string _databasePath;
         private string _dataDir;
@@ -163,6 +178,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     break;
                 case CommandCustomShell:
                     results.AddRange(HandleShell(query, rest));
+                    break;
+                case CommandKeys:
+                    results.AddRange(HandleKeys(query, rest));
                     break;
                 case CommandConfig:
                     results.AddRange(HandleConfig(query, rest));
@@ -881,6 +899,65 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 }
             });
 
+            // Suggest registered SSH keys when the input contains "-i " with no key value yet,
+            // or ends with "-i" (user is about to type a space then a key path).
+            var trimmedInput = rest.TrimStart();
+            bool suggestKeys = false;
+            if (trimmedInput.Equals("-i", StringComparison.Ordinal) ||
+                trimmedInput.EndsWith(" -i", StringComparison.Ordinal) ||
+                trimmedInput.EndsWith(" -i ", StringComparison.Ordinal))
+            {
+                suggestKeys = true;
+            }
+            // Also match "-i <partial>" where partial does not contain '@' (not a destination).
+            else
+            {
+                var dashI = trimmedInput.LastIndexOf("-i ", StringComparison.Ordinal);
+                if (dashI >= 0)
+                {
+                    var afterI = trimmedInput.Substring(dashI + 3).TrimStart();
+                    // If nothing follows -i or the text after -i has no space yet (still typing
+                    // a key path/alias), suggest keys that match.
+                    if (string.IsNullOrEmpty(afterI) || (!afterI.Contains('@') && !afterI.Contains(' ')))
+                        suggestKeys = true;
+                }
+            }
+
+            if (suggestKeys && _profileManager?.UserData?.SshKeys != null)
+            {
+                var keys = _profileManager.UserData.SshKeys;
+                foreach (var entry in keys)
+                {
+                    var alias = entry.Key;
+                    var keyPath = entry.Value?.Path ?? "";
+                    var quotedPath = SshCommandBuilder.QuoteArgument(keyPath);
+
+                    // Build the autocomplete text: replace "-i" / "-i <partial>" with "-i <full-path>"
+                    var prefix = trimmedInput;
+                    var dashIdx = prefix.LastIndexOf("-i", StringComparison.Ordinal);
+                    if (dashIdx >= 0)
+                        prefix = prefix.Substring(0, dashIdx).TrimEnd();
+
+                    var newInput = string.IsNullOrEmpty(prefix)
+                        ? "-i " + quotedPath + " "
+                        : prefix + " -i " + quotedPath + " ";
+
+                    var autoText = query.ActionKeyword + " " + newInput;
+                    results.Add(new Result
+                    {
+                        Title = alias,
+                        SubTitle = GetTranslation("plugin_quickssh_keys_identity") + " " + keyPath,
+                        IcoPath = AppIconGreenPath,
+                        AutoCompleteText = autoText,
+                        Action = _ =>
+                        {
+                            _pluginContext?.API?.ChangeQuery(autoText, true);
+                            return false;
+                        }
+                    });
+                }
+            }
+
             return results;
         }
 
@@ -1084,6 +1161,218 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         });
                     }
                     break;
+            }
+
+            return results;
+        }
+
+        // ── keys (SSH key management) ─────────────────────────────────────────────
+
+        private List<Result> HandleKeys(Query query, string rest)
+        {
+            var parts = rest.Split(new[] { ' ' }, 2);
+            var subCmd = parts[0].ToLowerInvariant();
+            var subRest = parts.Length > 1 ? parts[1].Trim() : "";
+
+            switch (subCmd)
+            {
+                case KeysSubAdd:    return HandleKeysAdd(query, subRest);
+                case KeysSubRemove: return HandleKeysRemove(query, subRest);
+                default:
+                    // Partial sub-command matching (mirrors profiles/shell pattern).
+                    if (!string.IsNullOrEmpty(subCmd) &&
+                        KeysSubCommands.Any(s => s.StartsWith(subCmd)))
+                    {
+                        return new List<Result>(AutoCompleter.GetSuggestions(
+                            query.ActionKeyword, "keys " + rest,
+                            _profileManager?.UserData, AppIconPath,
+                            _pluginContext?.API));
+                    }
+                    return HandleKeysList(query, rest);
+            }
+        }
+
+        private List<Result> HandleKeysList(Query query, string search)
+        {
+            var results = new List<Result>();
+            var keys = _profileManager.UserData.SshKeys;
+
+            // 1. Management/usage hint — always pinned at the top.
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandkeys"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandkeys"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " keys ",
+                Score = ScoreSubMenuManagement
+            });
+
+            // 2. Back-navigation row — returns to top-level command list.
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " ", query.ActionKeyword));
+
+            // 3. Action rows — only shown when no search text is active.
+            if (string.IsNullOrEmpty(search))
+            {
+                var keysSubCmds = new[]
+                {
+                    ("add",    GetTranslation("plugin_quickssh_title_commandkeys_add"),    GetTranslation("plugin_quickssh_subtitle_commandkeys_add"),    ScoreKeysActionAdd),
+                    ("remove", GetTranslation("plugin_quickssh_title_commandkeys_remove"), GetTranslation("plugin_quickssh_subtitle_commandkeys_remove"), ScoreKeysActionRemove),
+                };
+                foreach (var (scName, scTitle, scSubTitle, scScore) in keysSubCmds)
+                {
+                    var autoText = query.ActionKeyword + " keys " + scName + " ";
+                    results.Add(new Result
+                    {
+                        Title = scTitle,
+                        SubTitle = scSubTitle,
+                        IcoPath = AppIconPath,
+                        AutoCompleteText = autoText,
+                        Score = scScore,
+                        Action = _ =>
+                        {
+                            _pluginContext?.API?.ChangeQuery(autoText, true);
+                            return false;
+                        }
+                    });
+                }
+            }
+
+            // 4. Saved keys.
+            if (keys.Count == 0)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys"),
+                    SubTitle = GetTranslation("plugin_quickssh_nokeys"),
+                    IcoPath = AppIconPath,
+                    Score = ScoreKeysSavedItem
+                });
+            }
+            else
+            {
+                int keyScore = ScoreKeysSavedItem;
+                foreach (var entry in keys)
+                {
+                    if (!string.IsNullOrEmpty(search) &&
+                        !entry.Key.ToLowerInvariant().Contains(search.ToLowerInvariant()))
+                        continue;
+
+                    var alias = entry.Key;
+                    var keyEntry = entry.Value;
+                    var displayPath = keyEntry?.ToDisplayString() ?? "";
+                    bool fileExists = !string.IsNullOrEmpty(keyEntry?.Path) && File.Exists(keyEntry.Path);
+
+                    results.Add(new Result
+                    {
+                        Title = alias,
+                        SubTitle = displayPath + (fileExists ? "" : " " + GetTranslation("plugin_quickssh_keys_file_missing")),
+                        IcoPath = fileExists ? AppIconGreenPath : AppIconRedPath,
+                        AutoCompleteText = query.ActionKeyword + " keys " + alias,
+                        Score = keyScore--
+                    });
+                }
+            }
+
+            return results;
+        }
+
+        private List<Result> HandleKeysAdd(Query query, string rest)
+        {
+            var results = new List<Result>();
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandkeys_add"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandkeys_add"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " keys add ",
+                Score = int.MaxValue
+            });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " keys ", query.ActionKeyword + " keys"));
+
+            if (string.IsNullOrEmpty(rest))
+                return results;
+
+            var addParts = rest.Split(new[] { ' ' }, 2);
+            var keyAlias = addParts[0];
+            var keyPath = addParts.Length > 1 ? addParts[1].Trim() : "";
+
+            // Strip surrounding quotes from the path.
+            if (keyPath.Length >= 2 && keyPath.StartsWith("\"") && keyPath.EndsWith("\""))
+                keyPath = keyPath.Substring(1, keyPath.Length - 2);
+
+            if (!string.IsNullOrEmpty(keyPath))
+            {
+                // Expand ~ to user profile directory.
+                var expandedPath = keyPath.Replace("~",
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+                bool fileExists = File.Exists(expandedPath);
+
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_save_label") + " " + keyAlias,
+                    SubTitle = expandedPath + (fileExists ? "" : " " + GetTranslation("plugin_quickssh_keys_file_missing")),
+                    IcoPath = fileExists ? AppIconGreenPath : AppIconRedPath,
+                    Action = _ =>
+                    {
+                        _profileManager.UserData.SshKeys[keyAlias] = new SshKeyEntry
+                        {
+                            Path = expandedPath
+                        };
+                        return true;
+                    }
+                });
+            }
+
+            return results;
+        }
+
+        private List<Result> HandleKeysRemove(Query query, string rest)
+        {
+            var results = new List<Result>();
+            var keys = _profileManager.UserData.SshKeys;
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandkeys_remove"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandkeys_remove"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " keys remove ",
+                Score = int.MaxValue
+            });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " keys ", query.ActionKeyword + " keys"));
+
+            if (keys.Count == 0)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_remove"),
+                    SubTitle = GetTranslation("plugin_quickssh_nokeys"),
+                    IcoPath = AppIconPath
+                });
+                return results;
+            }
+
+            foreach (var entry in keys)
+            {
+                if (!string.IsNullOrEmpty(rest) &&
+                    !entry.Key.ToLowerInvariant().Contains(rest.ToLowerInvariant()))
+                    continue;
+
+                var alias = entry.Key;
+                var displayPath = entry.Value?.ToDisplayString() ?? "";
+                results.Add(new Result
+                {
+                    Title = alias,
+                    SubTitle = displayPath,
+                    IcoPath = AppIconRedPath,
+                    AutoCompleteText = query.ActionKeyword + " keys remove " + alias,
+                    Action = _ =>
+                    {
+                        _profileManager.UserData.SshKeys.Remove(alias);
+                        return true;
+                    }
+                });
             }
 
             return results;

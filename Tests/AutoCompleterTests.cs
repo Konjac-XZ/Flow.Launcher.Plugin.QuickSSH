@@ -19,6 +19,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
 
             // New top-level commands
             Assert.Contains("profiles", titles);
+            Assert.Contains("keys", titles);
             Assert.Contains("config", titles);
             Assert.Contains("shell", titles);
             Assert.Contains("help", titles);
@@ -139,17 +140,19 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         [Fact]
         public void GetSuggestions_EmptyInput_CommandsHaveDescendingScoresInDefinedOrder()
         {
-            // Expected display order: profiles > shell > config > help
+            // Expected display order: profiles > keys > shell > config > help
             // Flow Launcher sorts by Score descending, so each command must have a
             // strictly higher score than the one that should follow it.
             var results = AutoCompleter.GetSuggestions("ssh", "", null, "icon.png");
 
             int profilesScore = results.First(r => r.Title == "profiles").Score;
+            int keysScore     = results.First(r => r.Title == "keys").Score;
             int shellScore    = results.First(r => r.Title == "shell").Score;
             int configScore   = results.First(r => r.Title == "config").Score;
             int helpScore     = results.First(r => r.Title == "help").Score;
 
-            Assert.True(profilesScore > shellScore,  "profiles must outrank shell");
+            Assert.True(profilesScore > keysScore,   "profiles must outrank keys");
+            Assert.True(keysScore     > shellScore,   "keys must outrank shell");
             Assert.True(shellScore    > configScore, "shell must outrank config");
             Assert.True(configScore   > helpScore,   "config must outrank help");
         }
@@ -159,12 +162,12 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         {
             // When sorted by Score descending (as Flow Launcher does at runtime),
             // the top-level commands must appear in exactly this order:
-            //   1. profiles, 2. shell, 3. config, 4. help
+            //   1. profiles, 2. keys, 3. shell, 4. config, 5. help
             var results = AutoCompleter.GetSuggestions("ssh", "", null, "icon.png");
 
             var ordered = results.OrderByDescending(r => r.Score).Select(r => r.Title).ToList();
 
-            Assert.Equal(new[] { "profiles", "shell", "config", "help" }, ordered);
+            Assert.Equal(new[] { "profiles", "keys", "shell", "config", "help" }, ordered);
         }
 
         // ── Partial "profiles <prefix>" sub-command suggestions ───────────────────
@@ -274,6 +277,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
 
         [Theory]
         [InlineData("profiles")]
+        [InlineData("keys")]
         [InlineData("config")]
         [InlineData("shell")]
         [InlineData("help")]

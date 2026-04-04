@@ -1,6 +1,6 @@
 # QuickSSH — Flow Launcher Plugin
 
-Enhanced SSH/SCP connection plugin for [Flow Launcher](https://www.flowlauncher.com/) with query autocomplete, structured profile management, SSH config import, human-readable profile export/import, custom shell support, and fuzzy search.
+Enhanced SSH/SCP connection plugin for [Flow Launcher](https://www.flowlauncher.com/) with query autocomplete, structured profile management, SSH key registry, SSH config import, human-readable profile export/import, custom shell support, and fuzzy search.
 
 Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Flow.Launcher.Plugin.easyssh).
 
@@ -15,12 +15,16 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 | `ssh profiles copy [filter]` | Copy an SSH/SCP command to the clipboard |
 | `ssh profiles export` | Export all profiles to a human-readable `.sshconfig` file |
 | `ssh profiles import [filter]` | Import profiles from a `.sshconfig` or legacy `.json` file |
+| `ssh keys` | Manage registered SSH key aliases (add / remove / list) |
+| `ssh keys add <alias> <path>` | Register an SSH key alias pointing to a local key file |
+| `ssh keys remove [filter]` | Remove a registered SSH key alias |
 | `ssh shell` | Manage custom terminal shells (add / remove / select) |
 | `ssh config` | Import hosts from `~/.ssh/config` |
 | `ssh help` | Open plugin documentation |
+| `ssh -i <key> <destination>` | Direct connect with key autocomplete from registered keys |
 | `ssh <destination>` | **Implicit direct connect** — type a destination or SSH options directly |
 
-> **Suggestion order:** Typing bare `ssh` (with no arguments) shows top-level suggestions in this order: **profiles**, **shell**, **config**, **help**.
+> **Suggestion order:** Typing bare `ssh` (with no arguments) shows top-level suggestions in this order: **profiles**, **keys**, **shell**, **config**, **help**.
 
 > **Partial subcommand matching:** Under `ssh profiles`, subcommand matching reacts from the first matching character, consistently with top-level command matching.
 > Examples: `ssh profiles a` → **add**; `ssh profiles r` → **remove**, **rename**; `ssh profiles rem` → **remove**; `ssh profiles ren` → **rename**.
@@ -28,6 +32,9 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 
 > **Shell subcommand matching:** Under `ssh shell`, partial subcommand matching works the same way.
 > Examples: `ssh shell a` → **add**; `ssh shell r` → **remove**; `ssh shell rem` → **remove**.
+
+> **Keys subcommand matching:** Under `ssh keys`, partial subcommand matching works the same way.
+> Examples: `ssh keys a` → **add**; `ssh keys r` → **remove**.
 
 > **Note for v1 users:** The top-level `add` command (v1: `ssh add <name> <cmd>`) has been moved to `ssh profiles add <name> <cmd>`.
 > Typing `ssh add ...` shows an explicit redirect hint in the UI — it will not silently do something unexpected.
@@ -38,6 +45,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 - **Human-readable export/import** — profiles are exported and imported in an SSH-config-like text format (`.sshconfig` files)
 - **Legacy migration** — v1 raw-command profiles (JSON) are automatically migrated to the structured format on first load
 - **Query autocomplete** — type partial commands or profile names to see matching suggestions; select a result to expand the query
+- **SSH key registry** — register local SSH keys by alias; registered keys are offered in autocomplete when typing `ssh -i`
 - **Implicit direct SSH input** — type a destination (`user@host`, bare IP/hostname) or SSH options (`-p 22 user@host`, `-i key user@host`) directly without any command prefix
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
 - **SCP support** — save SCP upload/download profiles with all SCP options
@@ -136,6 +144,32 @@ ssh profiles rename myserver new-name    → rename "myserver" to "new-name"
 ssh profiles copy               → list all profiles for copying
 ssh profiles copy myserver      → filter by "myserver", then click to copy
 ```
+
+### SSH key management
+
+Register SSH keys by alias so you can quickly reference them in direct connect or profile creation:
+
+```
+ssh keys                                     → key management view: action rows + registered keys
+ssh keys add prod ~/.ssh/id_ed25519          → register key alias "prod"
+ssh keys add dev "C:\Users\me\.ssh\dev_key"  → register key alias "dev" (quoted path)
+ssh keys remove prod                         → remove key alias "prod"
+```
+
+> **Security note:** QuickSSH stores only the alias and the file path — **never** the private key content. The key file is accessed by SSH at connection time, not by the plugin.
+
+> **Key file validation:** When browsing registered keys, QuickSSH checks whether the key file exists on disk and shows a warning icon if it is missing.
+
+#### Identity file autocomplete (`-i`)
+
+When typing a direct SSH command with `-i`, registered keys are offered as autocomplete suggestions:
+
+```
+ssh -i                    → shows all registered key aliases
+ssh -i ~/.ssh/pr          → shows matching key aliases (e.g. "prod")
+```
+
+Select a key alias to fill in the full path automatically, then continue typing the destination.
 
 ### Quick one-time connection (without saving)
 
@@ -345,7 +379,7 @@ Click any shell in the list to **select** it. All SSH connections will then laun
 
 | File | Purpose |
 |------|---------|
-| `~/.ssh/profiles.json` | Main profile and shell database (v2 structured JSON) |
+| `~/.ssh/profiles.json` | Main profile, shell, and key database (v2 structured JSON) |
 | `%APPDATA%\FlowLauncher\Plugins\QuickSSH\data\*.sshconfig` | Human-readable export/import files |
 | `%APPDATA%\FlowLauncher\Plugins\QuickSSH\data\*.json` | Legacy import files (v1, still readable) |
 
@@ -369,7 +403,13 @@ Click any shell in the list to **select** it. All SSH connections will then laun
   "CustomShellLists": {
     "<shell-name>": "<executable path + optional args>"
   },
-  "SelectedCustomShell": "<shell-name or null>"
+  "SelectedCustomShell": "<shell-name or null>",
+  "SshKeysLists": {
+    "<alias>": {
+      "Path": "C:\\Users\\me\\.ssh\\id_ed25519",
+      "Description": "optional description"
+    }
+  }
 }
 ```
 

@@ -92,4 +92,15 @@
     <!-- BACK NAVIGATION -->
     <system:String x:Key="plugin_quickssh_back_nav_title">← Späť na {0}</system:String>
 
+    <!-- KEYS (SSH key management) -->
+    <system:String x:Key="plugin_quickssh_title_commandkeys">Správa SSH kľúčov</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Použitie: keys add | remove</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_add">Registrovať SSH kľúč</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Použitie: keys add &lt;alias&gt; &lt;cesta-ku-kľúču&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_remove">Odstrániť SSH kľúč</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_remove">Použitie: keys remove [filter]</system:String>
+    <system:String x:Key="plugin_quickssh_nokeys">Žiadne SSH kľúče neboli registrované.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_file_missing">(súbor sa nenašiel)</system:String>
+    <system:String x:Key="plugin_quickssh_keys_identity">Identifikačný súbor:</system:String>
+
 </ResourceDictionary>
