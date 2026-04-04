@@ -63,10 +63,17 @@ if ($userFacingChangedFiles -contains "plugin.json") {
         $headHash = @{}
         $pluginHead.PSObject.Properties | Where-Object { $_.Name -ne "Version" } | ForEach-Object { $headHash[$_.Name] = $_.Value }
 
-        $baseJson = $baseHash | ConvertTo-Json -Compress -Depth 10
-        $headJson = $headHash | ConvertTo-Json -Compress -Depth 10
+        $isVersionOnly = ($baseHash.Count -eq $headHash.Count)
+        if ($isVersionOnly) {
+            foreach ($key in $baseHash.Keys) {
+                if (-not $headHash.ContainsKey($key) -or "$($headHash[$key])" -ne "$($baseHash[$key])") {
+                    $isVersionOnly = $false
+                    break
+                }
+            }
+        }
 
-        if ($baseJson -eq $headJson) {
+        if ($isVersionOnly) {
             Write-Host "plugin.json change is version-only bump — exempted from docs gate."
             $userFacingChangedFiles = @($userFacingChangedFiles | Where-Object { $_ -ne "plugin.json" })
         }
