@@ -260,7 +260,7 @@ ssh -i                    → shows all registered key aliases
 ssh -i ~/.ssh/pr          → shows matching key aliases (e.g. "prod")
 ```
 
-Select a key alias to fill in the full path automatically, then continue typing the destination.
+Select a key alias to fill in the full path automatically, then continue typing the destination. The inserted path uses normal Windows backslashes (e.g. `ssh -i "C:\Users\me\.ssh\key"`) — paths containing spaces are quoted automatically.
 
 ### Quick one-time connection (without saving)
 
