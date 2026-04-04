@@ -103,6 +103,41 @@ namespace Flow.Launcher.Plugin.QuickSSH
         }
 
         /// <summary>
+        /// Splits a generate-command argument string into an alias and an optional
+        /// custom path.  Uses <see cref="System.Char.IsWhiteSpace(char)"/> to find the
+        /// boundary so that non-breaking spaces and other Unicode whitespace
+        /// characters are handled correctly.
+        /// Surrounding quotes on the custom path are stripped.
+        /// </summary>
+        internal static (string alias, string customPath) ParseGenerateArgs(string rest)
+        {
+            if (string.IsNullOrEmpty(rest))
+                return ("", "");
+
+            // Advance past the alias (first non-whitespace token).
+            int i = 0;
+            while (i < rest.Length && !char.IsWhiteSpace(rest[i]))
+                i++;
+
+            var alias = rest.Substring(0, i);
+
+            // Everything after the first whitespace run is the custom path.
+            var customPath = i < rest.Length
+                ? rest.Substring(i).TrimStart()
+                : "";
+
+            // Strip surrounding quotes.
+            if (customPath.Length >= 2 &&
+                customPath[0] == '"' &&
+                customPath[customPath.Length - 1] == '"')
+            {
+                customPath = customPath.Substring(1, customPath.Length - 2);
+            }
+
+            return (alias, customPath);
+        }
+
+        /// <summary>
         /// Checks whether an SSH client is installed on the system.
         /// </summary>
         public static bool IsSshInstalled()
