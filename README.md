@@ -17,7 +17,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 | `ssh profiles import [filter]` | Import profiles from a `.sshconfig` or legacy `.json` file |
 | `ssh keys` | Manage registered SSH key aliases (add / generate / remove / rename / copy-path / copy-pub / scan) |
 | `ssh keys add <alias> <path>` | Register an SSH key alias pointing to a local key file |
-| `ssh keys generate <alias>` | Generate a new SSH keypair and auto-register it |
+| `ssh keys generate <alias> [path]` | Generate a new SSH keypair and auto-register it (default: `~/.ssh/`, or custom path) |
 | `ssh keys remove [filter]` | Remove a registered SSH key alias |
 | `ssh keys rename <old> <new>` | Rename an existing key alias |
 | `ssh keys copy-path [filter]` | Copy the private key file path to clipboard |
@@ -51,7 +51,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 - **Legacy migration** — v1 raw-command profiles (JSON) are automatically migrated to the structured format on first load
 - **Query autocomplete** — type partial commands or profile names to see matching suggestions; select a result to expand the query
 - **SSH key registry** — register local SSH keys by alias; registered keys are offered in autocomplete when typing `ssh -i`
-- **SSH key generation** — generate new SSH keypairs (ed25519 or RSA 4096) locally via row-driven wizard; generated keys are auto-registered after verifying both private and public key files
+- **SSH key generation** — generate new SSH keypairs (ed25519 or RSA 4096) locally via row-driven wizard; supports custom output path or default `~/.ssh/` location; generated keys are auto-registered after verifying both private and public key files
 - **Implicit direct SSH input** — type a destination (`user@host`, bare IP/hostname) or SSH options (`-p 22 user@host`, `-i key user@host`) directly without any command prefix
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
 - **SCP support** — save SCP upload/download profiles with all SCP options
@@ -177,13 +177,18 @@ ssh keys generate                            → usage hint
 ssh keys generate mykey                      → shows actionable rows:
                                                 ● Generate ed25519 (recommended default)
                                                 ● Generate RSA 4096
+                                                ● Custom path… (hint row)
+ssh keys generate mykey C:\keys\mykey        → custom path flow:
+                                                ● Generate ed25519 → C:\keys\mykey
+                                                ● Generate RSA 4096 → C:\keys\mykey
 ```
 
-**Row-driven UX:** After typing the alias, you choose the algorithm by clicking a row — no need to type `ed25519` or `rsa` as arguments.
+**Row-driven UX:** After typing the alias, you choose the algorithm by clicking a row — no need to type `ed25519` or `rsa` as arguments. To use a custom output path, append it after the alias.
 
 **Default behaviour:**
 - **Algorithm:** ed25519 (recommended). RSA 4096 is available as an alternative row.
 - **Output path:** `%USERPROFILE%\.ssh\<alias>` — the file name is derived from the alias with unsafe characters removed.
+- **Custom path:** Append a path after the alias to generate the keypair at a custom location (e.g. `ssh keys generate mykey D:\keys\mykey`). Quoted paths with spaces are supported.
 - **Passphrase:** Not supported in this version — keys are generated with an empty passphrase (`-N ""`). Interactive passphrase support will be added in a future release.
 
 **What happens on click:**
@@ -196,6 +201,8 @@ ssh keys generate mykey                      → shows actionable rows:
 - Empty alias → usage hint shown
 - Duplicate alias → error: alias already exists
 - Target key file already exists → error: file already exists
+- Custom path is an existing directory → error: path is a directory
+- Custom path contains invalid characters → error: invalid path
 - ssh-keygen not found → error: install OpenSSH
 - Generation failed → no registration
 

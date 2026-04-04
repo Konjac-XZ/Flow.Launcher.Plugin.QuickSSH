@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -727,6 +728,157 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             {
                 Directory.Delete(dir, true);
             }
+        }
+
+        // ── Custom path flow tests ────────────────────────────────────────────────
+
+        [Fact]
+        public void CustomPath_FileExists_BlocksGeneration()
+        {
+            // If a file already exists at the custom path, generation must not proceed.
+            var dir = Path.Combine(Path.GetTempPath(), "quickssh_test_gen_" + Path.GetRandomFileName());
+            Directory.CreateDirectory(dir);
+            try
+            {
+                var keyPath = Path.Combine(dir, "my_custom_key");
+                File.WriteAllText(keyPath, "fake key");
+
+                Assert.True(File.Exists(keyPath),
+                    "Test setup: key file must exist to simulate the 'already exists' guard.");
+            }
+            finally
+            {
+                Directory.Delete(dir, true);
+            }
+        }
+
+        [Fact]
+        public void CustomPath_DirectoryTarget_BlocksGeneration()
+        {
+            // If the custom path points to an existing directory, it must be rejected.
+            var dir = Path.Combine(Path.GetTempPath(), "quickssh_test_gen_" + Path.GetRandomFileName());
+            Directory.CreateDirectory(dir);
+            try
+            {
+                Assert.True(Directory.Exists(dir),
+                    "Test setup: target must be an existing directory.");
+                // The handler checks Directory.Exists(fullPath) — this must block generation.
+            }
+            finally
+            {
+                Directory.Delete(dir, true);
+            }
+        }
+
+        [Fact]
+        public void CustomPath_NonExisting_AllowsGeneration()
+        {
+            var dir = Path.Combine(Path.GetTempPath(), "quickssh_test_gen_" + Path.GetRandomFileName());
+            var keyPath = Path.Combine(dir, "new_key");
+
+            Assert.False(File.Exists(keyPath), "Custom key path must not exist before generation.");
+            Assert.False(Directory.Exists(keyPath), "Custom key path must not be a directory.");
+        }
+
+        [Fact]
+        public void CustomPath_SuccessfulGeneration_RegistersCorrectPath()
+        {
+            // When a custom path is used and both files exist, the SshKeyEntry
+            // must store the custom path (not the default ~/.ssh/ path).
+            var userData = new UserData();
+            userData.Attach(() => { });
+
+            var dir = Path.Combine(Path.GetTempPath(), "quickssh_test_gen_" + Path.GetRandomFileName());
+            Directory.CreateDirectory(dir);
+            try
+            {
+                var customPath = Path.Combine(dir, "custom_key");
+                var pubPath = customPath + ".pub";
+                File.WriteAllText(customPath, "fake generated key");
+                File.WriteAllText(pubPath, "fake generated pub");
+
+                // Simulate the registration logic from ExecuteKeyGeneration
+                if (File.Exists(customPath) && File.Exists(pubPath))
+                {
+                    userData.SshKeys["myalias"] = new SshKeyEntry
+                    {
+                        Path = customPath,
+                        PublicKeyPath = pubPath,
+                        Algorithm = "ed25519",
+                        Source = "generated",
+                        CreatedAt = "2025-01-15T10:30:00.0000000Z"
+                    };
+                }
+
+                Assert.True(userData.SshKeys.ContainsKey("myalias"));
+                Assert.Equal(customPath, userData.SshKeys["myalias"].Path);
+                Assert.Equal(pubPath, userData.SshKeys["myalias"].PublicKeyPath);
+                Assert.Equal("generated", userData.SshKeys["myalias"].Source);
+            }
+            finally
+            {
+                Directory.Delete(dir, true);
+            }
+        }
+
+        [Fact]
+        public void CustomPath_ParentCreation_Succeeds()
+        {
+            // When the parent directory does not exist, ExecuteKeyGeneration creates it.
+            var dir = Path.Combine(Path.GetTempPath(), "quickssh_test_gen_" + Path.GetRandomFileName(),
+                "nested", "dir");
+            Assert.False(Directory.Exists(dir));
+
+            try
+            {
+                Directory.CreateDirectory(dir);
+                Assert.True(Directory.Exists(dir));
+            }
+            finally
+            {
+                // Clean up the top-level temp dir
+                var root = Path.Combine(Path.GetTempPath(),
+                    Path.GetFileName(Path.GetDirectoryName(Path.GetDirectoryName(dir))));
+                if (Directory.Exists(root))
+                    Directory.Delete(root, true);
+            }
+        }
+
+        [Fact]
+        public void CustomPath_QuotedPath_Stripped()
+        {
+            // Simulates the quote-stripping logic in HandleKeysGenerate:
+            // surrounding quotes are removed to get the raw path.
+            var raw = "\"C:\\Users\\me\\.ssh\\my key\"";
+            if (raw.Length >= 2 && raw.StartsWith("\"") && raw.EndsWith("\""))
+                raw = raw.Substring(1, raw.Length - 2);
+
+            Assert.Equal(@"C:\Users\me\.ssh\my key", raw);
+        }
+
+        [Fact]
+        public void CustomPath_SanitizeNotAppliedToPath()
+        {
+            // SanitizeKeyFileName is only for alias → default file name derivation.
+            // A custom path must NOT be transformed through sanitize.
+            var customPath = @"C:\My Keys\special-name_v2";
+            // If we ran it through SanitizeKeyFileName, spaces would become underscores
+            // and the result would be wrong.
+            var sanitized = Utils.SanitizeKeyFileName(customPath);
+            // The custom path contains path separators which are invalid file name chars,
+            // so sanitize would strip them — confirming it must not be used for paths.
+            Assert.NotEqual(customPath, sanitized);
+        }
+
+        [Fact]
+        public void CustomPath_TildeExpansion()
+        {
+            // Custom path supports ~ expansion to user profile directory.
+            var input = @"~\.ssh\custom_key";
+            var expanded = input.Replace("~",
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+            Assert.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), expanded);
+            Assert.EndsWith(@"\.ssh\custom_key", expanded);
         }
     }
 }

@@ -1361,12 +1361,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// <list type="bullet">
         ///   <item><c>keys generate</c> — usage hint only</item>
         ///   <item><c>keys generate &lt;alias&gt;</c> — show actionable rows:
-        ///     ed25519 (default), RSA 4096</item>
+        ///     ed25519 (default), RSA 4096, and a custom-path hint row</item>
+        ///   <item><c>keys generate &lt;alias&gt; &lt;custom-path&gt;</c> — show
+        ///     ed25519 + RSA 4096 rows targeting the custom path</item>
         /// </list>
-        /// Passphrase is intentionally NOT supported in this PR — keys are generated
-        /// with <c>-N ""</c> (empty passphrase).  Interactive passphrase flow will be
-        /// added in a separate follow-up PR once runtime behaviour from Flow Launcher
-        /// plugins has been verified.
+        /// Passphrase is intentionally NOT supported — keys are generated
+        /// with <c>-N ""</c> (empty passphrase).
         /// </summary>
         private List<Result> HandleKeysGenerate(Query query, string rest)
         {
@@ -1386,10 +1386,18 @@ namespace Flow.Launcher.Plugin.QuickSSH
             if (string.IsNullOrEmpty(rest))
                 return results;
 
-            // rest is <alias> only — the type/path selection is done via rows, not positional args
-            var alias = rest.Trim();
+            // Split rest into <alias> and optional <custom-path>.
+            var genParts = rest.Split(new[] { ' ' }, 2);
+            var alias = genParts[0];
+            var customPathRaw = genParts.Length > 1 ? genParts[1].Trim() : "";
 
-            // Sanitise alias for use as a file name
+            // Strip surrounding quotes from the custom path.
+            if (customPathRaw.Length >= 2 && customPathRaw.StartsWith("\"") && customPathRaw.EndsWith("\""))
+                customPathRaw = customPathRaw.Substring(1, customPathRaw.Length - 2);
+
+            bool hasCustomPath = !string.IsNullOrEmpty(customPathRaw);
+
+            // Sanitise alias for use as a file name (only used for the default-path branch)
             var safeFileName = Utils.SanitizeKeyFileName(alias);
             if (safeFileName == null)
             {
@@ -1414,41 +1422,119 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
             }
 
-            // Default key path
-            var sshDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ssh");
-            var defaultKeyPath = Path.Combine(sshDir, safeFileName);
-
-            // Check if target file already exists at the default path
-            if (File.Exists(defaultKeyPath))
+            if (hasCustomPath)
             {
+                // ── Custom path flow ──────────────────────────────────────────
+                // Expand ~ to user profile directory.
+                var expandedPath = customPathRaw.Replace("~",
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+
+                // Validate path characters
+                string fullPath;
+                try
+                {
+                    fullPath = Path.GetFullPath(expandedPath);
+                }
+                catch (Exception ex)
+                {
+                    results.Add(new Result
+                    {
+                        Title = GetTranslation("plugin_quickssh_title_commandkeys_generate") + ": " + alias,
+                        SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_invalid_path"), ex.Message),
+                        IcoPath = AppIconRedPath
+                    });
+                    return results;
+                }
+
+                // Target must not be an existing directory
+                if (Directory.Exists(fullPath))
+                {
+                    results.Add(new Result
+                    {
+                        Title = GetTranslation("plugin_quickssh_title_commandkeys_generate") + ": " + alias,
+                        SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_path_is_directory"), fullPath),
+                        IcoPath = AppIconRedPath
+                    });
+                    return results;
+                }
+
+                // Target must not be an existing file
+                if (File.Exists(fullPath))
+                {
+                    results.Add(new Result
+                    {
+                        Title = GetTranslation("plugin_quickssh_title_commandkeys_generate") + ": " + alias,
+                        SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_file_exists"), fullPath),
+                        IcoPath = AppIconRedPath
+                    });
+                    return results;
+                }
+
+                // Row 1: Generate ed25519 at custom path
                 results.Add(new Result
                 {
-                    Title = GetTranslation("plugin_quickssh_title_commandkeys_generate") + ": " + alias,
-                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_file_exists"), defaultKeyPath),
-                    IcoPath = AppIconRedPath
+                    Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "ed25519", fullPath),
+                    IcoPath = AppIconGreenPath,
+                    Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, fullPath)
                 });
-                return results;
+
+                // Row 2: Generate RSA 4096 at custom path
+                results.Add(new Result
+                {
+                    Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "RSA 4096", fullPath),
+                    IcoPath = AppIconPath,
+                    Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, fullPath)
+                });
             }
-
-            // Row 1: Generate ed25519 (recommended default)
-            results.Add(new Result
+            else
             {
-                Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
-                SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "ed25519", defaultKeyPath),
-                IcoPath = AppIconGreenPath,
-                Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, defaultKeyPath)
-            });
+                // ── Default path flow ─────────────────────────────────────────
+                var sshDir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ssh");
+                var defaultKeyPath = Path.Combine(sshDir, safeFileName);
 
-            // Row 2: Generate RSA 4096 (compatibility)
-            results.Add(new Result
-            {
-                Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
-                SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "RSA 4096", defaultKeyPath),
-                IcoPath = AppIconPath,
-                Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, defaultKeyPath)
-            });
+                // Check if target file already exists at the default path
+                if (File.Exists(defaultKeyPath))
+                {
+                    results.Add(new Result
+                    {
+                        Title = GetTranslation("plugin_quickssh_title_commandkeys_generate") + ": " + alias,
+                        SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_file_exists"), defaultKeyPath),
+                        IcoPath = AppIconRedPath
+                    });
+                    return results;
+                }
 
+                // Row 1: Generate ed25519 (recommended default)
+                results.Add(new Result
+                {
+                    Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "ed25519", defaultKeyPath),
+                    IcoPath = AppIconGreenPath,
+                    Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, defaultKeyPath)
+                });
+
+                // Row 2: Generate RSA 4096 (compatibility)
+                results.Add(new Result
+                {
+                    Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "RSA 4096", defaultKeyPath),
+                    IcoPath = AppIconPath,
+                    Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, defaultKeyPath)
+                });
+
+                // Row 3: Custom path hint — navigates the user to append a path
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_keys_generate_custom_path_title"),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_custom_path_hint"),
+                        query.ActionKeyword, alias),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " keys generate " + alias + " "
+                });
+            }
 
             return results;
         }
