@@ -14,6 +14,22 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
 
         /// <summary>
+        /// Wraps <paramref name="path"/> in double-quotes when it contains spaces,
+        /// without escaping backslashes. Intended for Flow Launcher query text
+        /// (e.g. ChangeQuery / AutoCompleteText) where shell escaping must not apply.
+        /// </summary>
+        public static string QuoteForDisplay(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                return "\"\"";
+
+            if (path.Contains(' ') || path.Contains('\t'))
+                return "\"" + path + "\"";
+
+            return path;
+        }
+
+        /// <summary>
         /// Wraps <paramref name="arg"/> in double-quotes if it contains spaces
         /// or other characters that need quoting.
         /// </summary>

@@ -61,6 +61,34 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.Equal(@"""C:\\My Keys\\id_rsa""", result);
         }
 
+        // ── QuoteForDisplay ──────────────────────────────────────────────────────
+
+        [Fact]
+        public void QuoteForDisplay_PathWithoutSpaces_NoDoubleBackslash()
+        {
+            var result = SshCommandBuilder.QuoteForDisplay(@"C:\Users\info\.ssh\custom\skuska");
+            Assert.Equal(@"C:\Users\info\.ssh\custom\skuska", result);
+            Assert.DoesNotContain("\\\\", result);
+        }
+
+        [Fact]
+        public void QuoteForDisplay_PathWithSpaces_QuotedNoDoubleBackslash()
+        {
+            var result = SshCommandBuilder.QuoteForDisplay(@"C:\Users\info\.ssh\My Keys\medzera");
+            Assert.Equal(@"""C:\Users\info\.ssh\My Keys\medzera""", result);
+            Assert.DoesNotContain("\\\\", result);
+        }
+
+        [Fact]
+        public void QuoteForDisplay_InsertedQueryText_NeverContainsDoubleBackslash()
+        {
+            // Simulate the exact flow: "-i " + QuoteForDisplay(path)
+            var path = @"C:\Users\info\.ssh\custom\skuska";
+            var queryText = "-i " + SshCommandBuilder.QuoteForDisplay(path);
+            Assert.DoesNotContain("\\\\", queryText);
+            Assert.Contains(path, queryText);
+        }
+
         // ── Build ─────────────────────────────────────────────────────────────────
 
         [Fact]

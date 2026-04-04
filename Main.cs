@@ -947,7 +947,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 {
                     var alias = entry.Key;
                     var keyPath = entry.Value?.Path ?? "";
-                    var quotedPath = SshCommandBuilder.QuoteArgument(keyPath);
+                    var quotedPath = SshCommandBuilder.QuoteForDisplay(keyPath);
 
                     // Build the autocomplete text: replace "-i" / "-i <partial>" with "-i <full-path>"
                     var prefix = trimmedInput;
