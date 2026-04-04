@@ -1366,6 +1366,18 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// Passphrase is prompted interactively in the terminal — never via the Flow Launcher query.
         /// After successful generation the key is auto-registered into the key registry.
         /// </summary>
+        /// <summary>
+        /// Row-driven SSH key generation wizard.
+        /// <list type="bullet">
+        ///   <item><c>keys generate</c> — usage hint only</item>
+        ///   <item><c>keys generate &lt;alias&gt;</c> — show actionable rows:
+        ///     ed25519 (default), RSA 4096, custom path hint</item>
+        /// </list>
+        /// Passphrase is intentionally NOT supported in this PR — keys are generated
+        /// with <c>-N ""</c> (empty passphrase).  Interactive passphrase flow will be
+        /// added in a separate follow-up PR once runtime behaviour from Flow Launcher
+        /// plugins has been verified.
+        /// </summary>
         private List<Result> HandleKeysGenerate(Query query, string rest)
         {
             var results = new List<Result>();
@@ -1384,24 +1396,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
             if (string.IsNullOrEmpty(rest))
                 return results;
 
-            // Parse: <alias> [type] [path]
-            var genParts = rest.Split(new[] { ' ' }, 3);
-            var alias = genParts[0];
-            var keyTypeRaw = genParts.Length > 1 ? genParts[1].Trim().ToLowerInvariant() : "";
-            var customPath = genParts.Length > 2 ? genParts[2].Trim() : "";
-
-            // Resolve key type — default to ed25519
-            string keyType;
-            int keyBits = 0;
-            if (keyTypeRaw == "rsa")
-            {
-                keyType = "rsa";
-                keyBits = 4096;
-            }
-            else
-            {
-                keyType = "ed25519";
-            }
+            // rest is <alias> only — the type/path selection is done via rows, not positional args
+            var alias = rest.Trim();
 
             // Sanitise alias for use as a file name
             var safeFileName = Utils.SanitizeKeyFileName(alias);
@@ -1428,92 +1424,56 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
             }
 
-            // Resolve key path
+            // Default key path
             var sshDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ssh");
-            string keyPath;
+            var defaultKeyPath = Path.Combine(sshDir, safeFileName);
 
-            if (!string.IsNullOrEmpty(customPath))
-            {
-                // Expand ~ to user profile directory
-                keyPath = customPath.Replace("~",
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
-                // Strip surrounding quotes
-                if (keyPath.Length >= 2 && keyPath.StartsWith("\"") && keyPath.EndsWith("\""))
-                    keyPath = keyPath.Substring(1, keyPath.Length - 2);
-            }
-            else
-            {
-                keyPath = Path.Combine(sshDir, safeFileName);
-            }
-
-            // Validate path
-            var keyDir = Path.GetDirectoryName(keyPath);
-            if (string.IsNullOrEmpty(keyDir))
-            {
-                results.Add(new Result
-                {
-                    Title = GetTranslation("plugin_quickssh_title_commandkeys_generate"),
-                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_invalid_path"), keyPath),
-                    IcoPath = AppIconRedPath
-                });
-                return results;
-            }
-
-            // Check if target file already exists
-            if (File.Exists(keyPath))
+            // Check if target file already exists at the default path
+            if (File.Exists(defaultKeyPath))
             {
                 results.Add(new Result
                 {
                     Title = GetTranslation("plugin_quickssh_title_commandkeys_generate") + ": " + alias,
-                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_file_exists"), keyPath),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_file_exists"), defaultKeyPath),
                     IcoPath = AppIconRedPath
                 });
                 return results;
             }
 
-            // Build display label for the key type
-            var typeLabel = keyType == "rsa" ? "RSA 4096" : "ed25519";
-
-            // Show the generate action
+            // Row 1: Generate ed25519 (recommended default)
             results.Add(new Result
             {
                 Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
-                SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), typeLabel, keyPath),
+                SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "ed25519", defaultKeyPath),
                 IcoPath = AppIconGreenPath,
-                Action = _ =>
-                {
-                    return ExecuteKeyGeneration(alias, keyType, keyBits, keyPath);
-                }
+                Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, defaultKeyPath)
             });
 
-            // If user hasn't typed a type yet, offer a hint for the alternative type
-            if (string.IsNullOrEmpty(keyTypeRaw))
+            // Row 2: Generate RSA 4096 (compatibility)
+            results.Add(new Result
             {
-                var altType = "rsa";
-                var altLabel = "RSA 4096";
-                var altPath = keyPath; // same path for the hint
-                var altAutoText = query.ActionKeyword + " keys generate " + alias + " " + altType + " ";
-                results.Add(new Result
-                {
-                    Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
-                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), altLabel, altPath),
-                    IcoPath = AppIconPath,
-                    AutoCompleteText = altAutoText,
-                    Action = _ =>
-                    {
-                        _pluginContext?.API?.ChangeQuery(altAutoText, true);
-                        return false;
-                    }
-                });
-            }
+                Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
+                SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "RSA 4096", defaultKeyPath),
+                IcoPath = AppIconPath,
+                Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, defaultKeyPath)
+            });
+
+            // Row 3: Custom path hint — navigates to deeper level (future extension point)
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_keys_generate_custom_path"),
+                SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_custom_path_hint"), sshDir),
+                IcoPath = AppIconPath
+            });
 
             return results;
         }
 
         /// <summary>
-        /// Runs ssh-keygen in an interactive terminal to generate a keypair, then
-        /// auto-registers the key in the key registry on success.
+        /// Runs ssh-keygen non-interactively to generate a keypair with an empty
+        /// passphrase (<c>-N ""</c>), then auto-registers the key in the registry
+        /// only if both the private key and <c>.pub</c> file exist on disk.
         /// Returns <see langword="true"/> to close Flow Launcher after execution.
         /// </summary>
         private bool ExecuteKeyGeneration(string alias, string keyType, int keyBits, string keyPath)
@@ -1548,23 +1508,22 @@ namespace Flow.Launcher.Plugin.QuickSSH
             }
 
             // 4. Build ssh-keygen arguments.
-            //    Passphrase is NOT passed via arguments — ssh-keygen will prompt interactively.
+            //    -N "" sets an empty passphrase — no interactive prompt needed.
+            //    Passphrase support will be added in a follow-up PR.
             var keygenArgs = keyBits > 0
-                ? $"-t {keyType} -b {keyBits} -f \"{keyPath}\" -C \"{alias}\""
-                : $"-t {keyType} -f \"{keyPath}\" -C \"{alias}\"";
-
-            var workingDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                ? $"-t {keyType} -b {keyBits} -f \"{keyPath}\" -C \"{alias}\" -N \"\""
+                : $"-t {keyType} -f \"{keyPath}\" -C \"{alias}\" -N \"\"";
 
             try
             {
-                // Launch ssh-keygen in an interactive cmd.exe window.
-                // /c closes the window after ssh-keygen finishes so we can detect completion.
                 var process = Process.Start(new ProcessStartInfo
                 {
-                    FileName = GetCmdExePath(),
-                    Arguments = "/c ssh-keygen " + keygenArgs,
-                    UseShellExecute = true,
-                    WorkingDirectory = workingDir
+                    FileName = "ssh-keygen",
+                    Arguments = keygenArgs,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
                 });
                 if (process == null)
                 {
@@ -1574,6 +1533,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 }
                 using (process)
                 {
+                    process.StandardOutput.ReadToEnd();
+                    process.StandardError.ReadToEnd();
                     process.WaitForExit();
                 }
             }
@@ -1584,13 +1545,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return true;
             }
 
-            // 5. Verify generation succeeded — only register if the file was actually created.
-            if (File.Exists(keyPath))
+            // 5. Verify generation succeeded — register only if BOTH private key and .pub exist.
+            var pubKeyPath = keyPath + ".pub";
+            if (File.Exists(keyPath) && File.Exists(pubKeyPath))
             {
                 _profileManager.UserData.SshKeys[alias] = new SshKeyEntry
                 {
                     Path = keyPath,
-                    PublicKeyPath = keyPath + ".pub",
+                    PublicKeyPath = pubKeyPath,
                     Algorithm = keyType,
                     Comment = alias,
                     Source = "generated",

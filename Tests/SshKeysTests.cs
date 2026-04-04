@@ -651,7 +651,8 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         [Fact]
         public void SuccessfulGeneration_Registers()
         {
-            // Simulates the logic: if File.Exists(keyPath) is true after ssh-keygen,
+            // Simulates the logic: if BOTH File.Exists(keyPath) and
+            // File.Exists(keyPath + ".pub") are true after ssh-keygen,
             // the key IS added to the registry.
             var userData = new UserData();
             userData.Attach(() => { });
@@ -661,15 +662,17 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             try
             {
                 var keyPath = Path.Combine(dir, "test_key");
+                var pubPath = keyPath + ".pub";
                 File.WriteAllText(keyPath, "fake generated key");
+                File.WriteAllText(pubPath, "fake generated pub");
 
-                // Simulate successful generation — file exists
-                if (File.Exists(keyPath))
+                // Simulate successful generation — both files exist
+                if (File.Exists(keyPath) && File.Exists(pubPath))
                 {
                     userData.SshKeys["testkey"] = new SshKeyEntry
                     {
                         Path = keyPath,
-                        PublicKeyPath = keyPath + ".pub",
+                        PublicKeyPath = pubPath,
                         Algorithm = "ed25519",
                         Source = "generated",
                         CreatedAt = "2025-01-15T10:30:00.0000000Z"
@@ -678,8 +681,47 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
 
                 Assert.True(userData.SshKeys.ContainsKey("testkey"));
                 Assert.Equal(keyPath, userData.SshKeys["testkey"].Path);
+                Assert.Equal(pubPath, userData.SshKeys["testkey"].PublicKeyPath);
                 Assert.Equal("ed25519", userData.SshKeys["testkey"].Algorithm);
                 Assert.Equal("generated", userData.SshKeys["testkey"].Source);
+            }
+            finally
+            {
+                Directory.Delete(dir, true);
+            }
+        }
+
+        [Fact]
+        public void SuccessfulGeneration_MissingPub_DoesNotRegister()
+        {
+            // If the private key was created but .pub is missing (partial generation),
+            // the key must NOT be registered.
+            var userData = new UserData();
+            userData.Attach(() => { });
+
+            var dir = Path.Combine(Path.GetTempPath(), "quickssh_test_gen_" + Path.GetRandomFileName());
+            Directory.CreateDirectory(dir);
+            try
+            {
+                var keyPath = Path.Combine(dir, "test_key");
+                var pubPath = keyPath + ".pub";
+                File.WriteAllText(keyPath, "fake generated key");
+                // Intentionally do NOT create .pub file
+
+                // Simulate generation check — private exists, .pub does not
+                if (File.Exists(keyPath) && File.Exists(pubPath))
+                {
+                    userData.SshKeys["testkey"] = new SshKeyEntry
+                    {
+                        Path = keyPath,
+                        PublicKeyPath = pubPath,
+                        Algorithm = "ed25519",
+                        Source = "generated"
+                    };
+                }
+
+                // Must NOT have been registered
+                Assert.Empty(userData.SshKeys);
             }
             finally
             {

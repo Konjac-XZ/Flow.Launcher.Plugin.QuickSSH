@@ -98,9 +98,11 @@
     <system:String x:Key="plugin_quickssh_title_commandkeys_add">Registrar clave SSH</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Uso: keys add &lt;alias&gt; &lt;ruta-a-la-clave&gt;</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_generate">Generar par de claves SSH</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_generate">Uso: keys generate &lt;alias&gt; [ed25519|rsa] [ruta]</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_generate">Uso: keys generate &lt;alias&gt;</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_confirm">Generar: {0}</system:String>
-    <system:String x:Key="plugin_quickssh_keys_generate_subtitle">{0} → {1} (contraseña a través del terminal)</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_subtitle">{0} → {1} (sin contraseña)</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_custom_path">Usar ruta personalizada…</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_custom_path_hint">Directorio predeterminado: {0} — soporte de ruta personalizada próximamente</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_invalid_alias">Alias no válido — contiene solo caracteres no válidos.</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_duplicate">El alias ya existe: {0}</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_file_exists">El archivo de clave ya existe: {0}</system:String>
