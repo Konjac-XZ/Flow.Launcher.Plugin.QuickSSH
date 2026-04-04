@@ -15,8 +15,9 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 | `ssh profiles copy [filter]` | Copy an SSH/SCP command to the clipboard |
 | `ssh profiles export` | Export all profiles to a human-readable `.sshconfig` file |
 | `ssh profiles import [filter]` | Import profiles from a `.sshconfig` or legacy `.json` file |
-| `ssh keys` | Manage registered SSH key aliases (add / remove / rename / copy-path / copy-pub / scan) |
+| `ssh keys` | Manage registered SSH key aliases (add / generate / remove / rename / copy-path / copy-pub / scan) |
 | `ssh keys add <alias> <path>` | Register an SSH key alias pointing to a local key file |
+| `ssh keys generate <alias> [type] [path]` | Generate a new SSH keypair and auto-register it |
 | `ssh keys remove [filter]` | Remove a registered SSH key alias |
 | `ssh keys rename <old> <new>` | Rename an existing key alias |
 | `ssh keys copy-path [filter]` | Copy the private key file path to clipboard |
@@ -38,7 +39,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 > Examples: `ssh shell a` → **add**; `ssh shell r` → **remove**; `ssh shell rem` → **remove**.
 
 > **Keys subcommand matching:** Under `ssh keys`, partial subcommand matching works the same way.
-> Examples: `ssh keys a` → **add**; `ssh keys r` → **remove**, **rename**; `ssh keys c` → **copy-path**, **copy-pub**; `ssh keys s` → **scan**.
+> Examples: `ssh keys a` → **add**; `ssh keys g` → **generate**; `ssh keys r` → **remove**, **rename**; `ssh keys c` → **copy-path**, **copy-pub**; `ssh keys s` → **scan**.
 
 > **Note for v1 users:** The top-level `add` command (v1: `ssh add <name> <cmd>`) has been moved to `ssh profiles add <name> <cmd>`.
 > Typing `ssh add ...` shows an explicit redirect hint in the UI — it will not silently do something unexpected.
@@ -50,6 +51,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 - **Legacy migration** — v1 raw-command profiles (JSON) are automatically migrated to the structured format on first load
 - **Query autocomplete** — type partial commands or profile names to see matching suggestions; select a result to expand the query
 - **SSH key registry** — register local SSH keys by alias; registered keys are offered in autocomplete when typing `ssh -i`
+- **SSH key generation** — generate new SSH keypairs (ed25519 or RSA 4096) locally with passphrase prompt in an interactive terminal; generated keys are auto-registered
 - **Implicit direct SSH input** — type a destination (`user@host`, bare IP/hostname) or SSH options (`-p 22 user@host`, `-i key user@host`) directly without any command prefix
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
 - **SCP support** — save SCP upload/download profiles with all SCP options
@@ -163,6 +165,38 @@ ssh keys remove prod                         → remove key alias "prod"
 > **Security note:** QuickSSH stores only the alias and the file path — **never** the private key content. The key file is accessed by SSH at connection time, not by the plugin.
 
 > **Key file validation:** When browsing registered keys, QuickSSH checks whether the key file exists on disk and shows a warning icon if it is missing.
+
+### Generate an SSH keypair
+
+Generate a new SSH keypair locally and auto-register it in the key registry:
+
+```
+ssh keys generate mykey                      → generate ed25519 keypair at ~/.ssh/mykey (default)
+ssh keys generate mykey rsa                  → generate RSA 4096 keypair at ~/.ssh/mykey
+ssh keys generate mykey ed25519              → explicitly choose ed25519 (same as default)
+ssh keys generate mykey rsa "C:\custom\path" → custom output path with RSA 4096
+```
+
+**Default behaviour:**
+- **Algorithm:** ed25519 (recommended). Use `rsa` for RSA 4096 compatibility.
+- **Output path:** `%USERPROFILE%\.ssh\<alias>` — the file name is derived from the alias with unsafe characters removed.
+- **Passphrase:** Entered interactively in the terminal window — **never** typed into or stored by the plugin.
+
+**What happens on click:**
+1. A terminal window opens with `ssh-keygen` running interactively.
+2. You enter the passphrase (or press Enter for no passphrase).
+3. After `ssh-keygen` finishes, QuickSSH checks whether the key file was created.
+4. If the file exists → the key is auto-registered with metadata (alias, path, algorithm, source, timestamp).
+5. If the file does not exist (cancelled or failed) → nothing is registered.
+
+**Validations:**
+- Empty alias → usage hint shown
+- Duplicate alias → error: alias already exists
+- Target key file already exists → error: file already exists
+- ssh-keygen not found → error: install OpenSSH
+- Generation failed or cancelled → no registration
+
+> **Storage:** Only harmless metadata is stored in the key registry: alias, path, public key path, algorithm, source (`"generated"`), and creation timestamp. Private key content and passphrases are **never** stored.
 
 ### Rename a key alias
 
@@ -455,7 +489,10 @@ Click any shell in the list to **select** it. All SSH connections will then laun
       "PublicKeyPath": "C:\\Users\\me\\.ssh\\id_ed25519.pub",
       "Fingerprint": "SHA256:...",
       "Comment": "user@host",
-      "Description": "optional description"
+      "Description": "optional description",
+      "Algorithm": "ed25519",
+      "Source": "generated",
+      "CreatedAt": "2025-01-15T10:30:00.0000000Z"
     }
   }
 }

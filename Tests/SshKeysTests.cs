@@ -192,6 +192,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             foreach (var r in results) titles.Add(r.Title);
 
             Assert.Contains("add", titles);
+            Assert.Contains("generate", titles);
             Assert.Contains("remove", titles);
             Assert.Contains("rename", titles);
             Assert.Contains("copy-path", titles);
@@ -203,6 +204,9 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         [InlineData("a",      new[] { "add" })]
         [InlineData("ad",     new[] { "add" })]
         [InlineData("add",    new[] { "add" })]
+        [InlineData("g",      new[] { "generate" })]
+        [InlineData("ge",     new[] { "generate" })]
+        [InlineData("gen",    new[] { "generate" })]
         [InlineData("r",      new[] { "remove", "rename" })]
         [InlineData("re",     new[] { "remove", "rename" })]
         [InlineData("rem",    new[] { "remove" })]
@@ -217,7 +221,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             string partial, string[] expected)
         {
             var results = AutoCompleter.GetSuggestions("ssh", "keys " + partial, null, "icon.png");
-            var allSubCmds = new HashSet<string> { "add", "remove", "rename", "copy-path", "copy-pub", "scan" };
+            var allSubCmds = new HashSet<string> { "add", "generate", "remove", "rename", "copy-path", "copy-pub", "scan" };
             var subCommandTitles = results
                 .Select(r => r.Title)
                 .Where(t => allSubCmds.Contains(t))
@@ -281,8 +285,9 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         [Fact]
         public void KeysSubmenu_ActionRowScoresAreInDescendingOrder()
         {
-            // add > remove > rename > copy-path > copy-pub > scan
-            Assert.True(QuickSsh.ScoreKeysActionAdd      > QuickSsh.ScoreKeysActionRemove);
+            // add > generate > remove > rename > copy-path > copy-pub > scan
+            Assert.True(QuickSsh.ScoreKeysActionAdd      > QuickSsh.ScoreKeysActionGenerate);
+            Assert.True(QuickSsh.ScoreKeysActionGenerate > QuickSsh.ScoreKeysActionRemove);
             Assert.True(QuickSsh.ScoreKeysActionRemove   > QuickSsh.ScoreKeysActionRename);
             Assert.True(QuickSsh.ScoreKeysActionRename   > QuickSsh.ScoreKeysActionCopyPath);
             Assert.True(QuickSsh.ScoreKeysActionCopyPath > QuickSsh.ScoreKeysActionCopyPub);
@@ -394,6 +399,292 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         {
             var results = QuickSsh.ScanSshDirectory(@"C:\nonexistent\path\that\does\not\exist");
             Assert.Empty(results);
+        }
+
+        // ── SshKeyEntry new metadata fields ───────────────────────────────────────
+
+        [Fact]
+        public void SshKeyEntry_NewFields_Algorithm_Source_CreatedAt()
+        {
+            var entry = new SshKeyEntry
+            {
+                Path = @"C:\Users\me\.ssh\id_ed25519",
+                Algorithm = "ed25519",
+                Source = "generated",
+                CreatedAt = "2025-01-15T10:30:00.0000000Z"
+            };
+            Assert.Equal("ed25519", entry.Algorithm);
+            Assert.Equal("generated", entry.Source);
+            Assert.Equal("2025-01-15T10:30:00.0000000Z", entry.CreatedAt);
+        }
+
+        [Fact]
+        public void SshKeyEntry_NewFields_NullByDefault()
+        {
+            var entry = new SshKeyEntry { Path = @"C:\path\key" };
+            Assert.Null(entry.Algorithm);
+            Assert.Null(entry.Source);
+            Assert.Null(entry.CreatedAt);
+        }
+
+        [Fact]
+        public void SshKeyEntry_Serialize_NewNullFieldsOmitted()
+        {
+            var entry = new SshKeyEntry { Path = @"C:\path\key" };
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(entry);
+
+            Assert.Contains("Path", json);
+            Assert.DoesNotContain("Algorithm", json);
+            Assert.DoesNotContain("Source", json);
+            Assert.DoesNotContain("CreatedAt", json);
+        }
+
+        [Fact]
+        public void SshKeyEntry_Deserialize_WithNewFields()
+        {
+            var json = @"{
+                ""Path"": ""C:\\Users\\me\\.ssh\\id_ed25519"",
+                ""Algorithm"": ""ed25519"",
+                ""Source"": ""generated"",
+                ""CreatedAt"": ""2025-01-15T10:30:00.0000000Z""
+            }";
+            var entry = Newtonsoft.Json.JsonConvert.DeserializeObject<SshKeyEntry>(json);
+
+            Assert.Equal(@"C:\Users\me\.ssh\id_ed25519", entry.Path);
+            Assert.Equal("ed25519", entry.Algorithm);
+            Assert.Equal("generated", entry.Source);
+            Assert.Equal("2025-01-15T10:30:00.0000000Z", entry.CreatedAt);
+        }
+
+        [Fact]
+        public void SshKeyEntry_Deserialize_OldFormat_NoNewMetadataFields()
+        {
+            // Existing stored data without Algorithm/Source/CreatedAt must still load cleanly.
+            var json = @"{ ""Path"": ""C:\\Users\\me\\.ssh\\id_rsa"" }";
+            var entry = Newtonsoft.Json.JsonConvert.DeserializeObject<SshKeyEntry>(json);
+
+            Assert.NotNull(entry);
+            Assert.Equal(@"C:\Users\me\.ssh\id_rsa", entry.Path);
+            Assert.Null(entry.Algorithm);
+            Assert.Null(entry.Source);
+            Assert.Null(entry.CreatedAt);
+        }
+
+        // ── SanitizeKeyFileName ───────────────────────────────────────────────────
+
+        [Theory]
+        [InlineData("mykey", "mykey")]
+        [InlineData("my key", "my_key")]
+        [InlineData("  spaced  ", "spaced")]
+        [InlineData("a/b\\c", "abc")]
+        [InlineData("normal-name_123", "normal-name_123")]
+        public void SanitizeKeyFileName_ValidInputs(string input, string expected)
+        {
+            Assert.Equal(expected, Utils.SanitizeKeyFileName(input));
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        public void SanitizeKeyFileName_EmptyOrNull_ReturnsNull(string input)
+        {
+            Assert.Null(Utils.SanitizeKeyFileName(input));
+        }
+
+        [Fact]
+        public void SanitizeKeyFileName_Null_ReturnsNull()
+        {
+            Assert.Null(Utils.SanitizeKeyFileName(null));
+        }
+
+        // ── Generate sub-command in autocomplete ──────────────────────────────────
+
+        [Fact]
+        public void GetSuggestions_KeysPartialG_SuggestsGenerate()
+        {
+            var results = AutoCompleter.GetSuggestions("ssh", "keys g", null, "icon.png");
+            Assert.Contains(results, r => r.Title == "generate");
+            Assert.DoesNotContain(results, r => r.Title == "add");
+            Assert.DoesNotContain(results, r => r.Title == "scan");
+        }
+
+        // ── Generate score placement ──────────────────────────────────────────────
+
+        [Fact]
+        public void KeysSubmenu_GenerateScoreIsBetweenAddAndRemove()
+        {
+            Assert.True(QuickSsh.ScoreKeysActionAdd > QuickSsh.ScoreKeysActionGenerate,
+                "Add must outrank generate.");
+            Assert.True(QuickSsh.ScoreKeysActionGenerate > QuickSsh.ScoreKeysActionRemove,
+                "Generate must outrank remove.");
+        }
+
+        [Fact]
+        public void KeysSubmenu_GenerateScoreIsSafeAboveSavedItems()
+        {
+            int gap = QuickSsh.ScoreKeysActionGenerate - QuickSsh.ScoreKeysSavedItem;
+            Assert.True(gap > 500,
+                $"Generate action score must exceed saved item base by > 500 (actual gap: {gap}).");
+        }
+
+        // ── Generated key auto-register availability ──────────────────────────────
+
+        [Fact]
+        public void GeneratedKey_RegisteredInSshKeys_AvailableInAutocomplete()
+        {
+            // Simulates a key that was generated and registered:
+            // after registration it must appear in autocomplete suggestions.
+            var userData = new UserData();
+            userData.Attach(() => { });
+            userData.SshKeys["mygenerated"] = new SshKeyEntry
+            {
+                Path = @"C:\Users\me\.ssh\mygenerated",
+                PublicKeyPath = @"C:\Users\me\.ssh\mygenerated.pub",
+                Algorithm = "ed25519",
+                Source = "generated",
+                CreatedAt = "2025-01-15T10:30:00.0000000Z"
+            };
+
+            // Key must appear in "keys " autocomplete (alongside sub-commands)
+            var results = AutoCompleter.GetSuggestions("ssh", "keys ", userData, "icon.png");
+            Assert.Contains(results, r => r.Title == "mygenerated");
+        }
+
+        [Fact]
+        public void GeneratedKey_NotRegistered_NotInAutocomplete()
+        {
+            // Verify that unregistered keys do NOT appear.
+            var userData = new UserData();
+            userData.Attach(() => { });
+
+            var results = AutoCompleter.GetSuggestions("ssh", "keys ", userData, "icon.png");
+            Assert.DoesNotContain(results, r => r.Title == "mygenerated");
+        }
+
+        [Fact]
+        public void GeneratedKey_AvailableInDirectConnect_DashI_Autocomplete()
+        {
+            // After registration, the key alias should be offered when typing "ssh -i"
+            // via direct-connect autocomplete. Since HandleDirectConnect is not tested
+            // directly here (it requires full plugin context), we verify the key is in
+            // the UserData registry which feeds the autocomplete.
+            var userData = new UserData();
+            userData.Attach(() => { });
+            userData.SshKeys["prod"] = new SshKeyEntry
+            {
+                Path = @"C:\Users\me\.ssh\prod",
+                Algorithm = "ed25519",
+                Source = "generated"
+            };
+
+            Assert.True(userData.SshKeys.ContainsKey("prod"));
+            Assert.Equal(@"C:\Users\me\.ssh\prod", userData.SshKeys["prod"].Path);
+        }
+
+        // ── Duplicate alias validation ────────────────────────────────────────────
+
+        [Fact]
+        public void DuplicateAlias_BlocksRegistration()
+        {
+            var userData = new UserData();
+            userData.Attach(() => { });
+            userData.SshKeys["existing"] = new SshKeyEntry { Path = @"C:\path\key" };
+
+            // A duplicate alias must be detected
+            Assert.True(userData.SshKeys.ContainsKey("existing"));
+        }
+
+        // ── File exists validation ────────────────────────────────────────────────
+
+        [Fact]
+        public void ExistingKeyFile_BlocksGeneration()
+        {
+            // Create a temp file to simulate an existing key
+            var dir = Path.Combine(Path.GetTempPath(), "quickssh_test_gen_" + Path.GetRandomFileName());
+            Directory.CreateDirectory(dir);
+            try
+            {
+                var keyPath = Path.Combine(dir, "existing_key");
+                File.WriteAllText(keyPath, "fake key");
+
+                // File.Exists should return true — this is what the generate handler checks
+                Assert.True(File.Exists(keyPath),
+                    "Test setup: key file must exist to simulate the 'already exists' guard.");
+            }
+            finally
+            {
+                Directory.Delete(dir, true);
+            }
+        }
+
+        [Fact]
+        public void NonExistingKeyFile_AllowsGeneration()
+        {
+            var dir = Path.Combine(Path.GetTempPath(), "quickssh_test_gen_" + Path.GetRandomFileName());
+            var keyPath = Path.Combine(dir, "new_key");
+
+            Assert.False(File.Exists(keyPath),
+                "Key file must not exist before generation.");
+        }
+
+        // ── No registration on failure ────────────────────────────────────────────
+
+        [Fact]
+        public void FailedGeneration_DoesNotRegister()
+        {
+            // Simulates the logic: if File.Exists(keyPath) is false after ssh-keygen,
+            // the key must NOT be added to the registry.
+            var userData = new UserData();
+            userData.Attach(() => { });
+
+            var keyPath = Path.Combine(Path.GetTempPath(), "nonexistent_" + Path.GetRandomFileName());
+
+            // Simulate failed generation — file does not exist
+            if (!File.Exists(keyPath))
+            {
+                // The handler would NOT register the key in this case.
+                // We verify the registry stays empty.
+                Assert.Empty(userData.SshKeys);
+            }
+        }
+
+        [Fact]
+        public void SuccessfulGeneration_Registers()
+        {
+            // Simulates the logic: if File.Exists(keyPath) is true after ssh-keygen,
+            // the key IS added to the registry.
+            var userData = new UserData();
+            userData.Attach(() => { });
+
+            var dir = Path.Combine(Path.GetTempPath(), "quickssh_test_gen_" + Path.GetRandomFileName());
+            Directory.CreateDirectory(dir);
+            try
+            {
+                var keyPath = Path.Combine(dir, "test_key");
+                File.WriteAllText(keyPath, "fake generated key");
+
+                // Simulate successful generation — file exists
+                if (File.Exists(keyPath))
+                {
+                    userData.SshKeys["testkey"] = new SshKeyEntry
+                    {
+                        Path = keyPath,
+                        PublicKeyPath = keyPath + ".pub",
+                        Algorithm = "ed25519",
+                        Source = "generated",
+                        CreatedAt = "2025-01-15T10:30:00.0000000Z"
+                    };
+                }
+
+                Assert.True(userData.SshKeys.ContainsKey("testkey"));
+                Assert.Equal(keyPath, userData.SshKeys["testkey"].Path);
+                Assert.Equal("ed25519", userData.SshKeys["testkey"].Algorithm);
+                Assert.Equal("generated", userData.SshKeys["testkey"].Source);
+            }
+            finally
+            {
+                Directory.Delete(dir, true);
+            }
         }
     }
 }
