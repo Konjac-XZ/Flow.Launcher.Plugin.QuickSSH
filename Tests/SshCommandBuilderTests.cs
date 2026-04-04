@@ -75,7 +75,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         public void QuoteForDisplay_PathWithSpaces_QuotedNoDoubleBackslash()
         {
             var result = SshCommandBuilder.QuoteForDisplay(@"C:\Users\info\.ssh\My Keys\medzera");
-            Assert.Equal("\"" + @"C:\Users\info\.ssh\My Keys\medzera" + "\"", result);
+            Assert.Equal(@"""C:\Users\info\.ssh\My Keys\medzera""", result);
             Assert.DoesNotContain("\\\\", result);
         }
 
