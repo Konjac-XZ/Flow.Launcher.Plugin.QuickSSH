@@ -92,4 +92,32 @@
     <!-- BACK NAVIGATION -->
     <system:String x:Key="plugin_quickssh_back_nav_title">← Volver a {0}</system:String>
 
+    <!-- KEYS (SSH key management) -->
+    <system:String x:Key="plugin_quickssh_title_commandkeys">Gestión de claves SSH</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Uso: keys add | remove | rename | copy-path | copy-pub | scan</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_add">Registrar clave SSH</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Uso: keys add &lt;alias&gt; &lt;ruta-a-la-clave&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_remove">Eliminar clave SSH</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_remove">Uso: keys remove [filtro]</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_rename">Renombrar alias de clave</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_rename">Uso: keys rename &lt;alias-antiguo&gt; &lt;alias-nuevo&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_keys_rename_notfound">Alias de clave no encontrado.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_rename_duplicate">Ya existe un alias con este nombre.</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_copypath">Copiar ruta de clave</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_copypath">Uso: keys copy-path [filtro]</system:String>
+    <system:String x:Key="plugin_quickssh_keys_copypath_label">Copiar ruta:</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_copypub">Copiar clave pública</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_copypub">Uso: keys copy-pub [filtro]</system:String>
+    <system:String x:Key="plugin_quickssh_keys_copypub_label">Copiar .pub:</system:String>
+    <system:String x:Key="plugin_quickssh_keys_copypub_notfound">Archivo de clave pública (.pub) no encontrado:</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_scan">Buscar claves</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_scan">Escanear ~/.ssh/ en busca de archivos de claves</system:String>
+    <system:String x:Key="plugin_quickssh_keys_scan_nodir">Directorio ~/.ssh/ no encontrado.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_scan_empty">No se encontraron archivos de claves en ~/.ssh/</system:String>
+    <system:String x:Key="plugin_quickssh_keys_scan_registered">(ya registrado)</system:String>
+    <system:String x:Key="plugin_quickssh_keys_scan_register">Registrar:</system:String>
+    <system:String x:Key="plugin_quickssh_nokeys">No hay claves SSH registradas.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_file_missing">(archivo no encontrado)</system:String>
+    <system:String x:Key="plugin_quickssh_keys_identity">Archivo de identidad:</system:String>
+
 </ResourceDictionary>

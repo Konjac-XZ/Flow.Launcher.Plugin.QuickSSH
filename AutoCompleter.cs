@@ -13,7 +13,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// </summary>
         private static readonly string[] VisibleCommands = new[]
         {
-            "profiles", "shell", "config", "help"
+            "profiles", "keys", "shell", "config", "help"
         };
 
         /// <summary>
@@ -30,6 +30,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private static readonly string[] ShellSubCommands = new[]
         {
             "add", "remove"
+        };
+
+        /// <summary>
+        /// Sub-commands of "keys" that appear in suggestions after "keys ".
+        /// </summary>
+        private static readonly string[] KeysSubCommands = new[]
+        {
+            "add", "remove", "rename", "copy-path", "copy-pub", "scan"
         };
 
         /// <summary>
@@ -60,7 +68,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         Title = cmd,
                         SubTitle = GetCommandDescription(cmd),
                         IcoPath = iconPath,
-                        Score = VisibleCommands.Length - i,
+                        Score = GetTopLevelScore(cmd),
                         Action = _ =>
                         {
                             api?.ChangeQuery(autoText, true);
@@ -189,6 +197,63 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 }
             }
 
+            // After "keys " suggest sub-commands and key aliases.
+            bool isKeysPrefix = prefixCheck.StartsWith("keys ");
+            if (isKeysPrefix)
+            {
+                var search = prefixCheck.Substring(5); // length of "keys "
+
+                // Suggest matching sub-commands first
+                foreach (var sub in KeysSubCommands)
+                {
+                    if (string.IsNullOrEmpty(search) || sub.StartsWith(search))
+                    {
+                        var autoText = actionKeyword + " keys " + sub + " ";
+                        results.Add(new Result
+                        {
+                            Title = sub,
+                            SubTitle = GetKeysSubCommandDescription(sub),
+                            IcoPath = iconPath,
+                            Action = _ =>
+                            {
+                                api?.ChangeQuery(autoText, true);
+                                return false;
+                            },
+                            AutoCompleteText = autoText
+                        });
+                    }
+                }
+
+                // Suggest key aliases when the search is not an exact sub-command match.
+                bool isExactSubCmd = KeysSubCommands.Any(s => s == search);
+                if (!isExactSubCmd && userData?.SshKeys != null)
+                {
+                    foreach (var entry in userData.SshKeys)
+                    {
+                        var keyAlias = entry.Key;
+                        var keyDisplay = entry.Value?.ToDisplayString() ?? "";
+
+                        if (string.IsNullOrEmpty(search) ||
+                            keyAlias.ToLowerInvariant().Contains(search))
+                        {
+                            var autoText = actionKeyword + " keys " + keyAlias;
+                            results.Add(new Result
+                            {
+                                Title = keyAlias,
+                                SubTitle = keyDisplay,
+                                IcoPath = iconPath,
+                                Action = _ =>
+                                {
+                                    api?.ChangeQuery(autoText, true);
+                                    return false;
+                                },
+                                AutoCompleteText = autoText
+                            });
+                        }
+                    }
+                }
+            }
+
             return results;
         }
 
@@ -197,6 +262,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             var key = command switch
             {
                 "profiles" => "plugin_quickssh_subtitle_commandprofiles",
+                "keys"     => "plugin_quickssh_subtitle_commandkeys",
                 "config"   => "plugin_quickssh_subtitle_commandconfig_usage",
                 "shell"    => "plugin_quickssh_subtitle_commandshell_help",
                 "help"     => "plugin_quickssh_subtitle_commandhelp_usage",
@@ -204,6 +270,21 @@ namespace Flow.Launcher.Plugin.QuickSSH
             };
             return key != null ? QuickSsh.GetTranslation(key) : "";
         }
+
+        /// <summary>
+        /// Returns the display-order score for a top-level command.
+        /// Values are centralised in <see cref="QuickSsh"/> so both the
+        /// AutoCompleter and any future code path share the same ordering.
+        /// </summary>
+        private static int GetTopLevelScore(string command) => command switch
+        {
+            "profiles" => QuickSsh.ScoreTopLevelProfiles,
+            "keys"     => QuickSsh.ScoreTopLevelKeys,
+            "shell"    => QuickSsh.ScoreTopLevelShell,
+            "config"   => QuickSsh.ScoreTopLevelConfig,
+            "help"     => QuickSsh.ScoreTopLevelHelp,
+            _          => 0
+        };
 
         private static string GetProfilesSubCommandDescription(string subCmd)
         {
@@ -226,6 +307,21 @@ namespace Flow.Launcher.Plugin.QuickSSH
             {
                 "add"    => "plugin_quickssh_subtitle_commandshell_add_usage",
                 "remove" => "plugin_quickssh_subtitle_commandshell_remove",
+                _ => null
+            };
+            return key != null ? QuickSsh.GetTranslation(key) : "";
+        }
+
+        private static string GetKeysSubCommandDescription(string subCmd)
+        {
+            var key = subCmd switch
+            {
+                "add"       => "plugin_quickssh_subtitle_commandkeys_add",
+                "remove"    => "plugin_quickssh_subtitle_commandkeys_remove",
+                "rename"    => "plugin_quickssh_subtitle_commandkeys_rename",
+                "copy-path" => "plugin_quickssh_subtitle_commandkeys_copypath",
+                "copy-pub"  => "plugin_quickssh_subtitle_commandkeys_copypub",
+                "scan"      => "plugin_quickssh_subtitle_commandkeys_scan",
                 _ => null
             };
             return key != null ? QuickSsh.GetTranslation(key) : "";

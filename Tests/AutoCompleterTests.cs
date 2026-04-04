@@ -19,6 +19,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
 
             // New top-level commands
             Assert.Contains("profiles", titles);
+            Assert.Contains("keys", titles);
             Assert.Contains("config", titles);
             Assert.Contains("shell", titles);
             Assert.Contains("help", titles);
@@ -139,17 +140,19 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         [Fact]
         public void GetSuggestions_EmptyInput_CommandsHaveDescendingScoresInDefinedOrder()
         {
-            // Expected display order: profiles > shell > config > help
+            // Expected display order: profiles > keys > shell > config > help
             // Flow Launcher sorts by Score descending, so each command must have a
             // strictly higher score than the one that should follow it.
             var results = AutoCompleter.GetSuggestions("ssh", "", null, "icon.png");
 
             int profilesScore = results.First(r => r.Title == "profiles").Score;
+            int keysScore     = results.First(r => r.Title == "keys").Score;
             int shellScore    = results.First(r => r.Title == "shell").Score;
             int configScore   = results.First(r => r.Title == "config").Score;
             int helpScore     = results.First(r => r.Title == "help").Score;
 
-            Assert.True(profilesScore > shellScore,  "profiles must outrank shell");
+            Assert.True(profilesScore > keysScore,   "profiles must outrank keys");
+            Assert.True(keysScore     > shellScore,   "keys must outrank shell");
             Assert.True(shellScore    > configScore, "shell must outrank config");
             Assert.True(configScore   > helpScore,   "config must outrank help");
         }
@@ -159,12 +162,66 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         {
             // When sorted by Score descending (as Flow Launcher does at runtime),
             // the top-level commands must appear in exactly this order:
-            //   1. profiles, 2. shell, 3. config, 4. help
+            //   1. profiles, 2. keys, 3. shell, 4. config, 5. help
             var results = AutoCompleter.GetSuggestions("ssh", "", null, "icon.png");
 
             var ordered = results.OrderByDescending(r => r.Score).Select(r => r.Title).ToList();
 
-            Assert.Equal(new[] { "profiles", "shell", "config", "help" }, ordered);
+            Assert.Equal(new[] { "profiles", "keys", "shell", "config", "help" }, ordered);
+        }
+
+        [Fact]
+        public void GetSuggestions_EmptyInput_ScoreGapsAreLargeEnoughToResistFuzzyBoost()
+        {
+            // Flow Launcher's usage-history bonus can add tens of thousands of points
+            // for frequently-selected items.  Adjacent top-level command scores must
+            // differ by >= 50 000 to prevent runtime reordering.
+            var results = AutoCompleter.GetSuggestions("ssh", "", null, "icon.png");
+
+            var scores = results.OrderByDescending(r => r.Score).Select(r => r.Score).ToList();
+            for (int i = 0; i < scores.Count - 1; i++)
+            {
+                int gap = scores[i] - scores[i + 1];
+                Assert.True(gap >= 50_000,
+                    $"Score gap between position {i} and {i + 1} is only {gap}; must be >= 50 000.");
+            }
+        }
+
+        [Fact]
+        public void TopLevelScoreConstants_AreInCorrectDescendingOrder()
+        {
+            // Verify the centralized constants in QuickSsh follow the expected order:
+            // profiles > keys > shell > config > help
+            Assert.True(QuickSsh.ScoreTopLevelProfiles > QuickSsh.ScoreTopLevelKeys,
+                "profiles must outrank keys");
+            Assert.True(QuickSsh.ScoreTopLevelKeys > QuickSsh.ScoreTopLevelShell,
+                "keys must outrank shell");
+            Assert.True(QuickSsh.ScoreTopLevelShell > QuickSsh.ScoreTopLevelConfig,
+                "shell must outrank config");
+            Assert.True(QuickSsh.ScoreTopLevelConfig > QuickSsh.ScoreTopLevelHelp,
+                "config must outrank help");
+        }
+
+        [Fact]
+        public void TopLevelScoreConstants_GapsAreAtLeast100k()
+        {
+            // Ensure each gap is exactly 100 000 (or at least large enough to resist
+            // Flow Launcher's internal usage-history bonus).
+            int[] scores = new[]
+            {
+                QuickSsh.ScoreTopLevelProfiles,
+                QuickSsh.ScoreTopLevelKeys,
+                QuickSsh.ScoreTopLevelShell,
+                QuickSsh.ScoreTopLevelConfig,
+                QuickSsh.ScoreTopLevelHelp
+            };
+
+            for (int i = 0; i < scores.Length - 1; i++)
+            {
+                int gap = scores[i] - scores[i + 1];
+                Assert.True(gap >= 100_000,
+                    $"Gap between constant position {i} and {i + 1} is only {gap}; must be >= 100 000.");
+            }
         }
 
         // ── Partial "profiles <prefix>" sub-command suggestions ───────────────────
@@ -274,6 +331,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
 
         [Theory]
         [InlineData("profiles")]
+        [InlineData("keys")]
         [InlineData("config")]
         [InlineData("shell")]
         [InlineData("help")]

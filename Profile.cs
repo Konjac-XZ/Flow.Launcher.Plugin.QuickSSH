@@ -35,6 +35,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         public string? SelectedCustomShell { get; set; }
 
+        // ── SSH key registry (alias → local path, never stores key content) ───────
+
+        [JsonProperty]
+        private Dictionary<string, SshKeyEntry> SshKeysLists { get; set; } = new();
+
+        [JsonIgnore]
+        public AutoSaveDictionary<string, SshKeyEntry> SshKeys { get; private set; }
+
         /// <summary>
         /// Binds auto-save callbacks after construction or deserialization.
         /// Migrates any legacy raw-string profiles to structured <see cref="SshProfile"/> objects.
@@ -48,6 +56,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
         {
             ProfilesLists ??= new Dictionary<string, SshProfile>();
             CustomShellLists ??= new Dictionary<string, string>();
+            SshKeysLists ??= new Dictionary<string, SshKeyEntry>();
 
             bool migrated = false;
 
@@ -71,6 +80,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             Profiles = new AutoSaveDictionary<string, SshProfile>(ProfilesLists, onChanged);
             CustomShell = new AutoSaveDictionary<string, string>(CustomShellLists, onChanged);
+            SshKeys = new AutoSaveDictionary<string, SshKeyEntry>(SshKeysLists, onChanged);
 
             return migrated;
         }
