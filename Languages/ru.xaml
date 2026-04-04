@@ -94,11 +94,28 @@
 
     <!-- KEYS (SSH key management) -->
     <system:String x:Key="plugin_quickssh_title_commandkeys">Управление SSH-ключами</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Использование: keys add | remove</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Использование: keys add | remove | rename | copy-path | copy-pub | scan</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_add">Зарегистрировать SSH-ключ</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Использование: keys add &lt;псевдоним&gt; &lt;путь-к-ключу&gt;</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_remove">Удалить SSH-ключ</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_remove">Использование: keys remove [фильтр]</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_rename">Переименовать псевдоним ключа</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_rename">Использование: keys rename &lt;старый-псевдоним&gt; &lt;новый-псевдоним&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_keys_rename_notfound">Псевдоним ключа не найден.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_rename_duplicate">Псевдоним с таким именем уже существует.</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_copypath">Копировать путь к ключу</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_copypath">Использование: keys copy-path [фильтр]</system:String>
+    <system:String x:Key="plugin_quickssh_keys_copypath_label">Копировать путь:</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_copypub">Копировать открытый ключ</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_copypub">Использование: keys copy-pub [фильтр]</system:String>
+    <system:String x:Key="plugin_quickssh_keys_copypub_label">Копировать .pub:</system:String>
+    <system:String x:Key="plugin_quickssh_keys_copypub_notfound">Файл открытого ключа (.pub) не найден:</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_scan">Найти ключи</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_scan">Сканировать ~/.ssh/ на файлы ключей</system:String>
+    <system:String x:Key="plugin_quickssh_keys_scan_nodir">Каталог ~/.ssh/ не найден.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_scan_empty">Файлы ключей в ~/.ssh/ не найдены</system:String>
+    <system:String x:Key="plugin_quickssh_keys_scan_registered">(уже зарегистрирован)</system:String>
+    <system:String x:Key="plugin_quickssh_keys_scan_register">Зарегистрировать:</system:String>
     <system:String x:Key="plugin_quickssh_nokeys">Нет зарегистрированных SSH-ключей.</system:String>
     <system:String x:Key="plugin_quickssh_keys_file_missing">(файл не найден)</system:String>
     <system:String x:Key="plugin_quickssh_keys_identity">Файл идентификации:</system:String>

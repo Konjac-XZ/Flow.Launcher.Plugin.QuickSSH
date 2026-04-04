@@ -54,12 +54,16 @@ namespace Flow.Launcher.Plugin.QuickSSH
         };
 
         // Sub-commands of "keys"
-        private const string KeysSubAdd    = "add";
-        private const string KeysSubRemove = "remove";
+        private const string KeysSubAdd      = "add";
+        private const string KeysSubRemove   = "remove";
+        private const string KeysSubRename   = "rename";
+        private const string KeysSubCopyPath = "copy-path";
+        private const string KeysSubCopyPub  = "copy-pub";
+        private const string KeysSubScan     = "scan";
 
         private static readonly string[] KeysSubCommands = new[]
         {
-            KeysSubAdd, KeysSubRemove
+            KeysSubAdd, KeysSubRemove, KeysSubRename, KeysSubCopyPath, KeysSubCopyPub, KeysSubScan
         };
 
         private const string AppIconPath = "Images\\app.png";
@@ -97,9 +101,13 @@ namespace Flow.Launcher.Plugin.QuickSSH
         internal const int ScoreShellOtherStart   = 500; // decremented per additional shell
 
         // "keys" submenu — action rows above saved key entries
-        internal const int ScoreKeysActionAdd     = 1100;
-        internal const int ScoreKeysActionRemove  = 1050;
-        internal const int ScoreKeysSavedItem     = 500;  // decremented per additional key
+        internal const int ScoreKeysActionAdd      = 1160;
+        internal const int ScoreKeysActionRemove   = 1150;
+        internal const int ScoreKeysActionRename   = 1140;
+        internal const int ScoreKeysActionCopyPath = 1130;
+        internal const int ScoreKeysActionCopyPub  = 1120;
+        internal const int ScoreKeysActionScan     = 1110;
+        internal const int ScoreKeysSavedItem      = 500;  // decremented per additional key
 
         private string _databasePath;
         private string _dataDir;
@@ -1176,8 +1184,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             switch (subCmd)
             {
-                case KeysSubAdd:    return HandleKeysAdd(query, subRest);
-                case KeysSubRemove: return HandleKeysRemove(query, subRest);
+                case KeysSubAdd:      return HandleKeysAdd(query, subRest);
+                case KeysSubRemove:   return HandleKeysRemove(query, subRest);
+                case KeysSubRename:   return HandleKeysRename(query, subRest);
+                case KeysSubCopyPath: return HandleKeysCopyPath(query, subRest);
+                case KeysSubCopyPub:  return HandleKeysCopyPub(query, subRest);
+                case KeysSubScan:     return HandleKeysScan(query);
                 default:
                     // Partial sub-command matching (mirrors profiles/shell pattern).
                     if (!string.IsNullOrEmpty(subCmd) &&
@@ -1215,8 +1227,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
             {
                 var keysSubCmds = new[]
                 {
-                    ("add",    GetTranslation("plugin_quickssh_title_commandkeys_add"),    GetTranslation("plugin_quickssh_subtitle_commandkeys_add"),    ScoreKeysActionAdd),
-                    ("remove", GetTranslation("plugin_quickssh_title_commandkeys_remove"), GetTranslation("plugin_quickssh_subtitle_commandkeys_remove"), ScoreKeysActionRemove),
+                    ("add",       GetTranslation("plugin_quickssh_title_commandkeys_add"),       GetTranslation("plugin_quickssh_subtitle_commandkeys_add"),       ScoreKeysActionAdd),
+                    ("remove",    GetTranslation("plugin_quickssh_title_commandkeys_remove"),    GetTranslation("plugin_quickssh_subtitle_commandkeys_remove"),    ScoreKeysActionRemove),
+                    ("rename",    GetTranslation("plugin_quickssh_title_commandkeys_rename"),    GetTranslation("plugin_quickssh_subtitle_commandkeys_rename"),    ScoreKeysActionRename),
+                    ("copy-path", GetTranslation("plugin_quickssh_title_commandkeys_copypath"),  GetTranslation("plugin_quickssh_subtitle_commandkeys_copypath"),  ScoreKeysActionCopyPath),
+                    ("copy-pub",  GetTranslation("plugin_quickssh_title_commandkeys_copypub"),   GetTranslation("plugin_quickssh_subtitle_commandkeys_copypub"),   ScoreKeysActionCopyPub),
+                    ("scan",      GetTranslation("plugin_quickssh_title_commandkeys_scan"),      GetTranslation("plugin_quickssh_subtitle_commandkeys_scan"),      ScoreKeysActionScan),
                 };
                 foreach (var (scName, scTitle, scSubTitle, scScore) in keysSubCmds)
                 {
@@ -1376,6 +1392,404 @@ namespace Flow.Launcher.Plugin.QuickSSH
             }
 
             return results;
+        }
+
+        // ── keys rename ───────────────────────────────────────────────────────────
+
+        private List<Result> HandleKeysRename(Query query, string rest)
+        {
+            var results = new List<Result>();
+            var keys = _profileManager.UserData.SshKeys;
+
+            var parts = rest.Split(new[] { ' ' }, 2);
+            var oldAlias = parts[0].Trim();
+            var newAlias = parts.Length > 1 ? parts[1].Trim() : "";
+
+            if (string.IsNullOrEmpty(oldAlias))
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_rename"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandkeys_rename"),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " keys rename ",
+                    Score = int.MaxValue
+                });
+                results.Add(MakeBackNavResult(query, query.ActionKeyword + " keys ", query.ActionKeyword + " keys"));
+
+                if (keys.Count == 0)
+                {
+                    results.Add(new Result
+                    {
+                        Title = GetTranslation("plugin_quickssh_title_commandkeys_rename"),
+                        SubTitle = GetTranslation("plugin_quickssh_nokeys"),
+                        IcoPath = AppIconPath
+                    });
+                    return results;
+                }
+
+                foreach (var entry in keys)
+                {
+                    var alias = entry.Key;
+                    var autoText = query.ActionKeyword + " keys rename " + alias + " ";
+                    results.Add(new Result
+                    {
+                        Title = alias,
+                        SubTitle = entry.Value?.ToDisplayString() ?? "",
+                        IcoPath = AppIconPath,
+                        AutoCompleteText = autoText,
+                        Action = _ =>
+                        {
+                            _pluginContext?.API?.ChangeQuery(autoText, true);
+                            return false;
+                        }
+                    });
+                }
+                return results;
+            }
+
+            if (!keys.ContainsKey(oldAlias))
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_rename"),
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandkeys_rename"),
+                    IcoPath = AppIconPath,
+                    AutoCompleteText = query.ActionKeyword + " keys rename ",
+                    Score = int.MaxValue
+                });
+                results.Add(MakeBackNavResult(query, query.ActionKeyword + " keys ", query.ActionKeyword + " keys"));
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_rename") + ": " + oldAlias,
+                    SubTitle = GetTranslation("plugin_quickssh_keys_rename_notfound"),
+                    IcoPath = AppIconRedPath
+                });
+                return results;
+            }
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandkeys_rename"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandkeys_rename"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " keys rename " + oldAlias + " ",
+                Score = int.MaxValue
+            });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " keys ", query.ActionKeyword + " keys"));
+
+            if (!string.IsNullOrEmpty(newAlias))
+            {
+                // Duplicate alias check
+                if (keys.ContainsKey(newAlias))
+                {
+                    results.Add(new Result
+                    {
+                        Title = oldAlias + " → " + newAlias,
+                        SubTitle = GetTranslation("plugin_quickssh_keys_rename_duplicate"),
+                        IcoPath = AppIconRedPath
+                    });
+                }
+                else
+                {
+                    var keyEntry = keys[oldAlias];
+                    results.Add(new Result
+                    {
+                        Title = oldAlias + " → " + newAlias,
+                        SubTitle = keyEntry?.ToDisplayString() ?? "",
+                        IcoPath = AppIconGreenPath,
+                        Action = _ =>
+                        {
+                            var value = keys[oldAlias];
+                            keys.SetCallback(null);
+                            try
+                            {
+                                keys.Remove(oldAlias);
+                                keys[newAlias] = value;
+                            }
+                            finally
+                            {
+                                keys.SetCallback(_profileManager.SaveConfiguration);
+                            }
+                            _profileManager.SaveConfiguration();
+                            return true;
+                        }
+                    });
+                }
+            }
+
+            return results;
+        }
+
+        // ── keys copy-path ────────────────────────────────────────────────────────
+
+        private List<Result> HandleKeysCopyPath(Query query, string search)
+        {
+            var results = new List<Result>();
+            var keys = _profileManager.UserData.SshKeys;
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandkeys_copypath"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandkeys_copypath"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " keys copy-path ",
+                Score = int.MaxValue
+            });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " keys ", query.ActionKeyword + " keys"));
+
+            if (keys.Count == 0)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_copypath"),
+                    SubTitle = GetTranslation("plugin_quickssh_nokeys"),
+                    IcoPath = AppIconPath
+                });
+                return results;
+            }
+
+            foreach (var entry in keys)
+            {
+                if (!string.IsNullOrEmpty(search) &&
+                    !entry.Key.ToLowerInvariant().Contains(search.ToLowerInvariant()))
+                    continue;
+
+                var alias = entry.Key;
+                var keyPath = entry.Value?.Path ?? "";
+                results.Add(new Result
+                {
+                    Title = alias,
+                    SubTitle = GetTranslation("plugin_quickssh_keys_copypath_label") + " " + keyPath,
+                    IcoPath = AppIconGreenPath,
+                    AutoCompleteText = query.ActionKeyword + " keys copy-path " + alias,
+                    Action = _ =>
+                    {
+                        try
+                        {
+                            System.Windows.Clipboard.SetText(keyPath);
+                        }
+                        catch (Exception)
+                        {
+                            _pluginContext?.API?.ShowMsg("QuickSSH",
+                                GetTranslation("plugin_quickssh_copy_clipboard_error"));
+                        }
+                        return true;
+                    }
+                });
+            }
+
+            return results;
+        }
+
+        // ── keys copy-pub ─────────────────────────────────────────────────────────
+
+        private List<Result> HandleKeysCopyPub(Query query, string search)
+        {
+            var results = new List<Result>();
+            var keys = _profileManager.UserData.SshKeys;
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandkeys_copypub"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandkeys_copypub"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " keys copy-pub ",
+                Score = int.MaxValue
+            });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " keys ", query.ActionKeyword + " keys"));
+
+            if (keys.Count == 0)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_copypub"),
+                    SubTitle = GetTranslation("plugin_quickssh_nokeys"),
+                    IcoPath = AppIconPath
+                });
+                return results;
+            }
+
+            foreach (var entry in keys)
+            {
+                if (!string.IsNullOrEmpty(search) &&
+                    !entry.Key.ToLowerInvariant().Contains(search.ToLowerInvariant()))
+                    continue;
+
+                var alias = entry.Key;
+                var pubPath = entry.Value?.GetEffectivePublicKeyPath();
+                bool pubExists = !string.IsNullOrEmpty(pubPath) && File.Exists(pubPath);
+
+                if (pubExists)
+                {
+                    results.Add(new Result
+                    {
+                        Title = alias,
+                        SubTitle = GetTranslation("plugin_quickssh_keys_copypub_label") + " " + pubPath,
+                        IcoPath = AppIconGreenPath,
+                        AutoCompleteText = query.ActionKeyword + " keys copy-pub " + alias,
+                        Action = _ =>
+                        {
+                            try
+                            {
+                                var content = File.ReadAllText(pubPath).Trim();
+                                System.Windows.Clipboard.SetText(content);
+                            }
+                            catch (Exception)
+                            {
+                                _pluginContext?.API?.ShowMsg("QuickSSH",
+                                    GetTranslation("plugin_quickssh_copy_clipboard_error"));
+                            }
+                            return true;
+                        }
+                    });
+                }
+                else
+                {
+                    results.Add(new Result
+                    {
+                        Title = alias,
+                        SubTitle = GetTranslation("plugin_quickssh_keys_copypub_notfound") + " " + (pubPath ?? ""),
+                        IcoPath = AppIconRedPath,
+                        AutoCompleteText = query.ActionKeyword + " keys copy-pub " + alias
+                    });
+                }
+            }
+
+            return results;
+        }
+
+        // ── keys scan ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Scans the user's ~/.ssh/ directory for private key files and offers them
+        /// as registration candidates. Files ending in .pub are filtered out.
+        /// </summary>
+        private List<Result> HandleKeysScan(Query query)
+        {
+            var results = new List<Result>();
+            var keys = _profileManager.UserData.SshKeys;
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandkeys_scan"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandkeys_scan"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " keys scan ",
+                Score = int.MaxValue
+            });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " keys ", query.ActionKeyword + " keys"));
+
+            var sshDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ssh");
+
+            if (!Directory.Exists(sshDir))
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_scan"),
+                    SubTitle = GetTranslation("plugin_quickssh_keys_scan_nodir"),
+                    IcoPath = AppIconRedPath
+                });
+                return results;
+            }
+
+            var candidates = ScanSshDirectory(sshDir);
+
+            if (candidates.Count == 0)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_scan"),
+                    SubTitle = GetTranslation("plugin_quickssh_keys_scan_empty"),
+                    IcoPath = AppIconPath
+                });
+                return results;
+            }
+
+            foreach (var candidate in candidates)
+            {
+                var fileName = Path.GetFileName(candidate);
+                bool alreadyRegistered = keys.Values.Any(k => k?.Path != null &&
+                    k.Path.Equals(candidate, StringComparison.OrdinalIgnoreCase));
+
+                if (alreadyRegistered)
+                {
+                    results.Add(new Result
+                    {
+                        Title = fileName + " " + GetTranslation("plugin_quickssh_keys_scan_registered"),
+                        SubTitle = candidate,
+                        IcoPath = AppIconPath
+                    });
+                }
+                else
+                {
+                    results.Add(new Result
+                    {
+                        Title = fileName,
+                        SubTitle = GetTranslation("plugin_quickssh_keys_scan_register") + " " + candidate,
+                        IcoPath = AppIconGreenPath,
+                        Action = _ =>
+                        {
+                            _profileManager.UserData.SshKeys[fileName] = new SshKeyEntry
+                            {
+                                Path = candidate
+                            };
+                            return true;
+                        }
+                    });
+                }
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// Returns a list of candidate private key file paths from the given directory.
+        /// Filters out:
+        /// <list type="bullet">
+        ///   <item>.pub files (public keys)</item>
+        ///   <item>known_hosts, known_hosts.old</item>
+        ///   <item>config</item>
+        ///   <item>authorized_keys</item>
+        /// </list>
+        /// </summary>
+        internal static List<string> ScanSshDirectory(string sshDir)
+        {
+            var candidates = new List<string>();
+
+            var excludedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "known_hosts", "known_hosts.old", "config", "authorized_keys", "environment"
+            };
+
+            try
+            {
+                foreach (var file in Directory.GetFiles(sshDir))
+                {
+                    var name = Path.GetFileName(file);
+
+                    // Skip .pub files
+                    if (name.EndsWith(".pub", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    // Skip well-known non-key files
+                    if (excludedNames.Contains(name))
+                        continue;
+
+                    // Skip hidden/system files starting with a dot (except key files)
+                    // and files with common non-key extensions
+                    var ext = Path.GetExtension(name).ToLowerInvariant();
+                    if (ext == ".log" || ext == ".bak" || ext == ".tmp" || ext == ".old")
+                        continue;
+
+                    candidates.Add(file);
+                }
+            }
+            catch (UnauthorizedAccessException) { }
+            catch (IOException) { }
+
+            return candidates;
         }
 
         private List<Result> HandleConfig(Query query, string rest)

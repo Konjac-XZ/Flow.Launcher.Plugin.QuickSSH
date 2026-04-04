@@ -15,9 +15,13 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 | `ssh profiles copy [filter]` | Copy an SSH/SCP command to the clipboard |
 | `ssh profiles export` | Export all profiles to a human-readable `.sshconfig` file |
 | `ssh profiles import [filter]` | Import profiles from a `.sshconfig` or legacy `.json` file |
-| `ssh keys` | Manage registered SSH key aliases (add / remove / list) |
+| `ssh keys` | Manage registered SSH key aliases (add / remove / rename / copy-path / copy-pub / scan) |
 | `ssh keys add <alias> <path>` | Register an SSH key alias pointing to a local key file |
 | `ssh keys remove [filter]` | Remove a registered SSH key alias |
+| `ssh keys rename <old> <new>` | Rename an existing key alias |
+| `ssh keys copy-path [filter]` | Copy the private key file path to clipboard |
+| `ssh keys copy-pub [filter]` | Copy the public key (.pub) content to clipboard |
+| `ssh keys scan` | Scan `~/.ssh/` for key files and offer registration |
 | `ssh shell` | Manage custom terminal shells (add / remove / select) |
 | `ssh config` | Import hosts from `~/.ssh/config` |
 | `ssh help` | Open plugin documentation |
@@ -34,7 +38,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 > Examples: `ssh shell a` → **add**; `ssh shell r` → **remove**; `ssh shell rem` → **remove**.
 
 > **Keys subcommand matching:** Under `ssh keys`, partial subcommand matching works the same way.
-> Examples: `ssh keys a` → **add**; `ssh keys r` → **remove**.
+> Examples: `ssh keys a` → **add**; `ssh keys r` → **remove**, **rename**; `ssh keys c` → **copy-path**, **copy-pub**; `ssh keys s` → **scan**.
 
 > **Note for v1 users:** The top-level `add` command (v1: `ssh add <name> <cmd>`) has been moved to `ssh profiles add <name> <cmd>`.
 > Typing `ssh add ...` shows an explicit redirect hint in the UI — it will not silently do something unexpected.
@@ -159,6 +163,47 @@ ssh keys remove prod                         → remove key alias "prod"
 > **Security note:** QuickSSH stores only the alias and the file path — **never** the private key content. The key file is accessed by SSH at connection time, not by the plugin.
 
 > **Key file validation:** When browsing registered keys, QuickSSH checks whether the key file exists on disk and shows a warning icon if it is missing.
+
+### Rename a key alias
+
+```
+ssh keys rename                              → list all key aliases for renaming
+ssh keys rename prod                         → pick "prod" as the source
+ssh keys rename prod production              → rename "prod" to "production"
+```
+
+Duplicate alias names are validated — renaming to an existing alias shows an error.
+
+### Copy key path to clipboard
+
+```
+ssh keys copy-path                           → list all keys for path copying
+ssh keys copy-path prod                      → copy the private key file path for "prod"
+```
+
+### Copy public key content to clipboard
+
+```
+ssh keys copy-pub                            → list all keys for public key copying
+ssh keys copy-pub prod                       → copy the content of prod's .pub file
+```
+
+If the `.pub` file does not exist (e.g. the key was generated without a public counterpart), an error row is shown instead of the copy action.
+
+The public key path is derived as `<private-key-path>.pub` by default, or from the explicit `PublicKeyPath` field if set.
+
+### Scan for key files
+
+```
+ssh keys scan                                → scan ~/.ssh/ for key files
+```
+
+Scans `%USERPROFILE%\.ssh\` for private key files. Filters out:
+- `.pub` files (public keys)
+- `known_hosts`, `known_hosts.old`, `config`, `authorized_keys`, `environment`
+- Files with `.log`, `.bak`, `.tmp`, `.old` extensions
+
+Each discovered key file is shown as a candidate — click to register it with the file name as the alias. Already-registered keys are marked as "(already registered)".
 
 #### Identity file autocomplete (`-i`)
 
@@ -407,6 +452,9 @@ Click any shell in the list to **select** it. All SSH connections will then laun
   "SshKeysLists": {
     "<alias>": {
       "Path": "C:\\Users\\me\\.ssh\\id_ed25519",
+      "PublicKeyPath": "C:\\Users\\me\\.ssh\\id_ed25519.pub",
+      "Fingerprint": "SHA256:...",
+      "Comment": "user@host",
       "Description": "optional description"
     }
   }

@@ -37,7 +37,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// </summary>
         private static readonly string[] KeysSubCommands = new[]
         {
-            "add", "remove"
+            "add", "remove", "rename", "copy-path", "copy-pub", "scan"
         };
 
         /// <summary>
@@ -301,8 +301,12 @@ namespace Flow.Launcher.Plugin.QuickSSH
         {
             var key = subCmd switch
             {
-                "add"    => "plugin_quickssh_subtitle_commandkeys_add",
-                "remove" => "plugin_quickssh_subtitle_commandkeys_remove",
+                "add"       => "plugin_quickssh_subtitle_commandkeys_add",
+                "remove"    => "plugin_quickssh_subtitle_commandkeys_remove",
+                "rename"    => "plugin_quickssh_subtitle_commandkeys_rename",
+                "copy-path" => "plugin_quickssh_subtitle_commandkeys_copypath",
+                "copy-pub"  => "plugin_quickssh_subtitle_commandkeys_copypub",
+                "scan"      => "plugin_quickssh_subtitle_commandkeys_scan",
                 _ => null
             };
             return key != null ? QuickSsh.GetTranslation(key) : "";
