@@ -910,15 +910,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
             // Suggest registered SSH keys when the input contains "-i " with no key value yet,
             // or ends with "-i" (user is about to type a space then a key path).
             var trimmedInput = rest.TrimStart();
-            bool suggestKeys = false;
-            if (trimmedInput.Equals("-i", StringComparison.Ordinal) ||
-                trimmedInput.EndsWith(" -i", StringComparison.Ordinal) ||
-                trimmedInput.EndsWith(" -i ", StringComparison.Ordinal))
-            {
-                suggestKeys = true;
-            }
+            bool suggestKeys = trimmedInput.Equals("-i", StringComparison.Ordinal) ||
+                               trimmedInput.EndsWith(" -i", StringComparison.Ordinal) ||
+                               trimmedInput.EndsWith(" -i ", StringComparison.Ordinal);
             // Also match "-i <partial>" where partial does not contain '@' (not a destination).
-            else
+            if (!suggestKeys)
             {
                 var dashI = trimmedInput.LastIndexOf("-i ", StringComparison.Ordinal);
                 if (dashI >= 0)
@@ -1707,11 +1703,18 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return results;
             }
 
+            // Pre-compute registered paths for O(1) lookup during candidate matching.
+            var registeredPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kv in keys)
+            {
+                if (kv.Value?.Path != null)
+                    registeredPaths.Add(kv.Value.Path);
+            }
+
             foreach (var candidate in candidates)
             {
                 var fileName = Path.GetFileName(candidate);
-                bool alreadyRegistered = keys.Values.Any(k => k?.Path != null &&
-                    k.Path.Equals(candidate, StringComparison.OrdinalIgnoreCase));
+                bool alreadyRegistered = registeredPaths.Contains(candidate);
 
                 if (alreadyRegistered)
                 {
