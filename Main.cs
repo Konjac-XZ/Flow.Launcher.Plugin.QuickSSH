@@ -1356,17 +1356,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
         // ── keys generate ─────────────────────────────────────────────────────────
 
         /// <summary>
-        /// SSH key generation wizard.
-        /// <list type="bullet">
-        ///   <item><c>keys generate</c> — usage hint</item>
-        ///   <item><c>keys generate &lt;alias&gt;</c> — propose ed25519 at default path</item>
-        ///   <item><c>keys generate &lt;alias&gt; rsa</c> — RSA 4096</item>
-        ///   <item><c>keys generate &lt;alias&gt; &lt;type&gt; &lt;path&gt;</c> — custom path</item>
-        /// </list>
-        /// Passphrase is prompted interactively in the terminal — never via the Flow Launcher query.
-        /// After successful generation the key is auto-registered into the key registry.
-        /// </summary>
-        /// <summary>
         /// Row-driven SSH key generation wizard.
         /// <list type="bullet">
         ///   <item><c>keys generate</c> — usage hint only</item>
@@ -1553,7 +1542,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 {
                     Path = keyPath,
                     PublicKeyPath = pubKeyPath,
-                    Algorithm = keyType,
+                    Algorithm = keyBits > 0 ? $"{keyType}-{keyBits}" : keyType,
                     Comment = alias,
                     Source = "generated",
                     CreatedAt = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture)
