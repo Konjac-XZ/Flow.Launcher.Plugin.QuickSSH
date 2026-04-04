@@ -51,6 +51,28 @@ foreach ($file in $changedFiles) {
 
 $userFacingChangedFiles = $userFacingChangedFiles | Sort-Object -Unique
 
+# Exempt plugin.json when only the Version field changed (version-only release bump)
+if ($userFacingChangedFiles -contains "plugin.json") {
+    $pluginBase = git show "${baseSha}:plugin.json" 2>$null | ConvertFrom-Json
+    $pluginHead = git show "${headSha}:plugin.json" 2>$null | ConvertFrom-Json
+
+    if ($null -ne $pluginBase -and $null -ne $pluginHead) {
+        $baseHash = @{}
+        $pluginBase.PSObject.Properties | Where-Object { $_.Name -ne "Version" } | ForEach-Object { $baseHash[$_.Name] = $_.Value }
+
+        $headHash = @{}
+        $pluginHead.PSObject.Properties | Where-Object { $_.Name -ne "Version" } | ForEach-Object { $headHash[$_.Name] = $_.Value }
+
+        $baseJson = $baseHash | ConvertTo-Json -Compress -Depth 10
+        $headJson = $headHash | ConvertTo-Json -Compress -Depth 10
+
+        if ($baseJson -eq $headJson) {
+            Write-Host "plugin.json change is version-only bump — exempted from docs gate."
+            $userFacingChangedFiles = @($userFacingChangedFiles | Where-Object { $_ -ne "plugin.json" })
+        }
+    }
+}
+
 if ($userFacingChangedFiles.Count -eq 0) {
     Write-Host "Docs check passed: no tracked user-facing files changed."
     exit 0
