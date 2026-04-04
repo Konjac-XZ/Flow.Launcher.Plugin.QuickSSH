@@ -68,7 +68,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         Title = cmd,
                         SubTitle = GetCommandDescription(cmd),
                         IcoPath = iconPath,
-                        Score = (VisibleCommands.Length - i) * 1000,
+                        Score = GetTopLevelScore(cmd),
                         Action = _ =>
                         {
                             api?.ChangeQuery(autoText, true);
@@ -270,6 +270,21 @@ namespace Flow.Launcher.Plugin.QuickSSH
             };
             return key != null ? QuickSsh.GetTranslation(key) : "";
         }
+
+        /// <summary>
+        /// Returns the display-order score for a top-level command.
+        /// Values are centralised in <see cref="QuickSsh"/> so both the
+        /// AutoCompleter and any future code path share the same ordering.
+        /// </summary>
+        private static int GetTopLevelScore(string command) => command switch
+        {
+            "profiles" => QuickSsh.ScoreTopLevelProfiles,
+            "keys"     => QuickSsh.ScoreTopLevelKeys,
+            "shell"    => QuickSsh.ScoreTopLevelShell,
+            "config"   => QuickSsh.ScoreTopLevelConfig,
+            "help"     => QuickSsh.ScoreTopLevelHelp,
+            _          => 0
+        };
 
         private static string GetProfilesSubCommandDescription(string subCmd)
         {

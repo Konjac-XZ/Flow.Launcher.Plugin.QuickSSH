@@ -100,6 +100,16 @@ namespace Flow.Launcher.Plugin.QuickSSH
         internal const int ScoreShellSelected     = 1000;
         internal const int ScoreShellOtherStart   = 500; // decremented per additional shell
 
+        // ── Top-level command ordering (root "ssh" menu) ────────────────────────
+        // Gaps of 100 000 ensure Flow Launcher's internal usage-history / fuzzy-match
+        // bonus (which can add thousands of points for frequently-selected items)
+        // cannot reorder the root menu.
+        internal const int ScoreTopLevelProfiles = 500_000;
+        internal const int ScoreTopLevelKeys     = 400_000;
+        internal const int ScoreTopLevelShell    = 300_000;
+        internal const int ScoreTopLevelConfig   = 200_000;
+        internal const int ScoreTopLevelHelp     = 100_000;
+
         // "keys" submenu — action rows above saved key entries
         internal const int ScoreKeysActionAdd      = 1160;
         internal const int ScoreKeysActionRemove   = 1150;
