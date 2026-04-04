@@ -1559,14 +1559,23 @@ namespace Flow.Launcher.Plugin.QuickSSH
             {
                 // Launch ssh-keygen in an interactive cmd.exe window.
                 // /c closes the window after ssh-keygen finishes so we can detect completion.
-                using var process = Process.Start(new ProcessStartInfo
+                var process = Process.Start(new ProcessStartInfo
                 {
                     FileName = GetCmdExePath(),
                     Arguments = "/c ssh-keygen " + keygenArgs,
                     UseShellExecute = true,
                     WorkingDirectory = workingDir
                 });
-                process?.WaitForExit();
+                if (process == null)
+                {
+                    _pluginContext?.API?.ShowMsg("QuickSSH",
+                        GetTranslation("plugin_quickssh_keys_generate_failed"));
+                    return true;
+                }
+                using (process)
+                {
+                    process.WaitForExit();
+                }
             }
             catch (Exception ex)
             {
