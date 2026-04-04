@@ -1754,7 +1754,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
         ///   <item>.pub files (public keys)</item>
         ///   <item>known_hosts, known_hosts.old</item>
         ///   <item>config</item>
-        ///   <item>authorized_keys</item>
+        ///   <item>authorized_keys, authorized_keys2</item>
+        ///   <item>environment, profiles.json</item>
+        ///   <item>.log, .bak, .tmp, .old, .json extensions</item>
         /// </list>
         /// </summary>
         internal static List<string> ScanSshDirectory(string sshDir)
@@ -1763,7 +1765,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             var excludedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                "known_hosts", "known_hosts.old", "config", "authorized_keys", "environment"
+                "known_hosts", "known_hosts.old", "config", "authorized_keys", "authorized_keys2",
+                "environment", "profiles.json"
             };
 
             try
@@ -1783,7 +1786,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     // Skip hidden/system files starting with a dot (except key files)
                     // and files with common non-key extensions
                     var ext = Path.GetExtension(name).ToLowerInvariant();
-                    if (ext == ".log" || ext == ".bak" || ext == ".tmp" || ext == ".old")
+                    if (ext == ".log" || ext == ".bak" || ext == ".tmp" || ext == ".old" || ext == ".json")
                         continue;
 
                     candidates.Add(file);

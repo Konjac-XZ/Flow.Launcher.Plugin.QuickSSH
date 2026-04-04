@@ -68,7 +68,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         Title = cmd,
                         SubTitle = GetCommandDescription(cmd),
                         IcoPath = iconPath,
-                        Score = VisibleCommands.Length - i,
+                        Score = (VisibleCommands.Length - i) * 1000,
                         Action = _ =>
                         {
                             api?.ChangeQuery(autoText, true);

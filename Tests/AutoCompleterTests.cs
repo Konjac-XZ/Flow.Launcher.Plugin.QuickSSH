@@ -170,6 +170,23 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.Equal(new[] { "profiles", "keys", "shell", "config", "help" }, ordered);
         }
 
+        [Fact]
+        public void GetSuggestions_EmptyInput_ScoreGapsAreLargeEnoughToResistFuzzyBoost()
+        {
+            // Flow Launcher's usage-history and fuzzy-match bonuses can add hundreds of
+            // points.  Adjacent top-level command scores must differ by >= 500 to prevent
+            // runtime reordering.
+            var results = AutoCompleter.GetSuggestions("ssh", "", null, "icon.png");
+
+            var scores = results.OrderByDescending(r => r.Score).Select(r => r.Score).ToList();
+            for (int i = 0; i < scores.Count - 1; i++)
+            {
+                int gap = scores[i] - scores[i + 1];
+                Assert.True(gap >= 500,
+                    $"Score gap between position {i} and {i + 1} is only {gap}; must be >= 500.");
+            }
+        }
+
         // ── Partial "profiles <prefix>" sub-command suggestions ───────────────────
 
         [Theory]

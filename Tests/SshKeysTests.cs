@@ -337,7 +337,9 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
                 File.WriteAllText(Path.Combine(dir, "known_hosts.old"), "old hosts");
                 File.WriteAllText(Path.Combine(dir, "config"), "ssh config");
                 File.WriteAllText(Path.Combine(dir, "authorized_keys"), "authorized");
+                File.WriteAllText(Path.Combine(dir, "authorized_keys2"), "authorized2");
                 File.WriteAllText(Path.Combine(dir, "environment"), "env");
+                File.WriteAllText(Path.Combine(dir, "profiles.json"), "{}");
 
                 var results = QuickSsh.ScanSshDirectory(dir);
 
@@ -347,7 +349,9 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
                 Assert.DoesNotContain("known_hosts.old", names);
                 Assert.DoesNotContain("config", names);
                 Assert.DoesNotContain("authorized_keys", names);
+                Assert.DoesNotContain("authorized_keys2", names);
                 Assert.DoesNotContain("environment", names);
+                Assert.DoesNotContain("profiles.json", names);
             }
             finally
             {
@@ -356,7 +360,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         }
 
         [Fact]
-        public void ScanSshDirectory_FiltersOutLogBakTmpOldExtensions()
+        public void ScanSshDirectory_FiltersOutLogBakTmpOldJsonExtensions()
         {
             var dir = Path.Combine(Path.GetTempPath(), "quickssh_test_scan_" + Path.GetRandomFileName());
             Directory.CreateDirectory(dir);
@@ -367,6 +371,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
                 File.WriteAllText(Path.Combine(dir, "backup.bak"), "bak");
                 File.WriteAllText(Path.Combine(dir, "temp.tmp"), "tmp");
                 File.WriteAllText(Path.Combine(dir, "file.old"), "old");
+                File.WriteAllText(Path.Combine(dir, "data.json"), "{}");
 
                 var results = QuickSsh.ScanSshDirectory(dir);
 
@@ -376,6 +381,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
                 Assert.DoesNotContain("backup.bak", names);
                 Assert.DoesNotContain("temp.tmp", names);
                 Assert.DoesNotContain("file.old", names);
+                Assert.DoesNotContain("data.json", names);
             }
             finally
             {
