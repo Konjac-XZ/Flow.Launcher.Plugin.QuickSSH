@@ -94,9 +94,21 @@
 
     <!-- KEYS (SSH key management) -->
     <system:String x:Key="plugin_quickssh_title_commandkeys">SSH-Schlüsselverwaltung</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Verwendung: keys add | remove | rename | copy-path | copy-pub | scan</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Verwendung: keys add | generate | remove | rename | copy-path | copy-pub | scan</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_add">SSH-Schlüssel registrieren</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Verwendung: keys add &lt;Alias&gt; &lt;Pfad-zum-Schlüssel&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_generate">SSH-Schlüsselpaar generieren</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_generate">Verwendung: keys generate &lt;Alias&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_confirm">Generieren: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_subtitle">{0} → {1} (ohne Passphrase)</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_invalid_alias">Ungültiger Alias — enthält nur ungültige Zeichen.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_duplicate">Alias existiert bereits: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_file_exists">Schlüsseldatei existiert bereits: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_invalid_path">Ungültiger Pfad: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_no_keygen">ssh-keygen nicht gefunden. Installieren Sie OpenSSH um Schlüssel zu generieren.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_success">Schlüssel '{0}' erfolgreich generiert und registriert.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_failed">Schlüsselgenerierung abgebrochen oder fehlgeschlagen.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_failed_detail">Schlüsselgenerierung fehlgeschlagen: {0}</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_remove">SSH-Schlüssel entfernen</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_remove">Verwendung: keys remove [Filter]</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_rename">Schlüssel-Alias umbenennen</system:String>

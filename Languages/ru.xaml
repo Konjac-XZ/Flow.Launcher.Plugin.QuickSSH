@@ -94,9 +94,21 @@
 
     <!-- KEYS (SSH key management) -->
     <system:String x:Key="plugin_quickssh_title_commandkeys">Управление SSH-ключами</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Использование: keys add | remove | rename | copy-path | copy-pub | scan</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Использование: keys add | generate | remove | rename | copy-path | copy-pub | scan</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_add">Зарегистрировать SSH-ключ</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Использование: keys add &lt;псевдоним&gt; &lt;путь-к-ключу&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_title_commandkeys_generate">Сгенерировать пару SSH-ключей</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_generate">Использование: keys generate &lt;псевдоним&gt;</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_confirm">Сгенерировать: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_subtitle">{0} → {1} (без пароля)</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_invalid_alias">Недопустимый псевдоним — содержит только недопустимые символы.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_duplicate">Псевдоним уже существует: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_file_exists">Файл ключа уже существует: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_invalid_path">Недопустимый путь: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_no_keygen">ssh-keygen не найден. Установите OpenSSH для генерации ключей.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_success">Ключ '{0}' успешно сгенерирован и зарегистрирован.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_failed">Генерация ключа отменена или не удалась.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_failed_detail">Ошибка генерации ключа: {0}</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_remove">Удалить SSH-ключ</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_remove">Использование: keys remove [фильтр]</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_rename">Переименовать псевдоним ключа</system:String>

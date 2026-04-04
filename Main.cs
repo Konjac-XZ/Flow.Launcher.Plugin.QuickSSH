@@ -55,6 +55,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         // Sub-commands of "keys"
         private const string KeysSubAdd      = "add";
+        private const string KeysSubGenerate = "generate";
         private const string KeysSubRemove   = "remove";
         private const string KeysSubRename   = "rename";
         private const string KeysSubCopyPath = "copy-path";
@@ -63,7 +64,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         private static readonly string[] KeysSubCommands = new[]
         {
-            KeysSubAdd, KeysSubRemove, KeysSubRename, KeysSubCopyPath, KeysSubCopyPub, KeysSubScan
+            KeysSubAdd, KeysSubGenerate, KeysSubRemove, KeysSubRename, KeysSubCopyPath, KeysSubCopyPub, KeysSubScan
         };
 
         private const string AppIconPath = "Images\\app.png";
@@ -111,7 +112,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
         internal const int ScoreTopLevelHelp     = 100_000;
 
         // "keys" submenu — action rows above saved key entries
-        internal const int ScoreKeysActionAdd      = 1160;
+        internal const int ScoreKeysActionAdd      = 1170;
+        internal const int ScoreKeysActionGenerate = 1160;
         internal const int ScoreKeysActionRemove   = 1150;
         internal const int ScoreKeysActionRename   = 1140;
         internal const int ScoreKeysActionCopyPath = 1130;
@@ -1191,6 +1193,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             switch (subCmd)
             {
                 case KeysSubAdd:      return HandleKeysAdd(query, subRest);
+                case KeysSubGenerate: return HandleKeysGenerate(query, subRest);
                 case KeysSubRemove:   return HandleKeysRemove(query, subRest);
                 case KeysSubRename:   return HandleKeysRename(query, subRest);
                 case KeysSubCopyPath: return HandleKeysCopyPath(query, subRest);
@@ -1234,6 +1237,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 var keysSubCmds = new[]
                 {
                     ("add",       GetTranslation("plugin_quickssh_title_commandkeys_add"),       GetTranslation("plugin_quickssh_subtitle_commandkeys_add"),       ScoreKeysActionAdd),
+                    ("generate",  GetTranslation("plugin_quickssh_title_commandkeys_generate"),  GetTranslation("plugin_quickssh_subtitle_commandkeys_generate"),  ScoreKeysActionGenerate),
                     ("remove",    GetTranslation("plugin_quickssh_title_commandkeys_remove"),    GetTranslation("plugin_quickssh_subtitle_commandkeys_remove"),    ScoreKeysActionRemove),
                     ("rename",    GetTranslation("plugin_quickssh_title_commandkeys_rename"),    GetTranslation("plugin_quickssh_subtitle_commandkeys_rename"),    ScoreKeysActionRename),
                     ("copy-path", GetTranslation("plugin_quickssh_title_commandkeys_copypath"),  GetTranslation("plugin_quickssh_subtitle_commandkeys_copypath"),  ScoreKeysActionCopyPath),
@@ -1347,6 +1351,205 @@ namespace Flow.Launcher.Plugin.QuickSSH
             }
 
             return results;
+        }
+
+        // ── keys generate ─────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Row-driven SSH key generation wizard.
+        /// <list type="bullet">
+        ///   <item><c>keys generate</c> — usage hint only</item>
+        ///   <item><c>keys generate &lt;alias&gt;</c> — show actionable rows:
+        ///     ed25519 (default), RSA 4096</item>
+        /// </list>
+        /// Passphrase is intentionally NOT supported in this PR — keys are generated
+        /// with <c>-N ""</c> (empty passphrase).  Interactive passphrase flow will be
+        /// added in a separate follow-up PR once runtime behaviour from Flow Launcher
+        /// plugins has been verified.
+        /// </summary>
+        private List<Result> HandleKeysGenerate(Query query, string rest)
+        {
+            var results = new List<Result>();
+            var keys = _profileManager.UserData.SshKeys;
+
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandkeys_generate"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandkeys_generate"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " keys generate ",
+                Score = int.MaxValue
+            });
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " keys ", query.ActionKeyword + " keys"));
+
+            if (string.IsNullOrEmpty(rest))
+                return results;
+
+            // rest is <alias> only — the type/path selection is done via rows, not positional args
+            var alias = rest.Trim();
+
+            // Sanitise alias for use as a file name
+            var safeFileName = Utils.SanitizeKeyFileName(alias);
+            if (safeFileName == null)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_generate"),
+                    SubTitle = GetTranslation("plugin_quickssh_keys_generate_invalid_alias"),
+                    IcoPath = AppIconRedPath
+                });
+                return results;
+            }
+
+            // Duplicate alias check
+            if (keys.ContainsKey(alias))
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_generate") + ": " + alias,
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_duplicate"), alias),
+                    IcoPath = AppIconRedPath
+                });
+                return results;
+            }
+
+            // Default key path
+            var sshDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ssh");
+            var defaultKeyPath = Path.Combine(sshDir, safeFileName);
+
+            // Check if target file already exists at the default path
+            if (File.Exists(defaultKeyPath))
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_generate") + ": " + alias,
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_file_exists"), defaultKeyPath),
+                    IcoPath = AppIconRedPath
+                });
+                return results;
+            }
+
+            // Row 1: Generate ed25519 (recommended default)
+            results.Add(new Result
+            {
+                Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
+                SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "ed25519", defaultKeyPath),
+                IcoPath = AppIconGreenPath,
+                Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, defaultKeyPath)
+            });
+
+            // Row 2: Generate RSA 4096 (compatibility)
+            results.Add(new Result
+            {
+                Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
+                SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "RSA 4096", defaultKeyPath),
+                IcoPath = AppIconPath,
+                Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, defaultKeyPath)
+            });
+
+
+            return results;
+        }
+
+        /// <summary>
+        /// Runs ssh-keygen non-interactively to generate a keypair with an empty
+        /// passphrase (<c>-N ""</c>), then auto-registers the key in the registry
+        /// only if both the private key and <c>.pub</c> file exist on disk.
+        /// Returns <see langword="true"/> to close Flow Launcher after execution.
+        /// </summary>
+        private bool ExecuteKeyGeneration(string alias, string keyType, int keyBits, string keyPath)
+        {
+            // 1. Check ssh-keygen availability
+            if (!Utils.IsSshKeygenInstalled())
+            {
+                _pluginContext?.API?.ShowMsg("QuickSSH",
+                    GetTranslation("plugin_quickssh_keys_generate_no_keygen"));
+                return true;
+            }
+
+            // 2. Ensure target directory exists
+            var keyDir = Path.GetDirectoryName(keyPath);
+            if (!string.IsNullOrEmpty(keyDir) && !Directory.Exists(keyDir))
+            {
+                try { Directory.CreateDirectory(keyDir); }
+                catch (Exception ex)
+                {
+                    _pluginContext?.API?.ShowMsg("QuickSSH",
+                        string.Format(GetTranslation("plugin_quickssh_keys_generate_invalid_path"), ex.Message));
+                    return true;
+                }
+            }
+
+            // 3. Final file-exists guard (race condition protection)
+            if (File.Exists(keyPath))
+            {
+                _pluginContext?.API?.ShowMsg("QuickSSH",
+                    string.Format(GetTranslation("plugin_quickssh_keys_generate_file_exists"), keyPath));
+                return true;
+            }
+
+            // 4. Build ssh-keygen arguments.
+            //    -N "" sets an empty passphrase — no interactive prompt needed.
+            //    Passphrase support will be added in a follow-up PR.
+            var keygenArgs = keyBits > 0
+                ? $"-t {keyType} -b {keyBits} -f \"{keyPath}\" -C \"{alias}\" -N \"\""
+                : $"-t {keyType} -f \"{keyPath}\" -C \"{alias}\" -N \"\"";
+
+            try
+            {
+                var process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "ssh-keygen",
+                    Arguments = keygenArgs,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                });
+                if (process == null)
+                {
+                    _pluginContext?.API?.ShowMsg("QuickSSH",
+                        GetTranslation("plugin_quickssh_keys_generate_failed"));
+                    return true;
+                }
+                using (process)
+                {
+                    process.StandardOutput.ReadToEnd();
+                    process.StandardError.ReadToEnd();
+                    process.WaitForExit();
+                }
+            }
+            catch (Exception ex)
+            {
+                _pluginContext?.API?.ShowMsg("QuickSSH",
+                    string.Format(GetTranslation("plugin_quickssh_keys_generate_failed_detail"), ex.Message));
+                return true;
+            }
+
+            // 5. Verify generation succeeded — register only if BOTH private key and .pub exist.
+            var pubKeyPath = keyPath + ".pub";
+            if (File.Exists(keyPath) && File.Exists(pubKeyPath))
+            {
+                _profileManager.UserData.SshKeys[alias] = new SshKeyEntry
+                {
+                    Path = keyPath,
+                    PublicKeyPath = pubKeyPath,
+                    Algorithm = keyBits > 0 ? $"{keyType}-{keyBits}" : keyType,
+                    Comment = alias,
+                    Source = "generated",
+                    CreatedAt = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture)
+                };
+                _pluginContext?.API?.ShowMsg("QuickSSH",
+                    string.Format(GetTranslation("plugin_quickssh_keys_generate_success"), alias));
+            }
+            else
+            {
+                _pluginContext?.API?.ShowMsg("QuickSSH",
+                    GetTranslation("plugin_quickssh_keys_generate_failed"));
+            }
+
+            return true;
         }
 
         private List<Result> HandleKeysRemove(Query query, string rest)
