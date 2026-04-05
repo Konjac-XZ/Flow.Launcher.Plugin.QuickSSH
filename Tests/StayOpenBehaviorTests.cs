@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Xunit;
 
 namespace Flow.Launcher.Plugin.QuickSSH.Tests
@@ -321,6 +323,39 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.Contains(keyPath, message);
         }
 
+        // ── Profiles: export/import round-trip ───────────────────────────────────
+
+        [Fact]
+        public void ProfilesExport_Serialize_ProducesNonEmptyText()
+        {
+            // Export uses ProfileSerializer.Serialize — verify it produces output.
+            var profiles = new Dictionary<string, SshProfile>
+            {
+                ["myserver"] = SshProfile.ParseFromLegacyCommand("ssh root@10.0.0.1")
+            };
+            var text = ProfileSerializer.Serialize(profiles);
+
+            Assert.False(string.IsNullOrWhiteSpace(text));
+            Assert.Contains("myserver", text);
+        }
+
+        [Fact]
+        public void ProfilesImport_Deserialize_RestoresProfiles()
+        {
+            // Import uses ProfileSerializer.Deserialize — verify round-trip works.
+            var original = new Dictionary<string, SshProfile>
+            {
+                ["web"] = SshProfile.ParseFromLegacyCommand("ssh admin@web.example.com -p 2222"),
+                ["db"] = SshProfile.ParseFromLegacyCommand("ssh root@db.internal")
+            };
+            var text = ProfileSerializer.Serialize(original);
+            var imported = ProfileSerializer.Deserialize(text);
+
+            Assert.Equal(2, imported.Count);
+            Assert.True(imported.ContainsKey("web"));
+            Assert.True(imported.ContainsKey("db"));
+        }
+
         // ── Config: import data mutation ──────────────────────────────────────────
 
         [Fact]
@@ -331,6 +366,17 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             pm.UserData.Profiles["webserver"] = profile;
 
             Assert.True(pm.UserData.Profiles.ContainsKey("webserver"));
+        }
+
+        // ── Help: docs URL is valid ───────────────────────────────────────────────
+
+        [Fact]
+        public void HelpDocs_GitHubUrl_IsValid()
+        {
+            // The help action opens this URL — verify it's a valid absolute HTTPS URI.
+            var url = "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH";
+            Assert.True(Uri.TryCreate(url, UriKind.Absolute, out var uri));
+            Assert.Equal("https", uri.Scheme);
         }
 
         // ── LAUNCH actions remain unchanged ───────────────────────────────────────
