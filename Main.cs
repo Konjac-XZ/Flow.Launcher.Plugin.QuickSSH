@@ -455,7 +455,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         Action = _ =>
                         {
                             _profileManager.UserData.Profiles[profileName] = profile;
-                            return true;
+                            _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles ", true);
+                            return false;
                         }
                     });
                 }
@@ -508,7 +509,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Action = _ =>
                     {
                         _profileManager.UserData.Profiles.Remove(entry.Key);
-                        return true;
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles ", true);
+                        return false;
                     }
                 });
             }
@@ -622,7 +624,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             profiles.SetCallback(_profileManager.SaveConfiguration);
                         }
                         _profileManager.SaveConfiguration();
-                        return true;
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles ", true);
+                        return false;
                     }
                 });
             }
@@ -683,7 +686,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             _pluginContext?.API?.ShowMsg("QuickSSH",
                                 GetTranslation("plugin_quickssh_copy_clipboard_error"));
                         }
-                        return true;
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles copy ", true);
+                        return false;
                     }
                 });
             }
@@ -731,7 +735,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     {
                         _pluginContext.API.ShowMsg("QuickSSH", "Error: " + ex.Message);
                     }
-                    return true;
+                    _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles ", true);
+                    return false;
                 }
             });
 
@@ -809,7 +814,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         {
                             _pluginContext.API.ShowMsg("QuickSSH", "Error: " + ex.Message);
                         }
-                        return true;
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles ", true);
+                        return false;
                     }
                 });
             }
@@ -1015,7 +1021,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                     _profileManager.UserData.SelectedCustomShell = name;
                                 _profileManager.UserData.CustomShell.SetCallback(_profileManager.SaveConfiguration);
                                 _profileManager.SaveConfiguration();
-                                return true;
+                                _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " shell ", true);
+                                return false;
                             }
                         });
                     }
@@ -1066,7 +1073,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                     }
                                     _profileManager.UserData.CustomShell.SetCallback(_profileManager.SaveConfiguration);
                                     _profileManager.SaveConfiguration();
-                                    return true;
+                                    _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " shell ", true);
+                                    return false;
                                 }
                             });
                         }
@@ -1151,7 +1159,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             {
                                 _profileManager.UserData.SelectedCustomShell = selected;
                                 _profileManager.SaveConfiguration();
-                                return true;
+                                _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " shell ", true);
+                                return false;
                             }
                         });
                     }
@@ -1173,7 +1182,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             {
                                 _profileManager.UserData.SelectedCustomShell = shell.Key;
                                 _profileManager.SaveConfiguration();
-                                return true;
+                                _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " shell ", true);
+                                return false;
                             }
                         });
                     }
@@ -1346,7 +1356,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         {
                             Path = expandedPath
                         };
-                        return true;
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys ", true);
+                        return false;
                     }
                 });
             }
@@ -1811,7 +1822,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                 keys.SetCallback(_profileManager.SaveConfiguration);
                             }
                             _profileManager.SaveConfiguration();
-                            return true;
+                            _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys ", true);
+                            return false;
                         }
                     });
                 }
@@ -1873,7 +1885,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             _pluginContext?.API?.ShowMsg("QuickSSH",
                                 GetTranslation("plugin_quickssh_copy_clipboard_error"));
                         }
-                        return true;
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys copy-path ", true);
+                        return false;
                     }
                 });
             }
@@ -1939,7 +1952,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                 _pluginContext?.API?.ShowMsg("QuickSSH",
                                     GetTranslation("plugin_quickssh_copy_clipboard_error"));
                             }
-                            return true;
+                            _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys copy-pub ", true);
+                            return false;
                         }
                     });
                 }
@@ -2041,7 +2055,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             {
                                 Path = candidate
                             };
-                            return true;
+                            _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys ", true);
+                            return false;
                         }
                     });
                 }
@@ -2134,7 +2149,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         {
                             _pluginContext.API.ShowMsg("QuickSSH",
                                 GetTranslation("plugin_quickssh_config_notfound"));
-                            return true;
+                            _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " config ", true);
+                            return false;
                         }
 
                         int imported = 0;
@@ -2154,7 +2170,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     {
                         _pluginContext.API.ShowMsg("QuickSSH", "Error: " + ex.Message);
                     }
-                    return true;
+                    _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " config ", true);
+                    return false;
                 }
             });
 
@@ -2188,7 +2205,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             FileName = "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
                             UseShellExecute = true
                         });
-                        return true;
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " ", true);
+                        return false;
                     }
                 }
             };
