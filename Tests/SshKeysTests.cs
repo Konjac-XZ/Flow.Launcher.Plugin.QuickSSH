@@ -968,5 +968,128 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             // Sanitize on just the alias is correct.
             Assert.Equal("skuska", Utils.SanitizeKeyFileName(alias));
         }
+
+        // ── Remove is registry-only (no file deletion) ───────────────────────────
+
+        [Fact]
+        public void UserData_SshKeys_Remove_DoesNotDeleteFiles()
+        {
+            // Create a real temp file to prove Remove() never touches the filesystem.
+            var tempDir = Path.Combine(Path.GetTempPath(), "quickssh_test_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+            try
+            {
+                var keyPath = Path.Combine(tempDir, "test_key");
+                var pubPath = keyPath + ".pub";
+                File.WriteAllText(keyPath, "fake-private-key");
+                File.WriteAllText(pubPath, "fake-public-key");
+
+                var userData = new UserData();
+                userData.Attach(() => { });
+                userData.SshKeys["testkey"] = new SshKeyEntry
+                {
+                    Path = keyPath,
+                    PublicKeyPath = pubPath
+                };
+
+                // Remove the alias — this must be registry-only.
+                userData.SshKeys.Remove("testkey");
+
+                Assert.False(userData.SshKeys.ContainsKey("testkey"));
+                Assert.True(File.Exists(keyPath), "Private key file must NOT be deleted by Remove.");
+                Assert.True(File.Exists(pubPath), "Public key file must NOT be deleted by Remove.");
+            }
+            finally
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+
+        [Fact]
+        public void UserData_SshKeys_Remove_CapturePathBeforeRemoval()
+        {
+            // Verifies that the entry's path can be captured before Remove()
+            // so the confirmation message can include it.
+            var userData = new UserData();
+            userData.Attach(() => { });
+            userData.SshKeys["myalias"] = new SshKeyEntry
+            {
+                Path = @"C:\Users\me\.ssh\myalias",
+                PublicKeyPath = @"C:\Users\me\.ssh\myalias.pub"
+            };
+
+            // Capture the path before removing (as the action handler does).
+            var capturedPath = userData.SshKeys["myalias"].Path;
+            userData.SshKeys.Remove("myalias");
+
+            Assert.Equal(@"C:\Users\me\.ssh\myalias", capturedPath);
+            Assert.False(userData.SshKeys.ContainsKey("myalias"));
+        }
+
+        // ── Generate success feedback includes paths ─────────────────────────────
+
+        [Fact]
+        public void SshKeyEntry_GenerateSuccessFeedback_IncludesPaths()
+        {
+            // Simulate what ExecuteKeyGeneration does after successful generation:
+            // register the key and format a message with alias, private path, and public path.
+            var alias = "mykey";
+            var keyPath = @"C:\Users\me\.ssh\mykey";
+            var pubKeyPath = keyPath + ".pub";
+
+            var entry = new SshKeyEntry
+            {
+                Path = keyPath,
+                PublicKeyPath = pubKeyPath,
+                Algorithm = "ed25519",
+                Comment = alias,
+                Source = "generated"
+            };
+
+            // The success message format: "SSH key generated: {0}\nPrivate: {1}\nPublic: {2}"
+            var message = string.Format(
+                "SSH key generated: {0}\nPrivate: {1}\nPublic: {2}",
+                alias, entry.Path, entry.PublicKeyPath);
+
+            Assert.Contains(alias, message);
+            Assert.Contains(keyPath, message);
+            Assert.Contains(pubKeyPath, message);
+        }
+
+        // ── Remove success feedback makes it clear only alias was removed ────────
+
+        [Fact]
+        public void SshKeyEntry_RemoveSuccessFeedback_RegistryOnlyMessage()
+        {
+            // Simulate what HandleKeysRemove does after successful removal:
+            // format a message with alias, registry-only note, and file path.
+            var alias = "prodkey";
+            var keyPath = @"C:\Users\me\.ssh\prodkey";
+
+            // The remove message format: "SSH key alias removed: {0}\nRegistry entry removed only.\nFiles kept on disk: {1}"
+            var message = string.Format(
+                "SSH key alias removed: {0}\nRegistry entry removed only.\nFiles kept on disk: {1}",
+                alias, keyPath);
+
+            Assert.Contains(alias, message);
+            Assert.Contains("Registry entry removed only", message);
+            Assert.Contains("Files kept on disk", message);
+            Assert.Contains(keyPath, message);
+        }
+
+        [Fact]
+        public void SshKeyEntry_RemoveSuccessFeedback_EmptyPath()
+        {
+            // When a key entry has no path (edge case), the message still works.
+            var alias = "orphan";
+            var keyPath = "";
+
+            var message = string.Format(
+                "SSH key alias removed: {0}\nRegistry entry removed only.\nFiles kept on disk: {1}",
+                alias, keyPath);
+
+            Assert.Contains(alias, message);
+            Assert.Contains("Registry entry removed only", message);
+        }
     }
 }

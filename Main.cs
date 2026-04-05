@@ -1471,7 +1471,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
                     SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "ed25519", fullPath),
                     IcoPath = AppIconGreenPath,
-                    Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, fullPath)
+                    Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, fullPath, query.ActionKeyword)
                 });
 
                 // Row 2: Generate RSA 4096 at custom path
@@ -1480,7 +1480,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
                     SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "RSA 4096", fullPath),
                     IcoPath = AppIconPath,
-                    Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, fullPath)
+                    Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, fullPath, query.ActionKeyword)
                 });
             }
             else
@@ -1508,7 +1508,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
                     SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "ed25519", defaultKeyPath),
                     IcoPath = AppIconGreenPath,
-                    Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, defaultKeyPath)
+                    Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, defaultKeyPath, query.ActionKeyword)
                 });
 
                 // Row 2: Generate RSA 4096 (compatibility)
@@ -1517,7 +1517,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
                     SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "RSA 4096", defaultKeyPath),
                     IcoPath = AppIconPath,
-                    Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, defaultKeyPath)
+                    Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, defaultKeyPath, query.ActionKeyword)
                 });
 
                 // Row 3: Custom path hint — navigates the user to append a path
@@ -1538,9 +1538,10 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// Runs ssh-keygen non-interactively to generate a keypair with an empty
         /// passphrase (<c>-N ""</c>), then auto-registers the key in the registry
         /// only if both the private key and <c>.pub</c> file exist on disk.
-        /// Returns <see langword="true"/> to close Flow Launcher after execution.
+        /// On success, shows a confirmation message with paths and returns the
+        /// user to the <c>keys</c> menu. On failure, closes Flow Launcher.
         /// </summary>
-        private bool ExecuteKeyGeneration(string alias, string keyType, int keyBits, string keyPath)
+        private bool ExecuteKeyGeneration(string alias, string keyType, int keyBits, string keyPath, string actionKeyword)
         {
             // 1. Check ssh-keygen availability
             if (!Utils.IsSshKeygenInstalled())
@@ -1623,7 +1624,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     CreatedAt = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture)
                 };
                 _pluginContext?.API?.ShowMsg("QuickSSH",
-                    string.Format(GetTranslation("plugin_quickssh_keys_generate_success"), alias));
+                    string.Format(GetTranslation("plugin_quickssh_keys_generate_success"), alias, keyPath, pubKeyPath));
+                _pluginContext?.API?.ChangeQuery(actionKeyword + " keys ", true);
+                return false;
             }
             else
             {
@@ -1667,6 +1670,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     continue;
 
                 var alias = entry.Key;
+                var keyPath = entry.Value?.Path ?? "";
                 var displayPath = entry.Value?.ToDisplayString() ?? "";
                 results.Add(new Result
                 {
@@ -1677,7 +1681,10 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Action = _ =>
                     {
                         _profileManager.UserData.SshKeys.Remove(alias);
-                        return true;
+                        _pluginContext?.API?.ShowMsg("QuickSSH",
+                            string.Format(GetTranslation("plugin_quickssh_keys_remove_success"), alias, keyPath));
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys ", true);
+                        return false;
                     }
                 });
             }

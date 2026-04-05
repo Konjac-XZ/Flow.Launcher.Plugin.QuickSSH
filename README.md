@@ -159,7 +159,7 @@ Register SSH keys by alias so you can quickly reference them in direct connect o
 ssh keys                                     → key management view: action rows + registered keys
 ssh keys add prod ~/.ssh/id_ed25519          → register key alias "prod"
 ssh keys add dev "C:\Users\me\.ssh\dev_key"  → register key alias "dev" (quoted path)
-ssh keys remove prod                         → remove key alias "prod"
+ssh keys remove prod                         → remove key alias "prod" (registry only — files on disk are kept)
 ```
 
 > **Display order** — `ssh keys` always shows action rows in a fixed, stable order: **add** → **generate** → **remove** → **rename** → **copy-path** → **copy-pub** → **scan**, followed by registered key entries.
@@ -167,6 +167,8 @@ ssh keys remove prod                         → remove key alias "prod"
 > **Security note:** QuickSSH stores only the alias and the file path — **never** the private key content. The key file is accessed by SSH at connection time, not by the plugin.
 
 > **Key file validation:** When browsing registered keys, QuickSSH checks whether the key file exists on disk and shows a warning icon if it is missing.
+
+> **Post-action feedback:** After `keys generate` and `keys remove`, a confirmation message is shown and Flow Launcher returns to the `ssh keys` menu so you can see the updated key list. The `keys remove` command only removes the alias from the registry — key files on disk are never deleted.
 
 ### Generate an SSH keypair
 
@@ -196,6 +198,7 @@ ssh keys generate mykey C:\keys\mykey        → custom path flow:
 2. QuickSSH verifies that **both** the private key and `.pub` file were created.
 3. If both files exist → the key is auto-registered with metadata (alias, path, algorithm, source, timestamp).
 4. If either file is missing (failed) → nothing is registered.
+5. On success, a confirmation message shows the alias, private key path, and public key path. Flow Launcher stays open and returns to the `ssh keys` menu.
 
 **Validations:**
 - Empty alias → usage hint shown

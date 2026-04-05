@@ -109,11 +109,16 @@
     <system:String x:Key="plugin_quickssh_keys_generate_custom_path_title">Свой путь…</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_custom_path_hint">Введите: {0} keys generate {1} C:\путь\к\ключу</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_no_keygen">ssh-keygen не найден. Установите OpenSSH для генерации ключей.</system:String>
-    <system:String x:Key="plugin_quickssh_keys_generate_success">Ключ '{0}' успешно сгенерирован и зарегистрирован.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_success">SSH-ключ сгенерирован: {0}
+Приватный: {1}
+Публичный: {2}</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_failed">Генерация ключа отменена или не удалась.</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_failed_detail">Ошибка генерации ключа: {0}</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_remove">Удалить SSH-ключ</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_remove">Использование: keys remove [фильтр]</system:String>
+    <system:String x:Key="plugin_quickssh_keys_remove_success">Псевдоним SSH-ключа удалён: {0}
+Удалена только запись в реестре.
+Файлы на диске сохранены: {1}</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_rename">Переименовать псевдоним ключа</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_rename">Использование: keys rename &lt;старый-псевдоним&gt; &lt;новый-псевдоним&gt;</system:String>
     <system:String x:Key="plugin_quickssh_keys_rename_notfound">Псевдоним ключа не найден.</system:String>
