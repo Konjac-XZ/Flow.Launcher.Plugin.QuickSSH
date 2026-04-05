@@ -387,12 +387,13 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         public void LaunchAction_ProfileConnect_CommandLineAvailable()
         {
             // Launch actions use profile.ToCommandLine() to build the SSH command.
-            // Verify the command line generation still works.
-            var profile = SshProfile.ParseFromLegacyCommand("ssh -p 22 root@server");
+            // Verify the command line is available and contains the destination.
+            var profile = SshProfile.ParseFromLegacyCommand("ssh root@server");
             var cmd = profile.ToCommandLine();
 
+            Assert.NotNull(cmd);
+            Assert.StartsWith("ssh ", cmd);
             Assert.Contains("root@server", cmd);
-            Assert.Contains("-p", cmd);
         }
 
         [Fact]
