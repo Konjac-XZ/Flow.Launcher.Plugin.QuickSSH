@@ -42,6 +42,9 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy">Kopírovať:</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy_usage">Použitie: profiles copy [filter]</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Nepodarilo sa skopírovať do schránky. Uistite sa, že Flow Launcher beží na UI vlákne.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_command_success">SSH príkaz skopírovaný do schránky.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_keypath_success">Cesta ku kľúču skopírovaná do schránky.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_pubkey_success">Verejný kľúč skopírovaný do schránky.</system:String>
 
     <!-- PROFILES EXPORT -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles_export">Exportovať profily</system:String>

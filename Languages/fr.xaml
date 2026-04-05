@@ -42,6 +42,9 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy">Copier :</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy_usage">Utilisation : profiles copy [filtre]</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Impossible de copier dans le presse-papiers. Assurez-vous que Flow Launcher s'exécute sur le thread UI.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_command_success">Commande SSH copiée dans le presse-papiers.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_keypath_success">Chemin de la clé copié dans le presse-papiers.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_pubkey_success">Clé publique copiée dans le presse-papiers.</system:String>
 
     <!-- PROFILES EXPORT -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles_export">Exporter les profils</system:String>

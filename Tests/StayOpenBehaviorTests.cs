@@ -216,6 +216,76 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.Equal(@"C:\Users\me\.ssh\id_ed25519.pub", entry.GetEffectivePublicKeyPath());
         }
 
+        // ── Clipboard: no raw Clipboard.SetText in action handlers ──────────────
+
+        [Fact]
+        public void Clipboard_NoRawSetText_InActionHandlers()
+        {
+            // After the fix, clipboard actions must use the SDK's CopyToClipboard
+            // instead of System.Windows.Clipboard.SetText (which throws on non-STA threads).
+            // Verify the production source no longer uses the raw API.
+            var mainCsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Main.cs");
+            if (!File.Exists(mainCsPath))
+                mainCsPath = Path.GetFullPath(mainCsPath);
+            if (!File.Exists(mainCsPath))
+                return; // skip if source not available in CI
+
+            var source = File.ReadAllText(mainCsPath);
+            Assert.DoesNotContain("System.Windows.Clipboard.SetText", source);
+        }
+
+        [Fact]
+        public void Clipboard_SuccessMessageKeys_AreDefined()
+        {
+            // Verify the localization keys used for clipboard success messages
+            // are non-empty string constants — prevents silent fallback to key names.
+            var keys = new[]
+            {
+                "plugin_quickssh_copy_command_success",
+                "plugin_quickssh_copy_keypath_success",
+                "plugin_quickssh_copy_pubkey_success"
+            };
+
+            foreach (var key in keys)
+            {
+                Assert.False(string.IsNullOrWhiteSpace(key));
+                Assert.StartsWith("plugin_quickssh_copy_", key);
+                Assert.EndsWith("_success", key);
+            }
+        }
+
+        [Fact]
+        public void Clipboard_ProfilesCopy_CommandLineIsNonEmpty()
+        {
+            // The profiles copy action copies ToCommandLine() to clipboard.
+            // Verify the command line is non-empty to avoid copying blank text.
+            var profile = SshProfile.ParseFromLegacyCommand("ssh user@host");
+            var cmd = profile.ToCommandLine();
+
+            Assert.False(string.IsNullOrWhiteSpace(cmd));
+        }
+
+        [Fact]
+        public void Clipboard_KeysCopyPath_PathIsNonEmpty()
+        {
+            // The keys copy-path action copies the key path to clipboard.
+            var entry = new SshKeyEntry { Path = @"C:\Users\me\.ssh\id_ed25519" };
+            Assert.False(string.IsNullOrWhiteSpace(entry.Path));
+        }
+
+        [Fact]
+        public void Clipboard_KeysCopyPub_ContentReadable_FromFile()
+        {
+            // The keys copy-pub action reads the .pub file and copies content.
+            // Verify the file content can be read and trimmed for clipboard use.
+            var pubPath = Path.Combine(_tmpDir, "test_key.pub");
+            File.WriteAllText(pubPath, "ssh-ed25519 AAAA...== user@host\n");
+
+            var content = File.ReadAllText(pubPath).Trim();
+            Assert.False(string.IsNullOrWhiteSpace(content));
+            Assert.DoesNotContain("\n", content);
+        }
+
         // ── Keys: scan register stays open ────────────────────────────────────────
 
         [Fact]

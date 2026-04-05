@@ -42,6 +42,9 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy">Kopiuj:</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy_usage">Użycie: profiles copy [filtr]</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Could not copy to clipboard. Ensure Flow Launcher is running on the UI thread.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_command_success">Polecenie SSH skopiowane do schowka.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_keypath_success">Ścieżka klucza skopiowana do schowka.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_pubkey_success">Klucz publiczny skopiowany do schowka.</system:String>
 
     <!-- PROFILES EXPORT -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles_export">Eksportuj profile</system:String>

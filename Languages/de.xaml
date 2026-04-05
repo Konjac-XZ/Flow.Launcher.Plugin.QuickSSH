@@ -42,6 +42,9 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy">Kopieren:</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy_usage">Verwendung: profiles copy [Filter]</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Kopieren in die Zwischenablage fehlgeschlagen. Stellen Sie sicher, dass Flow Launcher auf dem UI-Thread läuft.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_command_success">SSH-Befehl in die Zwischenablage kopiert.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_keypath_success">Schlüsselpfad in die Zwischenablage kopiert.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_pubkey_success">Öffentlicher Schlüssel in die Zwischenablage kopiert.</system:String>
 
     <!-- PROFILES EXPORT -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles_export">Profile exportieren</system:String>

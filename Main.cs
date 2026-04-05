@@ -677,15 +677,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     AutoCompleteText = query.ActionKeyword + " profiles copy " + name,
                     Action = _ =>
                     {
-                        try
-                        {
-                            System.Windows.Clipboard.SetText(cmd);
-                        }
-                        catch (Exception)
-                        {
-                            _pluginContext?.API?.ShowMsg("QuickSSH",
-                                GetTranslation("plugin_quickssh_copy_clipboard_error"));
-                        }
+                        _pluginContext?.API?.CopyToClipboard(cmd, false, false);
+                        _pluginContext?.API?.ShowMsg("QuickSSH",
+                            GetTranslation("plugin_quickssh_copy_command_success"));
                         _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles copy ", true);
                         return false;
                     }
@@ -1876,15 +1870,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     AutoCompleteText = query.ActionKeyword + " keys copy-path " + alias,
                     Action = _ =>
                     {
-                        try
-                        {
-                            System.Windows.Clipboard.SetText(keyPath);
-                        }
-                        catch (Exception)
-                        {
-                            _pluginContext?.API?.ShowMsg("QuickSSH",
-                                GetTranslation("plugin_quickssh_copy_clipboard_error"));
-                        }
+                        _pluginContext?.API?.CopyToClipboard(keyPath, false, false);
+                        _pluginContext?.API?.ShowMsg("QuickSSH",
+                            GetTranslation("plugin_quickssh_copy_keypath_success"));
                         _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys copy-path ", true);
                         return false;
                     }
@@ -1945,7 +1933,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             try
                             {
                                 var content = File.ReadAllText(pubPath).Trim();
-                                System.Windows.Clipboard.SetText(content);
+                                _pluginContext?.API?.CopyToClipboard(content, false, false);
+                                _pluginContext?.API?.ShowMsg("QuickSSH",
+                                    GetTranslation("plugin_quickssh_copy_pubkey_success"));
                             }
                             catch (Exception)
                             {
