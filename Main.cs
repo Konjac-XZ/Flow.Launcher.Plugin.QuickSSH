@@ -1670,8 +1670,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     continue;
 
                 var alias = entry.Key;
-                var keyPath = entry.Value?.Path ?? "";
-                var displayPath = entry.Value?.ToDisplayString() ?? "";
+                var entryValue = entry.Value;
+                var keyPath = entryValue?.Path ?? "";
+                var displayPath = entryValue?.ToDisplayString() ?? "";
                 results.Add(new Result
                 {
                     Title = alias,
