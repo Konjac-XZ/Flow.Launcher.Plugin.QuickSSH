@@ -75,6 +75,8 @@ ssh profiles prod      → filter saved profiles containing "prod"
 
 Press Enter on a profile row to launch the connection.
 
+> **Stay-open behaviour:** All non-launch actions (add, remove, rename, copy, export, import, generate, scan, config import, help) keep Flow Launcher open and navigate back to the parent menu. Only actions that actually launch an SSH/SCP connection close the plugin.
+
 > **Display order** — `ssh profiles` always shows results in a fixed, stable order regardless of fuzzy-match scoring:
 > 1. **Profile management** (usage hint, always pinned at the top)
 > 2. **← Back to ssh** (back-navigation row — press Enter to return to the top-level command list)
@@ -168,7 +170,7 @@ ssh keys remove prod                         → remove key alias "prod" (regist
 
 > **Key file validation:** When browsing registered keys, QuickSSH checks whether the key file exists on disk and shows a warning icon if it is missing.
 
-> **Post-action feedback:** After `keys generate` and `keys remove`, a confirmation message is shown and Flow Launcher returns to the `ssh keys` menu so you can see the updated key list. The `keys remove` command only removes the alias from the registry — key files on disk are never deleted.
+> **Post-action feedback:** All management actions (add, remove, rename, copy, export, import, generate, scan, config import) keep Flow Launcher open and return to the parent menu so you can see the updated state and continue working. Clipboard actions (profiles copy, keys copy-path, keys copy-pub) stay inside their submenu. The `keys remove` command only removes the alias from the registry — key files on disk are never deleted.
 
 ### Generate an SSH keypair
 
