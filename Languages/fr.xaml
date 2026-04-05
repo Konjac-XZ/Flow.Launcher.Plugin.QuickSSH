@@ -42,6 +42,9 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy">Copier :</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy_usage">Utilisation : profiles copy [filtre]</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Impossible de copier dans le presse-papiers. Assurez-vous que Flow Launcher s'exécute sur le thread UI.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_command_success">Commande SSH copiée dans le presse-papiers.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_keypath_success">Chemin de la clé copié dans le presse-papiers.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_pubkey_success">Clé publique copiée dans le presse-papiers.</system:String>
 
     <!-- PROFILES EXPORT -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles_export">Exporter les profils</system:String>
@@ -109,11 +112,16 @@
     <system:String x:Key="plugin_quickssh_keys_generate_custom_path_title">Chemin personnalisé…</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_custom_path_hint">Tapez : {0} keys generate {1} C:\chemin\vers\clé</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_no_keygen">ssh-keygen introuvable. Installez OpenSSH pour générer des clés.</system:String>
-    <system:String x:Key="plugin_quickssh_keys_generate_success">Clé '{0}' générée et enregistrée avec succès.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_success">Clé SSH générée : {0}
+Privée : {1}
+Publique : {2}</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_failed">Génération de clé annulée ou échouée.</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_failed_detail">Échec de la génération de clé : {0}</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_remove">Supprimer une clé SSH</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_remove">Utilisation : keys remove [filtre]</system:String>
+    <system:String x:Key="plugin_quickssh_keys_remove_success">Alias de clé SSH supprimé : {0}
+Entrée de registre supprimée uniquement.
+Fichiers conservés sur le disque : {1}</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_rename">Renommer l'alias de clé</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_rename">Utilisation : keys rename &lt;ancien-alias&gt; &lt;nouvel-alias&gt;</system:String>
     <system:String x:Key="plugin_quickssh_keys_rename_notfound">Alias de clé introuvable.</system:String>

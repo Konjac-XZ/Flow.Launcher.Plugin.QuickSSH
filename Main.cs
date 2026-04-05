@@ -455,7 +455,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         Action = _ =>
                         {
                             _profileManager.UserData.Profiles[profileName] = profile;
-                            return true;
+                            _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles ", true);
+                            return false;
                         }
                     });
                 }
@@ -508,7 +509,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Action = _ =>
                     {
                         _profileManager.UserData.Profiles.Remove(entry.Key);
-                        return true;
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles ", true);
+                        return false;
                     }
                 });
             }
@@ -622,7 +624,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             profiles.SetCallback(_profileManager.SaveConfiguration);
                         }
                         _profileManager.SaveConfiguration();
-                        return true;
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles ", true);
+                        return false;
                     }
                 });
             }
@@ -674,16 +677,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     AutoCompleteText = query.ActionKeyword + " profiles copy " + name,
                     Action = _ =>
                     {
-                        try
-                        {
-                            System.Windows.Clipboard.SetText(cmd);
-                        }
-                        catch (Exception)
-                        {
-                            _pluginContext?.API?.ShowMsg("QuickSSH",
-                                GetTranslation("plugin_quickssh_copy_clipboard_error"));
-                        }
-                        return true;
+                        _pluginContext?.API?.CopyToClipboard(cmd, false, false);
+                        _pluginContext?.API?.ShowMsg("QuickSSH",
+                            GetTranslation("plugin_quickssh_copy_command_success"));
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles copy ", true);
+                        return false;
                     }
                 });
             }
@@ -731,7 +729,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     {
                         _pluginContext.API.ShowMsg("QuickSSH", "Error: " + ex.Message);
                     }
-                    return true;
+                    _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles ", true);
+                    return false;
                 }
             });
 
@@ -809,7 +808,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         {
                             _pluginContext.API.ShowMsg("QuickSSH", "Error: " + ex.Message);
                         }
-                        return true;
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles ", true);
+                        return false;
                     }
                 });
             }
@@ -1015,7 +1015,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                     _profileManager.UserData.SelectedCustomShell = name;
                                 _profileManager.UserData.CustomShell.SetCallback(_profileManager.SaveConfiguration);
                                 _profileManager.SaveConfiguration();
-                                return true;
+                                _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " shell ", true);
+                                return false;
                             }
                         });
                     }
@@ -1066,7 +1067,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                     }
                                     _profileManager.UserData.CustomShell.SetCallback(_profileManager.SaveConfiguration);
                                     _profileManager.SaveConfiguration();
-                                    return true;
+                                    _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " shell ", true);
+                                    return false;
                                 }
                             });
                         }
@@ -1151,7 +1153,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             {
                                 _profileManager.UserData.SelectedCustomShell = selected;
                                 _profileManager.SaveConfiguration();
-                                return true;
+                                _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " shell ", true);
+                                return false;
                             }
                         });
                     }
@@ -1173,7 +1176,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             {
                                 _profileManager.UserData.SelectedCustomShell = shell.Key;
                                 _profileManager.SaveConfiguration();
-                                return true;
+                                _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " shell ", true);
+                                return false;
                             }
                         });
                     }
@@ -1346,7 +1350,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         {
                             Path = expandedPath
                         };
-                        return true;
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys ", true);
+                        return false;
                     }
                 });
             }
@@ -1471,7 +1476,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
                     SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "ed25519", fullPath),
                     IcoPath = AppIconGreenPath,
-                    Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, fullPath)
+                    Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, fullPath, query.ActionKeyword)
                 });
 
                 // Row 2: Generate RSA 4096 at custom path
@@ -1480,7 +1485,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
                     SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "RSA 4096", fullPath),
                     IcoPath = AppIconPath,
-                    Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, fullPath)
+                    Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, fullPath, query.ActionKeyword)
                 });
             }
             else
@@ -1508,7 +1513,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
                     SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "ed25519", defaultKeyPath),
                     IcoPath = AppIconGreenPath,
-                    Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, defaultKeyPath)
+                    Action = _ => ExecuteKeyGeneration(alias, "ed25519", 0, defaultKeyPath, query.ActionKeyword)
                 });
 
                 // Row 2: Generate RSA 4096 (compatibility)
@@ -1517,7 +1522,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Title = string.Format(GetTranslation("plugin_quickssh_keys_generate_confirm"), alias),
                     SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_generate_subtitle"), "RSA 4096", defaultKeyPath),
                     IcoPath = AppIconPath,
-                    Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, defaultKeyPath)
+                    Action = _ => ExecuteKeyGeneration(alias, "rsa", 4096, defaultKeyPath, query.ActionKeyword)
                 });
 
                 // Row 3: Custom path hint — navigates the user to append a path
@@ -1538,9 +1543,10 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// Runs ssh-keygen non-interactively to generate a keypair with an empty
         /// passphrase (<c>-N ""</c>), then auto-registers the key in the registry
         /// only if both the private key and <c>.pub</c> file exist on disk.
-        /// Returns <see langword="true"/> to close Flow Launcher after execution.
+        /// On success, shows a confirmation message with paths and returns the
+        /// user to the <c>keys</c> menu. On failure, closes Flow Launcher.
         /// </summary>
-        private bool ExecuteKeyGeneration(string alias, string keyType, int keyBits, string keyPath)
+        private bool ExecuteKeyGeneration(string alias, string keyType, int keyBits, string keyPath, string actionKeyword)
         {
             // 1. Check ssh-keygen availability
             if (!Utils.IsSshKeygenInstalled())
@@ -1623,7 +1629,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     CreatedAt = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture)
                 };
                 _pluginContext?.API?.ShowMsg("QuickSSH",
-                    string.Format(GetTranslation("plugin_quickssh_keys_generate_success"), alias));
+                    string.Format(GetTranslation("plugin_quickssh_keys_generate_success"), alias, keyPath, pubKeyPath));
+                _pluginContext?.API?.ChangeQuery(actionKeyword + " keys ", true);
+                return false;
             }
             else
             {
@@ -1667,7 +1675,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     continue;
 
                 var alias = entry.Key;
-                var displayPath = entry.Value?.ToDisplayString() ?? "";
+                var entryValue = entry.Value;
+                var keyPath = entryValue?.Path ?? "";
+                var displayPath = entryValue?.ToDisplayString() ?? "";
                 results.Add(new Result
                 {
                     Title = alias,
@@ -1677,7 +1687,10 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     Action = _ =>
                     {
                         _profileManager.UserData.SshKeys.Remove(alias);
-                        return true;
+                        _pluginContext?.API?.ShowMsg("QuickSSH",
+                            string.Format(GetTranslation("plugin_quickssh_keys_remove_success"), alias, keyPath));
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys ", true);
+                        return false;
                     }
                 });
             }
@@ -1803,7 +1816,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                                 keys.SetCallback(_profileManager.SaveConfiguration);
                             }
                             _profileManager.SaveConfiguration();
-                            return true;
+                            _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys ", true);
+                            return false;
                         }
                     });
                 }
@@ -1856,16 +1870,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     AutoCompleteText = query.ActionKeyword + " keys copy-path " + alias,
                     Action = _ =>
                     {
-                        try
-                        {
-                            System.Windows.Clipboard.SetText(keyPath);
-                        }
-                        catch (Exception)
-                        {
-                            _pluginContext?.API?.ShowMsg("QuickSSH",
-                                GetTranslation("plugin_quickssh_copy_clipboard_error"));
-                        }
-                        return true;
+                        _pluginContext?.API?.CopyToClipboard(keyPath, false, false);
+                        _pluginContext?.API?.ShowMsg("QuickSSH",
+                            GetTranslation("plugin_quickssh_copy_keypath_success"));
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys copy-path ", true);
+                        return false;
                     }
                 });
             }
@@ -1924,14 +1933,17 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             try
                             {
                                 var content = File.ReadAllText(pubPath).Trim();
-                                System.Windows.Clipboard.SetText(content);
+                                _pluginContext?.API?.CopyToClipboard(content, false, false);
+                                _pluginContext?.API?.ShowMsg("QuickSSH",
+                                    GetTranslation("plugin_quickssh_copy_pubkey_success"));
                             }
                             catch (Exception)
                             {
                                 _pluginContext?.API?.ShowMsg("QuickSSH",
                                     GetTranslation("plugin_quickssh_copy_clipboard_error"));
                             }
-                            return true;
+                            _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys copy-pub ", true);
+                            return false;
                         }
                     });
                 }
@@ -2033,7 +2045,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             {
                                 Path = candidate
                             };
-                            return true;
+                            _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys ", true);
+                            return false;
                         }
                     });
                 }
@@ -2126,7 +2139,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                         {
                             _pluginContext.API.ShowMsg("QuickSSH",
                                 GetTranslation("plugin_quickssh_config_notfound"));
-                            return true;
+                            _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " config ", true);
+                            return false;
                         }
 
                         int imported = 0;
@@ -2146,7 +2160,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     {
                         _pluginContext.API.ShowMsg("QuickSSH", "Error: " + ex.Message);
                     }
-                    return true;
+                    _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " config ", true);
+                    return false;
                 }
             });
 
@@ -2180,7 +2195,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             FileName = "https://github.com/Vaso73/Flow.Launcher.Plugin.QuickSSH",
                             UseShellExecute = true
                         });
-                        return true;
+                        _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " ", true);
+                        return false;
                     }
                 }
             };

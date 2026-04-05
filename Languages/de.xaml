@@ -42,6 +42,9 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy">Kopieren:</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy_usage">Verwendung: profiles copy [Filter]</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Kopieren in die Zwischenablage fehlgeschlagen. Stellen Sie sicher, dass Flow Launcher auf dem UI-Thread läuft.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_command_success">SSH-Befehl in die Zwischenablage kopiert.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_keypath_success">Schlüsselpfad in die Zwischenablage kopiert.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_pubkey_success">Öffentlicher Schlüssel in die Zwischenablage kopiert.</system:String>
 
     <!-- PROFILES EXPORT -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles_export">Profile exportieren</system:String>
@@ -109,11 +112,16 @@
     <system:String x:Key="plugin_quickssh_keys_generate_custom_path_title">Benutzerdefinierter Pfad…</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_custom_path_hint">Eingabe: {0} keys generate {1} C:\Pfad\zum\Schlüssel</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_no_keygen">ssh-keygen nicht gefunden. Installieren Sie OpenSSH um Schlüssel zu generieren.</system:String>
-    <system:String x:Key="plugin_quickssh_keys_generate_success">Schlüssel '{0}' erfolgreich generiert und registriert.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_success">SSH-Schlüssel generiert: {0}
+Privat: {1}
+Öffentlich: {2}</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_failed">Schlüsselgenerierung abgebrochen oder fehlgeschlagen.</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_failed_detail">Schlüsselgenerierung fehlgeschlagen: {0}</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_remove">SSH-Schlüssel entfernen</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_remove">Verwendung: keys remove [Filter]</system:String>
+    <system:String x:Key="plugin_quickssh_keys_remove_success">SSH-Schlüsselalias entfernt: {0}
+Nur Registrierungseintrag entfernt.
+Dateien auf der Festplatte behalten: {1}</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_rename">Schlüssel-Alias umbenennen</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_rename">Verwendung: keys rename &lt;alter-Alias&gt; &lt;neuer-Alias&gt;</system:String>
     <system:String x:Key="plugin_quickssh_keys_rename_notfound">Schlüssel-Alias nicht gefunden.</system:String>

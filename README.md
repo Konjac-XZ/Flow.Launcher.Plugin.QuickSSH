@@ -75,6 +75,8 @@ ssh profiles prod      → filter saved profiles containing "prod"
 
 Press Enter on a profile row to launch the connection.
 
+> **Stay-open behaviour:** All non-launch actions (add, remove, rename, copy, export, import, generate, scan, config import, help) keep Flow Launcher open and navigate back to the parent menu. Only actions that actually launch an SSH/SCP connection close the plugin.
+
 > **Display order** — `ssh profiles` always shows results in a fixed, stable order regardless of fuzzy-match scoring:
 > 1. **Profile management** (usage hint, always pinned at the top)
 > 2. **← Back to ssh** (back-navigation row — press Enter to return to the top-level command list)
@@ -159,7 +161,7 @@ Register SSH keys by alias so you can quickly reference them in direct connect o
 ssh keys                                     → key management view: action rows + registered keys
 ssh keys add prod ~/.ssh/id_ed25519          → register key alias "prod"
 ssh keys add dev "C:\Users\me\.ssh\dev_key"  → register key alias "dev" (quoted path)
-ssh keys remove prod                         → remove key alias "prod"
+ssh keys remove prod                         → remove key alias "prod" (registry only — files on disk are kept)
 ```
 
 > **Display order** — `ssh keys` always shows action rows in a fixed, stable order: **add** → **generate** → **remove** → **rename** → **copy-path** → **copy-pub** → **scan**, followed by registered key entries.
@@ -167,6 +169,8 @@ ssh keys remove prod                         → remove key alias "prod"
 > **Security note:** QuickSSH stores only the alias and the file path — **never** the private key content. The key file is accessed by SSH at connection time, not by the plugin.
 
 > **Key file validation:** When browsing registered keys, QuickSSH checks whether the key file exists on disk and shows a warning icon if it is missing.
+
+> **Post-action feedback:** All management actions (add, remove, rename, copy, export, import, generate, scan, config import) keep Flow Launcher open and return to the parent menu so you can see the updated state and continue working. Clipboard actions (profiles copy, keys copy-path, keys copy-pub) stay inside their submenu. The `keys remove` command only removes the alias from the registry — key files on disk are never deleted.
 
 ### Generate an SSH keypair
 
@@ -196,6 +200,7 @@ ssh keys generate mykey C:\keys\mykey        → custom path flow:
 2. QuickSSH verifies that **both** the private key and `.pub` file were created.
 3. If both files exist → the key is auto-registered with metadata (alias, path, algorithm, source, timestamp).
 4. If either file is missing (failed) → nothing is registered.
+5. On success, a confirmation message shows the alias, private key path, and public key path. Flow Launcher stays open and returns to the `ssh keys` menu.
 
 **Validations:**
 - Empty alias → usage hint shown

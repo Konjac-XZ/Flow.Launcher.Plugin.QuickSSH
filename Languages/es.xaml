@@ -42,6 +42,9 @@
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy">Copiar:</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandprofiles_copy_usage">Uso: profiles copy [filtro]</system:String>
     <system:String x:Key="plugin_quickssh_copy_clipboard_error">Could not copy to clipboard. Ensure Flow Launcher is running on the UI thread.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_command_success">Comando SSH copiado al portapapeles.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_keypath_success">Ruta de la clave copiada al portapapeles.</system:String>
+    <system:String x:Key="plugin_quickssh_copy_pubkey_success">Clave pública copiada al portapapeles.</system:String>
 
     <!-- PROFILES EXPORT -->
     <system:String x:Key="plugin_quickssh_title_commandprofiles_export">Exportar perfiles</system:String>
@@ -109,11 +112,16 @@
     <system:String x:Key="plugin_quickssh_keys_generate_custom_path_title">Ruta personalizada…</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_custom_path_hint">Escriba: {0} keys generate {1} C:\ruta\a\la\clave</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_no_keygen">ssh-keygen no encontrado. Instale OpenSSH para generar claves.</system:String>
-    <system:String x:Key="plugin_quickssh_keys_generate_success">Clave '{0}' generada y registrada con éxito.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_generate_success">Clave SSH generada: {0}
+Privada: {1}
+Pública: {2}</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_failed">Generación de clave cancelada o fallida.</system:String>
     <system:String x:Key="plugin_quickssh_keys_generate_failed_detail">Fallo en la generación de clave: {0}</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_remove">Eliminar clave SSH</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_remove">Uso: keys remove [filtro]</system:String>
+    <system:String x:Key="plugin_quickssh_keys_remove_success">Alias de clave SSH eliminado: {0}
+Solo se eliminó la entrada del registro.
+Archivos conservados en disco: {1}</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_rename">Renombrar alias de clave</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_rename">Uso: keys rename &lt;alias-antiguo&gt; &lt;alias-nuevo&gt;</system:String>
     <system:String x:Key="plugin_quickssh_keys_rename_notfound">Alias de clave no encontrado.</system:String>
