@@ -97,7 +97,7 @@
 
     <!-- KEYS (SSH key management) -->
     <system:String x:Key="plugin_quickssh_title_commandkeys">Gestion des clés SSH</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Utilisation : keys add | generate | remove | rename | copy-path | copy-pub | scan</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Utilisation : keys install | add | generate | remove | rename | copy-path | copy-pub | scan</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_add">Enregistrer une clé SSH</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Utilisation : keys add &lt;alias&gt; &lt;chemin-clé&gt;</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_generate">Générer une paire de clés SSH</system:String>

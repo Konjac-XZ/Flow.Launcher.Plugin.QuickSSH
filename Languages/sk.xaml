@@ -97,7 +97,7 @@
 
     <!-- KEYS (SSH key management) -->
     <system:String x:Key="plugin_quickssh_title_commandkeys">Správa SSH kľúčov</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Použitie: keys add | generate | remove | rename | copy-path | copy-pub | scan</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Použitie: keys install | add | generate | remove | rename | copy-path | copy-pub | scan</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_add">Registrovať SSH kľúč</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Použitie: keys add &lt;alias&gt; &lt;cesta-ku-kľúču&gt;</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_generate">Generovať SSH kľúčový pár</system:String>

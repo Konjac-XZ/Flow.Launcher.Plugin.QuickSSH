@@ -15,7 +15,8 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 | `ssh profiles copy [filter]` | Copy an SSH/SCP command to the clipboard |
 | `ssh profiles export` | Export all profiles to a human-readable `.sshconfig` file |
 | `ssh profiles import [filter]` | Import profiles from a `.sshconfig` or legacy `.json` file |
-| `ssh keys` | Manage registered SSH key aliases (add / generate / remove / rename / copy-path / copy-pub / scan) |
+| `ssh keys` | Manage registered SSH key aliases (install / add / generate / remove / rename / copy-path / copy-pub / scan) |
+| `ssh keys install <alias> <user@host>` | Install public key on remote Linux host |
 | `ssh keys add <alias> <path>` | Register an SSH key alias pointing to a local key file |
 | `ssh keys generate <alias> [path]` | Generate a new SSH keypair and auto-register it (default: `~/.ssh/`, or custom path) |
 | `ssh keys remove [filter]` | Remove a registered SSH key alias |
@@ -39,7 +40,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 > Examples: `ssh shell a` → **add**; `ssh shell r` → **remove**; `ssh shell rem` → **remove**.
 
 > **Keys subcommand matching:** Under `ssh keys`, partial subcommand matching works the same way.
-> Examples: `ssh keys a` → **add**; `ssh keys g` → **generate**; `ssh keys r` → **remove**, **rename**; `ssh keys c` → **copy-path**, **copy-pub**; `ssh keys s` → **scan**.
+> Examples: `ssh keys a` → **add**; `ssh keys g` → **generate**; `ssh keys i` → **install**; `ssh keys r` → **remove**, **rename**; `ssh keys c` → **copy-path**, **copy-pub**; `ssh keys s` → **scan**.
 
 > **Note for v1 users:** The top-level `add` command (v1: `ssh add <name> <cmd>`) has been moved to `ssh profiles add <name> <cmd>`.
 > Typing `ssh add ...` shows an explicit redirect hint in the UI — it will not silently do something unexpected.
@@ -52,6 +53,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 - **Query autocomplete** — type partial commands or profile names to see matching suggestions; select a result to expand the query
 - **SSH key registry** — register local SSH keys by alias; registered keys are offered in autocomplete when typing `ssh -i`
 - **SSH key generation** — generate new SSH keypairs (ed25519 or RSA 4096) locally via row-driven wizard; supports custom output path or default `~/.ssh/` location; generated keys are auto-registered after verifying both private and public key files
+- **SSH key installation** — deploy a registered public key to a remote Linux host's `~/.ssh/authorized_keys` via an idempotent bootstrap command; supports run, copy command, and copy public key actions
 - **Implicit direct SSH input** — type a destination (`user@host`, bare IP/hostname) or SSH options (`-p 22 user@host`, `-i key user@host`) directly without any command prefix
 - **SSH config import** — parse and import hosts from `~/.ssh/config`
 - **SCP support** — save SCP upload/download profiles with all SCP options
@@ -168,13 +170,13 @@ ssh keys add dev "C:\Users\me\.ssh\dev_key"  → register key alias "dev" (quote
 ssh keys remove prod                         → remove key alias "prod" (registry only — files on disk are kept)
 ```
 
-> **Display order** — `ssh keys` always shows action rows in a fixed, stable order: **add** → **generate** → **remove** → **rename** → **copy-path** → **copy-pub** → **scan**, followed by registered key entries.
+> **Display order** — `ssh keys` always shows action rows in a fixed, stable order: **install** → **add** → **generate** → **remove** → **rename** → **copy-path** → **copy-pub** → **scan**, followed by registered key entries.
 
 > **Security note:** QuickSSH stores only the alias and the file path — **never** the private key content. The key file is accessed by SSH at connection time, not by the plugin.
 
 > **Key file validation:** When browsing registered keys, QuickSSH checks whether the key file exists on disk and shows a warning icon if it is missing.
 
-> **Post-action feedback:** All management actions (add, remove, rename, copy, export, import, generate, scan, config import) keep Flow Launcher open and return to the parent menu so you can see the updated state and continue working. Clipboard actions (profiles copy, keys copy-path, keys copy-pub) stay inside their submenu. The `keys remove` command only removes the alias from the registry — key files on disk are never deleted.
+> **Post-action feedback:** All management actions (add, remove, rename, copy, export, import, generate, install, scan, config import) keep Flow Launcher open and return to the parent menu so you can see the updated state and continue working. Clipboard actions (profiles copy, keys copy-path, keys copy-pub) stay inside their submenu. The `keys install` "Run remote setup command" action opens a terminal and closes Flow Launcher. The `keys remove` command only removes the alias from the registry — key files on disk are never deleted.
 
 ### Generate an SSH keypair
 
@@ -218,6 +220,35 @@ ssh keys generate mykey C:\keys\mykey        → custom path flow:
 > **Storage:** Only harmless metadata is stored in the key registry: alias, path, public key path, algorithm, source (`"generated"`), and creation timestamp. Private key content and passphrases are **never** stored.
 
 > **Passphrase flow:** Intentionally deferred. Launching an interactive terminal from a Flow Launcher plugin and waiting for completion has not been runtime-verified. This will be addressed in a follow-up PR.
+
+### Install public key on a remote host
+
+Deploy a registered public key to a remote Linux host's `~/.ssh/authorized_keys`:
+
+```
+ssh keys install                             → list registered keys (select one)
+ssh keys install mykey                       → prompt for user@host
+ssh keys install mykey admin@10.0.0.1        → shows 3 action rows:
+                                                ● Run remote setup command (opens terminal)
+                                                ● Copy remote setup command (clipboard)
+                                                ● Copy public key (clipboard)
+```
+
+**Available actions:**
+- **Run remote setup command** — opens a terminal and runs `ssh user@host '<bootstrap>'`. The user enters their password in the terminal.
+- **Copy remote setup command** — copies the full `ssh user@host '...'` command to the clipboard.
+- **Copy public key** — copies the `.pub` file content to the clipboard.
+
+**Remote bootstrap command:** The plugin builds an idempotent one-liner that:
+1. Sets `umask 077` for secure permissions
+2. Creates `~/.ssh` and `authorized_keys` if missing
+3. Fixes permissions (`chmod 700`/`600`)
+4. Checks whether the key is already present (`grep -qxF`)
+5. Appends the key only if not already present (`printf` — no `echo`)
+
+**Public key validation:** The `.pub` file content must start with a known key type (`ssh-ed25519`, `ssh-rsa`, `ecdsa-sha2-*`, etc.) followed by base64 data. Everything after the second token is treated as an optional comment. Single quotes, newlines, and null bytes are rejected to prevent shell injection.
+
+**Security note:** Only the public key is handled. No private keys are transmitted. No `sshd_config` changes are made on the remote host. The user enters their password directly in the SSH terminal.
 
 ### Rename a key alias
 

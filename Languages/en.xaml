@@ -97,7 +97,7 @@
 
     <!-- KEYS (SSH key management) -->
     <system:String x:Key="plugin_quickssh_title_commandkeys">SSH key management</system:String>
-    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Usage: keys add | generate | remove | rename | copy-path | copy-pub | scan</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys">Usage: keys install | add | generate | remove | rename | copy-path | copy-pub | scan</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_add">Register SSH key</system:String>
     <system:String x:Key="plugin_quickssh_subtitle_commandkeys_add">Usage: keys add &lt;alias&gt; &lt;path-to-key&gt;</system:String>
     <system:String x:Key="plugin_quickssh_title_commandkeys_generate">Generate SSH keypair</system:String>
@@ -142,5 +142,21 @@ Files kept on disk: {1}</system:String>
     <system:String x:Key="plugin_quickssh_nokeys">No SSH keys registered.</system:String>
     <system:String x:Key="plugin_quickssh_keys_file_missing">(file not found)</system:String>
     <system:String x:Key="plugin_quickssh_keys_identity">Identity file:</system:String>
+
+    <!-- KEYS INSTALL -->
+    <system:String x:Key="plugin_quickssh_title_commandkeys_install">Install SSH public key on remote server</system:String>
+    <system:String x:Key="plugin_quickssh_subtitle_commandkeys_install">Add the selected public key to ~/.ssh/authorized_keys on a remote Linux host</system:String>
+    <system:String x:Key="plugin_quickssh_keys_install_type_userhost">Type: {0} keys install {1} user@host</system:String>
+    <system:String x:Key="plugin_quickssh_keys_install_summary">Install "{0}" → {1}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_install_run">Run remote setup command</system:String>
+    <system:String x:Key="plugin_quickssh_keys_install_copy_cmd">Copy remote setup command</system:String>
+    <system:String x:Key="plugin_quickssh_keys_install_copy_pub">Copy public key</system:String>
+    <system:String x:Key="plugin_quickssh_keys_install_copy_cmd_subtitle">Copy the full SSH command to clipboard</system:String>
+    <system:String x:Key="plugin_quickssh_keys_install_copy_pub_subtitle">Copy the public key that will be added to the remote server</system:String>
+    <system:String x:Key="plugin_quickssh_keys_install_alias_notfound">Key alias not found: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_install_pub_notfound">Public key file not found: {0}</system:String>
+    <system:String x:Key="plugin_quickssh_keys_install_pub_invalid">Public key file content is invalid or unsafe.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_install_invalid_destination">Invalid destination — expected user@host format.</system:String>
+    <system:String x:Key="plugin_quickssh_keys_install_copy_cmd_success">Remote setup command copied to clipboard.</system:String>
 
 </ResourceDictionary>
