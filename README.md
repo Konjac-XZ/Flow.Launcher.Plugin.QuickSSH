@@ -153,6 +153,10 @@ ssh profiles copy               → list all profiles for copying
 ssh profiles copy myserver      → filter by "myserver", then click to copy
 ```
 
+> **Copied command format:** The clipboard receives a user-friendly, paste-ready command with single backslashes for Windows paths. Arguments are quoted only when needed (e.g. paths containing spaces). Examples:
+> - `ssh -i C:\Users\info\.ssh\key root@10.0.0.150` — no quotes (path without spaces)
+> - `ssh -i "C:\Users\info\My Keys\key" root@10.0.0.150` — quoted (path with spaces)
+
 ### SSH key management
 
 Register SSH keys by alias so you can quickly reference them in direct connect or profile creation:

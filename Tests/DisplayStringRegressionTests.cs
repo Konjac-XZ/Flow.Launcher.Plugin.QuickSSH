@@ -104,13 +104,12 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             Assert.NotEqual(p.ToCommandLine(), p.ToDisplayString());
         }
 
-        // ── Clipboard behavioral: copied string has single backslashes ─────────
+        // ── Display quoting: conditional quoting based on whitespace ────────────
 
         [Fact]
-        public void CopiedCommand_WindowsIdentityPath_ContainsSingleBackslashes()
+        public void ToDisplayString_WindowsPathWithoutSpaces_NoQuotes()
         {
-            // The clipboard-bound string for a profile with a Windows identity path
-            // must contain single backslashes (user-friendly), not escaped doubles.
+            // Path without spaces must appear unquoted in display output.
             var p = new SshProfile
             {
                 Type = "ssh",
@@ -120,10 +119,61 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             };
             var display = p.ToDisplayString();
 
-            // Must contain single backslashes
+            Assert.Equal(@"ssh -i C:\Users\info\.ssh\public_key root@10.0.0.150", display);
+        }
+
+        [Fact]
+        public void ToDisplayString_WindowsPathWithSpaces_Quoted()
+        {
+            // Path with spaces must be wrapped in double-quotes in display output.
+            var p = new SshProfile
+            {
+                Type = "ssh",
+                User = "root",
+                HostName = "10.0.0.150",
+                IdentityFile = @"C:\Users\info\My Keys\public key"
+            };
+            var display = p.ToDisplayString();
+
+            Assert.Equal("ssh -i \"C:\\Users\\info\\My Keys\\public key\" root@10.0.0.150", display);
+        }
+
+        [Fact]
+        public void CopiedCommand_WindowsIdentityPath_ContainsSingleBackslashes()
+        {
+            // Display/copy output must contain single backslashes, not escaped doubles.
+            var p = new SshProfile
+            {
+                Type = "ssh",
+                User = "root",
+                HostName = "10.0.0.150",
+                IdentityFile = @"C:\Users\info\.ssh\public_key"
+            };
+            var display = p.ToDisplayString();
+
             Assert.Contains(@"C:\Users\info\.ssh\public_key", display);
-            // Must NOT contain doubled backslashes
             Assert.DoesNotContain(@"C:\\Users", display);
+        }
+
+        // ── ToCommandLine execution contract unchanged ───────────────────────────
+
+        [Fact]
+        public void ToCommandLine_WindowsPath_UsesExecutionEscaping()
+        {
+            // ToCommandLine must preserve shell-escaping: backslashes doubled, path quoted.
+            var p = new SshProfile
+            {
+                Type = "ssh",
+                User = "root",
+                HostName = "10.0.0.150",
+                IdentityFile = @"C:\Users\info\.ssh\public_key"
+            };
+            var cmd = p.ToCommandLine();
+
+            // Execution string must have escaped backslashes
+            Assert.Contains(@"C:\\Users\\info\\.ssh\\public_key", cmd);
+            // Must be different from display string
+            Assert.NotEqual(cmd, p.ToDisplayString());
         }
     }
 }
