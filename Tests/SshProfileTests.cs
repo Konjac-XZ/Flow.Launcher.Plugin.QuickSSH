@@ -463,7 +463,7 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
                 IdentityFile = @"C:\Users\info\.ssh\public_key"
             };
             var display = p.ToDisplayString();
-            Assert.Equal(@"ssh -i ""C:\Users\info\.ssh\public_key"" root@10.0.0.150", display);
+            Assert.Equal(@"ssh -i C:\Users\info\.ssh\public_key root@10.0.0.150", display);
             Assert.DoesNotContain(@"C:\\Users", display);
             Assert.DoesNotContain(@"\\.ssh", display);
         }
