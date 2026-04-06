@@ -32,8 +32,9 @@ namespace Flow.Launcher.Plugin.QuickSSH
         ///         (<c>&lt;type&gt; &lt;base64&gt;</c>).</item>
         ///   <item>Everything after the second token is treated as an optional
         ///         comment — no field-count constraint.</item>
-        ///   <item>Must not contain single quotes (<c>'</c>), newlines
-        ///         (<c>\n</c>, <c>\r</c>), or null bytes (<c>\0</c>).</item>
+        ///   <item>Must not contain single quotes (<c>'</c>), double quotes
+        ///         (<c>"</c>), newlines (<c>\n</c>, <c>\r</c>), or null bytes
+        ///         (<c>\0</c>).</item>
         /// </list>
         /// </summary>
         public static bool ValidatePublicKeyLine(string line)
@@ -42,7 +43,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 return false;
 
             // Reject dangerous characters.
+            // Single quotes would break the inner quoting in the bootstrap command.
+            // Double quotes would break the outer double-quote wrapper in BuildFullSshCommand.
+            // Newlines and null bytes would break single-line shell command parsing.
             if (line.IndexOf('\'') >= 0 ||
+                line.IndexOf('"')  >= 0 ||
                 line.IndexOf('\n') >= 0 ||
                 line.IndexOf('\r') >= 0 ||
                 line.IndexOf('\0') >= 0)
@@ -102,17 +107,29 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         /// <summary>
         /// Builds the full SSH command that runs the bootstrap on a remote host.
+        /// <para>
+        /// The bootstrap command is wrapped in <b>double quotes</b> so that:
+        /// <list type="bullet">
+        ///   <item><c>cmd.exe /k</c> (the default RunCommand shell on Windows)
+        ///   does not interpret <c>&amp;&amp;</c> / <c>||</c> as command separators.</item>
+        ///   <item>The bootstrap's internal single-quoted segments
+        ///   (<c>'KEY'</c>, <c>'%s\n'</c>) are preserved as literal characters
+        ///   and arrive intact on the remote shell.</item>
+        /// </list>
+        /// </para>
         /// </summary>
         /// <param name="userAtHost"><c>user@host</c> destination string.</param>
         /// <param name="bootstrapCommand">
         /// The command returned by <see cref="BuildBootstrapCommand"/>.
+        /// Must not contain double-quote characters (guaranteed when the public
+        /// key line passes <see cref="ValidatePublicKeyLine"/>).
         /// </param>
         /// <returns>
-        /// A string like <c>ssh user@host 'umask 077 &amp;&amp; ...'</c>.
+        /// A string like <c>ssh user@host "umask 077 &amp;&amp; ..."</c>.
         /// </returns>
         public static string BuildFullSshCommand(string userAtHost, string bootstrapCommand)
         {
-            return "ssh " + userAtHost + " '" + bootstrapCommand + "'";
+            return "ssh " + userAtHost + " \"" + bootstrapCommand + "\"";
         }
 
         /// <summary>

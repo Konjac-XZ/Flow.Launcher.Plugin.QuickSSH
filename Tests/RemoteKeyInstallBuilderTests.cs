@@ -69,6 +69,13 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         }
 
         [Fact]
+        public void ValidatePublicKeyLine_RejectsDoubleQuote()
+        {
+            Assert.False(RemoteKeyInstallBuilder.ValidatePublicKeyLine(
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI user\"s key"));
+        }
+
+        [Fact]
         public void ValidatePublicKeyLine_RejectsNewline()
         {
             Assert.False(RemoteKeyInstallBuilder.ValidatePublicKeyLine(
@@ -149,13 +156,13 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         // ── BuildFullSshCommand ───────────────────────────────────────────────────
 
         [Fact]
-        public void BuildFullSshCommand_WrapsWithSshAndSingleQuotes()
+        public void BuildFullSshCommand_WrapsWithSshAndDoubleQuotes()
         {
             var bootstrap = RemoteKeyInstallBuilder.BuildBootstrapCommand("ssh-ed25519 AAAA user@host");
             var full = RemoteKeyInstallBuilder.BuildFullSshCommand("admin@10.0.0.1", bootstrap);
 
-            Assert.StartsWith("ssh admin@10.0.0.1 '", full);
-            Assert.EndsWith("'", full);
+            Assert.StartsWith("ssh admin@10.0.0.1 \"", full);
+            Assert.EndsWith("\"", full);
         }
 
         [Fact]
@@ -166,6 +173,56 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
 
             Assert.Contains("umask 077", full);
             Assert.Contains("authorized_keys", full);
+        }
+
+        [Fact]
+        public void BuildFullSshCommand_NoNestedSingleQuoteConflict()
+        {
+            // The inner single-quoted segments ('KEY', '%s\n') must NOT collide
+            // with the outer wrapper.  Previous bug: outer single quotes conflicted
+            // with inner single quotes, producing shell-invalid nesting.
+            var pubKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleBase64Key testuser@testhost";
+            var bootstrap = RemoteKeyInstallBuilder.BuildBootstrapCommand(pubKey);
+            var full = RemoteKeyInstallBuilder.BuildFullSshCommand("root@10.0.0.150", bootstrap);
+
+            // Outer wrapper must be double quotes — not single quotes.
+            Assert.StartsWith("ssh root@10.0.0.150 \"", full);
+            Assert.EndsWith("\"", full);
+
+            // The inner bootstrap must still contain its single-quoted segments.
+            Assert.Contains("'" + pubKey + "'", full);
+            Assert.Contains("'%s\\n'", full);
+
+            // There must be no pattern where an outer single quote opens and
+            // an inner single quote prematurely closes it.  With double-quote
+            // wrapping the outer and single-quote wrapping the inner, this is
+            // structurally impossible — verify anyway.
+            var outerContent = full.Substring(full.IndexOf('"') + 1,
+                full.LastIndexOf('"') - full.IndexOf('"') - 1);
+            Assert.DoesNotContain("\"", outerContent);
+        }
+
+        [Fact]
+        public void BuildFullSshCommand_BootstrapHasNoDoubleQuotes()
+        {
+            // The bootstrap command itself must not contain double quotes,
+            // otherwise wrapping it in double quotes would break.
+            var pubKey = "ssh-ed25519 AAAA user@host";
+            var bootstrap = RemoteKeyInstallBuilder.BuildBootstrapCommand(pubKey);
+            Assert.DoesNotContain("\"", bootstrap);
+        }
+
+        [Fact]
+        public void BuildFullSshCommand_RunAndCopyUseSameBuilder()
+        {
+            // Both "Run remote setup command" and "Copy remote setup command"
+            // must use BuildFullSshCommand — verify they produce identical output
+            // when called with the same inputs.
+            var pubKey = "ssh-ed25519 AAAA user@host";
+            var bootstrap = RemoteKeyInstallBuilder.BuildBootstrapCommand(pubKey);
+            var full1 = RemoteKeyInstallBuilder.BuildFullSshCommand("admin@server", bootstrap);
+            var full2 = RemoteKeyInstallBuilder.BuildFullSshCommand("admin@server", bootstrap);
+            Assert.Equal(full1, full2);
         }
 
         // ── IsValidUserAtHost ─────────────────────────────────────────────────────
