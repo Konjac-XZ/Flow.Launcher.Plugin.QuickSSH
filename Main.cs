@@ -56,6 +56,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
         // Sub-commands of "keys"
         private const string KeysSubAdd      = "add";
         private const string KeysSubGenerate = "generate";
+        private const string KeysSubInstall  = "install";
         private const string KeysSubRemove   = "remove";
         private const string KeysSubRename   = "rename";
         private const string KeysSubCopyPath = "copy-path";
@@ -64,7 +65,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         private static readonly string[] KeysSubCommands = new[]
         {
-            KeysSubAdd, KeysSubGenerate, KeysSubRemove, KeysSubRename, KeysSubCopyPath, KeysSubCopyPub, KeysSubScan
+            KeysSubAdd, KeysSubGenerate, KeysSubInstall, KeysSubRemove, KeysSubRename, KeysSubCopyPath, KeysSubCopyPub, KeysSubScan
         };
 
         private const string AppIconPath = "Images\\app.png";
@@ -113,6 +114,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
         // "keys" submenu — action rows above saved key entries
         // Gaps of 1000 prevent Flow Launcher's usage-history bonus from reordering rows.
+        internal const int ScoreKeysActionInstall  = 9000;
         internal const int ScoreKeysActionAdd      = 8000;
         internal const int ScoreKeysActionGenerate = 7000;
         internal const int ScoreKeysActionRemove   = 6000;
@@ -1201,6 +1203,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             {
                 case KeysSubAdd:      return HandleKeysAdd(query, subRest);
                 case KeysSubGenerate: return HandleKeysGenerate(query, subRest);
+                case KeysSubInstall:  return HandleKeysInstall(query, subRest);
                 case KeysSubRemove:   return HandleKeysRemove(query, subRest);
                 case KeysSubRename:   return HandleKeysRename(query, subRest);
                 case KeysSubCopyPath: return HandleKeysCopyPath(query, subRest);
@@ -1243,6 +1246,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             {
                 var keysSubCmds = new[]
                 {
+                    ("install",   GetTranslation("plugin_quickssh_title_commandkeys_install"),   GetTranslation("plugin_quickssh_subtitle_commandkeys_install"),   ScoreKeysActionInstall),
                     ("add",       GetTranslation("plugin_quickssh_title_commandkeys_add"),       GetTranslation("plugin_quickssh_subtitle_commandkeys_add"),       ScoreKeysActionAdd),
                     ("generate",  GetTranslation("plugin_quickssh_title_commandkeys_generate"),  GetTranslation("plugin_quickssh_subtitle_commandkeys_generate"),  ScoreKeysActionGenerate),
                     ("remove",    GetTranslation("plugin_quickssh_title_commandkeys_remove"),    GetTranslation("plugin_quickssh_subtitle_commandkeys_remove"),    ScoreKeysActionRemove),
@@ -1357,6 +1361,236 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     }
                 });
             }
+
+            return results;
+        }
+
+        // ── keys install ──────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Row-driven flow for installing a public key on a remote Linux host.
+        /// <list type="bullet">
+        ///   <item><c>keys install</c> — list registered keys (select one)</item>
+        ///   <item><c>keys install &lt;alias&gt;</c> — prompt for user@host</item>
+        ///   <item><c>keys install &lt;alias&gt; &lt;user@host&gt;</c> — show 3 action rows</item>
+        /// </list>
+        /// </summary>
+        private List<Result> HandleKeysInstall(Query query, string rest)
+        {
+            var results = new List<Result>();
+            var keys = _profileManager.UserData.SshKeys;
+
+            // Hint row — always pinned at the top.
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandkeys_install"),
+                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandkeys_install"),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " keys install ",
+                Score = int.MaxValue
+            });
+
+            // Back row — always "← Back to ssh keys".
+            results.Add(MakeBackNavResult(query, query.ActionKeyword + " keys ", query.ActionKeyword + " keys"));
+
+            if (string.IsNullOrEmpty(rest))
+            {
+                // Step 1: List registered keys for selection.
+                if (keys.Count == 0)
+                {
+                    results.Add(new Result
+                    {
+                        Title = GetTranslation("plugin_quickssh_title_commandkeys_install"),
+                        SubTitle = GetTranslation("plugin_quickssh_nokeys"),
+                        IcoPath = AppIconPath
+                    });
+                    return results;
+                }
+
+                int keyScore = ScoreKeysSavedItem;
+                foreach (var entry in keys)
+                {
+                    var alias = entry.Key;
+                    var keyEntry = entry.Value;
+                    var pubPath = keyEntry?.GetEffectivePublicKeyPath();
+                    bool pubExists = !string.IsNullOrEmpty(pubPath) && File.Exists(pubPath);
+                    var algoLabel = !string.IsNullOrEmpty(keyEntry?.Algorithm) ? keyEntry.Algorithm + " — " : "";
+
+                    if (pubExists)
+                    {
+                        var targetQuery = query.ActionKeyword + " keys install " + alias + " ";
+                        results.Add(new Result
+                        {
+                            Title = alias,
+                            SubTitle = algoLabel + (keyEntry?.Path ?? ""),
+                            IcoPath = AppIconGreenPath,
+                            AutoCompleteText = targetQuery,
+                            Score = keyScore--,
+                            Action = _ =>
+                            {
+                                _pluginContext?.API?.ChangeQuery(targetQuery, true);
+                                return false;
+                            }
+                        });
+                    }
+                    else
+                    {
+                        results.Add(new Result
+                        {
+                            Title = alias,
+                            SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_install_pub_notfound"), pubPath ?? ""),
+                            IcoPath = AppIconRedPath,
+                            Score = keyScore--
+                        });
+                    }
+                }
+
+                return results;
+            }
+
+            // Split rest into <alias> and optional <user@host>.
+            var installParts = rest.Split(new[] { ' ' }, 2);
+            var installAlias = installParts[0];
+            var userAtHost = installParts.Length > 1 ? installParts[1].Trim() : "";
+
+            // Validate alias exists.
+            if (!keys.ContainsKey(installAlias))
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_install"),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_install_alias_notfound"), installAlias),
+                    IcoPath = AppIconRedPath
+                });
+                return results;
+            }
+
+            var installKeyEntry = keys[installAlias];
+            var installPubPath = installKeyEntry?.GetEffectivePublicKeyPath();
+            bool installPubExists = !string.IsNullOrEmpty(installPubPath) && File.Exists(installPubPath);
+
+            if (!installPubExists)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_install"),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_install_pub_notfound"), installPubPath ?? ""),
+                    IcoPath = AppIconRedPath
+                });
+                return results;
+            }
+
+            if (string.IsNullOrEmpty(userAtHost))
+            {
+                // Step 2: Prompt for user@host.
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_install"),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_install_type_userhost"),
+                        query.ActionKeyword, installAlias),
+                    IcoPath = AppIconPath
+                });
+                return results;
+            }
+
+            // Step 3: Validate destination and show action rows.
+            if (!RemoteKeyInstallBuilder.IsValidUserAtHost(userAtHost))
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_install"),
+                    SubTitle = GetTranslation("plugin_quickssh_keys_install_invalid_destination"),
+                    IcoPath = AppIconRedPath
+                });
+                return results;
+            }
+
+            // Read and validate the public key content.
+            string pubContent;
+            try
+            {
+                pubContent = File.ReadAllText(installPubPath).Trim();
+            }
+            catch (Exception)
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_install"),
+                    SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_install_pub_notfound"), installPubPath),
+                    IcoPath = AppIconRedPath
+                });
+                return results;
+            }
+
+            if (!RemoteKeyInstallBuilder.ValidatePublicKeyLine(pubContent))
+            {
+                results.Add(new Result
+                {
+                    Title = GetTranslation("plugin_quickssh_title_commandkeys_install"),
+                    SubTitle = GetTranslation("plugin_quickssh_keys_install_pub_invalid"),
+                    IcoPath = AppIconRedPath
+                });
+                return results;
+            }
+
+            var bootstrap = RemoteKeyInstallBuilder.BuildBootstrapCommand(pubContent);
+            var fullSshCmd = RemoteKeyInstallBuilder.BuildFullSshCommand(userAtHost, bootstrap);
+
+            // Hint row subtitle updates for step 3.
+            results[0] = new Result
+            {
+                Title = GetTranslation("plugin_quickssh_title_commandkeys_install"),
+                SubTitle = string.Format(GetTranslation("plugin_quickssh_keys_install_summary"),
+                    installAlias, userAtHost),
+                IcoPath = AppIconPath,
+                AutoCompleteText = query.ActionKeyword + " keys install ",
+                Score = int.MaxValue
+            };
+
+            // Row 1: Run remote setup command (launches terminal)
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_keys_install_run"),
+                SubTitle = fullSshCmd,
+                IcoPath = AppIconGreenPath,
+                Action = _ =>
+                {
+                    RunCommand(fullSshCmd);
+                    return true;
+                }
+            });
+
+            // Row 2: Copy remote setup command
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_keys_install_copy_cmd"),
+                SubTitle = GetTranslation("plugin_quickssh_keys_install_copy_cmd_subtitle"),
+                IcoPath = AppIconPath,
+                Action = _ =>
+                {
+                    _pluginContext?.API?.CopyToClipboard(fullSshCmd, false, false);
+                    _pluginContext?.API?.ShowMsg("QuickSSH",
+                        GetTranslation("plugin_quickssh_keys_install_copy_cmd_success"));
+                    _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys install " + installAlias + " " + userAtHost, true);
+                    return false;
+                }
+            });
+
+            // Row 3: Copy public key
+            results.Add(new Result
+            {
+                Title = GetTranslation("plugin_quickssh_keys_install_copy_pub"),
+                SubTitle = GetTranslation("plugin_quickssh_keys_install_copy_pub_subtitle"),
+                IcoPath = AppIconPath,
+                Action = _ =>
+                {
+                    _pluginContext?.API?.CopyToClipboard(pubContent, false, false);
+                    _pluginContext?.API?.ShowMsg("QuickSSH",
+                        GetTranslation("plugin_quickssh_copy_pubkey_success"));
+                    _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " keys install " + installAlias + " " + userAtHost, true);
+                    return false;
+                }
+            });
 
             return results;
         }

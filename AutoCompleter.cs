@@ -37,7 +37,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
         /// </summary>
         private static readonly string[] KeysSubCommands = new[]
         {
-            "add", "generate", "remove", "rename", "copy-path", "copy-pub", "scan"
+            "add", "generate", "install", "remove", "rename", "copy-path", "copy-pub", "scan"
         };
 
         /// <summary>
@@ -318,6 +318,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             {
                 "add"       => "plugin_quickssh_subtitle_commandkeys_add",
                 "generate"  => "plugin_quickssh_subtitle_commandkeys_generate",
+                "install"   => "plugin_quickssh_subtitle_commandkeys_install",
                 "remove"    => "plugin_quickssh_subtitle_commandkeys_remove",
                 "rename"    => "plugin_quickssh_subtitle_commandkeys_rename",
                 "copy-path" => "plugin_quickssh_subtitle_commandkeys_copypath",
