@@ -6,7 +6,8 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
 {
     /// <summary>
     /// Source-inspection regression tests that verify Main.cs uses the correct
-    /// display vs execution string methods for saved-profile UI subtitles.
+    /// display vs execution string methods for saved-profile UI subtitles
+    /// and clipboard operations.
     /// </summary>
     public class DisplayStringRegressionTests
     {
