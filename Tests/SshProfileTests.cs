@@ -449,5 +449,106 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
             var cmd = p.ToCommandLine();
             Assert.Contains("ServerAliveInterval=60", cmd);
         }
+
+        // ── ToDisplayString — display-safe Windows path rendering ─────────────────
+
+        [Fact]
+        public void ToDisplayString_SshWithWindowsIdentityFile_SingleBackslashes()
+        {
+            var p = new SshProfile
+            {
+                Type = "ssh",
+                User = "root",
+                HostName = "10.0.0.150",
+                IdentityFile = @"C:\Users\info\.ssh\public_key"
+            };
+            var display = p.ToDisplayString();
+            Assert.Equal(@"ssh -i C:\Users\info\.ssh\public_key root@10.0.0.150", display);
+            Assert.DoesNotContain(@"C:\\Users", display);
+            Assert.DoesNotContain(@"\\.ssh", display);
+        }
+
+        [Fact]
+        public void ToDisplayString_SshWithUnixIdentityFile_NoChange()
+        {
+            var p = new SshProfile
+            {
+                Type = "ssh",
+                User = "root",
+                HostName = "host",
+                IdentityFile = "/home/user/.ssh/id_rsa"
+            };
+            var display = p.ToDisplayString();
+            Assert.Contains("-i /home/user/.ssh/id_rsa", display);
+        }
+
+        [Fact]
+        public void ToDisplayString_SshNoIdentityFile_MatchesToCommandLine()
+        {
+            var p = new SshProfile { Type = "ssh", User = "root", HostName = "10.0.0.1" };
+            Assert.Equal(p.ToCommandLine(), p.ToDisplayString());
+        }
+
+        [Fact]
+        public void ToDisplayString_ScpWithWindowsPath_SingleBackslashes()
+        {
+            var p = new SshProfile
+            {
+                Type = "scp",
+                User = "root",
+                HostName = "10.0.0.1",
+                Source = @"C:\web\index.html",
+                Target = "/var/www/html/index.html"
+            };
+            var display = p.ToDisplayString();
+            Assert.StartsWith("scp", display);
+            Assert.DoesNotContain(@"\\web", display);
+            Assert.Contains(@"C:\web\index.html", display);
+        }
+
+        // ── ToCommandLine vs ToDisplayString — contract difference ────────────────
+
+        [Fact]
+        public void ToCommandLine_SshWithWindowsPath_EscapesBackslashes()
+        {
+            var p = new SshProfile
+            {
+                Type = "ssh",
+                User = "root",
+                HostName = "10.0.0.150",
+                IdentityFile = @"C:\Users\info\.ssh\public_key"
+            };
+            var cmd = p.ToCommandLine();
+            // QuoteArgument escapes \ to \\ for shell execution
+            Assert.Contains(@"C:\\Users\\info\\.ssh\\public_key", cmd);
+        }
+
+        [Fact]
+        public void ToCommandLine_And_ToDisplayString_DifferForWindowsPath()
+        {
+            var p = new SshProfile
+            {
+                Type = "ssh",
+                User = "root",
+                HostName = "10.0.0.150",
+                IdentityFile = @"C:\Users\info\.ssh\public_key"
+            };
+            var cmd = p.ToCommandLine();
+            var display = p.ToDisplayString();
+            // They must differ when a Windows path is present
+            Assert.NotEqual(cmd, display);
+            // Display must not have double backslashes
+            Assert.DoesNotContain(@"\\", display);
+            // CommandLine must have escaped backslashes
+            Assert.Contains(@"\\", cmd);
+        }
+
+        [Fact]
+        public void ToCommandLine_And_ToDisplayString_SameForSimpleProfile()
+        {
+            // No paths with backslashes → both outputs should be identical
+            var p = new SshProfile { Type = "ssh", User = "root", HostName = "10.0.0.1", Port = "2222" };
+            Assert.Equal(p.ToCommandLine(), p.ToDisplayString());
+        }
     }
 }
