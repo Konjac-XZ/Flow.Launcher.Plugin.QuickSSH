@@ -679,7 +679,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     AutoCompleteText = query.ActionKeyword + " profiles copy " + name,
                     Action = _ =>
                     {
-                        _pluginContext?.API?.CopyToClipboard(cmd, false, false);
+                        _pluginContext?.API?.CopyToClipboard(displayCmd, false, false);
                         _pluginContext?.API?.ShowMsg("QuickSSH",
                             GetTranslation("plugin_quickssh_copy_command_success"));
                         _pluginContext?.API?.ChangeQuery(query.ActionKeyword + " profiles copy ", true);
