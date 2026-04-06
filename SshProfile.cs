@@ -109,18 +109,23 @@ namespace Flow.Launcher.Plugin.QuickSSH
             return isScp ? BuildScpCommand() : BuildSshCommand();
         }
 
-        /// <summary>Returns a short human-readable summary for the Flow Launcher result subtitle.</summary>
+        /// <summary>Returns a short human-readable summary for the Flow Launcher result subtitle.
+        /// Uses display-safe quoting (no backslash escaping) so Windows paths look natural.</summary>
         public string ToDisplayString()
         {
-            return ToCommandLine();
+            bool isScp = string.Equals(Type, "scp", StringComparison.OrdinalIgnoreCase);
+            return isScp
+                ? BuildScpCommand(SshCommandBuilder.QuoteForDisplay)
+                : BuildSshCommand(SshCommandBuilder.QuoteForDisplay);
         }
 
-        private string BuildSshCommand()
+        private string BuildSshCommand(Func<string, string> quote = null)
         {
+            quote ??= SshCommandBuilder.QuoteArgument;
             var sb = new StringBuilder("ssh");
 
             if (!string.IsNullOrEmpty(IdentityFile))
-                sb.Append(" -i ").Append(SshCommandBuilder.QuoteArgument(IdentityFile));
+                sb.Append(" -i ").Append(quote(IdentityFile));
 
             if (IdentitiesOnly)
                 sb.Append(" -o IdentitiesOnly=yes");
@@ -155,7 +160,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 sb.Append(" -J ").Append(ProxyJump);
 
             if (!string.IsNullOrEmpty(ProxyCommand))
-                sb.Append(" -o ProxyCommand=").Append(SshCommandBuilder.QuoteArgument(ProxyCommand));
+                sb.Append(" -o ProxyCommand=").Append(quote(ProxyCommand));
 
             if (!string.IsNullOrEmpty(ExtraArgs))
                 sb.Append(" ").Append(ExtraArgs);
@@ -168,13 +173,14 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 sb.Append(" ").Append(target);
 
             if (!string.IsNullOrEmpty(RemoteCommand))
-                sb.Append(" ").Append(SshCommandBuilder.QuoteArgument(RemoteCommand));
+                sb.Append(" ").Append(quote(RemoteCommand));
 
             return sb.ToString();
         }
 
-        private string BuildScpCommand()
+        private string BuildScpCommand(Func<string, string> quote = null)
         {
+            quote ??= SshCommandBuilder.QuoteArgument;
             var sb = new StringBuilder("scp");
 
             if (Compression)
@@ -187,7 +193,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 sb.Append(" -p");
 
             if (!string.IsNullOrEmpty(IdentityFile))
-                sb.Append(" -i ").Append(SshCommandBuilder.QuoteArgument(IdentityFile));
+                sb.Append(" -i ").Append(quote(IdentityFile));
 
             if (IdentitiesOnly)
                 sb.Append(" -o IdentitiesOnly=yes");
@@ -231,20 +237,20 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     ? remotePrefix + (Source ?? "")
                     : (Source ?? "");
                 if (!string.IsNullOrEmpty(remoteSrc))
-                    sb.Append(" ").Append(SshCommandBuilder.QuoteArgument(remoteSrc));
+                    sb.Append(" ").Append(quote(remoteSrc));
                 if (!string.IsNullOrEmpty(Target))
-                    sb.Append(" ").Append(SshCommandBuilder.QuoteArgument(Target));
+                    sb.Append(" ").Append(quote(Target));
             }
             else
             {
                 // Upload (or ambiguous → assume upload): source  user@host:target
                 if (!string.IsNullOrEmpty(Source))
-                    sb.Append(" ").Append(SshCommandBuilder.QuoteArgument(Source));
+                    sb.Append(" ").Append(quote(Source));
                 var remoteTgt = !string.IsNullOrEmpty(remotePrefix)
                     ? remotePrefix + (Target ?? "")
                     : (Target ?? "");
                 if (!string.IsNullOrEmpty(remoteTgt))
-                    sb.Append(" ").Append(SshCommandBuilder.QuoteArgument(remoteTgt));
+                    sb.Append(" ").Append(quote(remoteTgt));
             }
 
             return sb.ToString();

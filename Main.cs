@@ -368,10 +368,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     var name = item.name;
                     var profile = item.profile;
                     var cmd = profile?.ToCommandLine() ?? "";
+                    var displayCmd = profile?.ToDisplayString() ?? "";
                     results.Add(new Result
                     {
                         Title = name,
-                        SubTitle = cmd,
+                        SubTitle = displayCmd,
                         IcoPath = AppIconGreenPath,
                         Score = profileScore--,
                         Action = _ =>
@@ -446,7 +447,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 if (!string.IsNullOrEmpty(sshCommand))
                 {
                     var profile = SshProfile.ParseFromLegacyCommand(sshCommand);
-                    var displayCmd = profile.ToCommandLine();
+                    var displayCmd = profile.ToDisplayString();
                     results.Add(new Result
                     {
                         Title = GetTranslation("plugin_quickssh_save_label") + " " + profileName,
@@ -499,7 +500,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     !entry.Key.ToLowerInvariant().Contains(rest.ToLowerInvariant()))
                     continue;
 
-                var cmd = entry.Value?.ToCommandLine() ?? "";
+                var cmd = entry.Value?.ToDisplayString() ?? "";
                 results.Add(new Result
                 {
                     Title = entry.Key,
@@ -559,7 +560,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     results.Add(new Result
                     {
                         Title = name,
-                        SubTitle = entry.Value?.ToCommandLine() ?? "",
+                        SubTitle = entry.Value?.ToDisplayString() ?? "",
                         IcoPath = AppIconPath,
                         AutoCompleteText = autoText,
                         Action = _ =>
@@ -608,7 +609,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 results.Add(new Result
                 {
                     Title = oldName + " → " + newName,
-                    SubTitle = profileValue?.ToCommandLine() ?? "",
+                    SubTitle = profileValue?.ToDisplayString() ?? "",
                     IcoPath = AppIconGreenPath,
                     Action = _ =>
                     {
@@ -669,10 +670,11 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
                 var name = entry.Key;
                 var cmd = entry.Value?.ToCommandLine() ?? "";
+                var displayCmd = entry.Value?.ToDisplayString() ?? "";
                 results.Add(new Result
                 {
                     Title = name,
-                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles_copy") + " " + cmd,
+                    SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles_copy") + " " + displayCmd,
                     IcoPath = AppIconGreenPath,
                     AutoCompleteText = query.ActionKeyword + " profiles copy " + name,
                     Action = _ =>
