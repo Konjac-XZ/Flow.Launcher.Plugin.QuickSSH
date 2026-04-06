@@ -1535,6 +1535,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             var bootstrap = RemoteKeyInstallBuilder.BuildBootstrapCommand(pubContent);
             var fullSshCmd = RemoteKeyInstallBuilder.BuildFullSshCommand(userAtHost, bootstrap);
+            var runSshCmd = RemoteKeyInstallBuilder.BuildRunCommand(userAtHost, bootstrap);
 
             // Hint row subtitle updates for step 3.
             results[0] = new Result
@@ -1548,6 +1549,8 @@ namespace Flow.Launcher.Plugin.QuickSSH
             };
 
             // Row 1: Run remote setup command (launches terminal)
+            // Uses the wrapped run command that includes a local failure guard
+            // for connection-level errors (refused, unreachable, auth failure).
             results.Add(new Result
             {
                 Title = GetTranslation("plugin_quickssh_keys_install_run"),
@@ -1555,7 +1558,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 IcoPath = AppIconGreenPath,
                 Action = _ =>
                 {
-                    RunCommand(fullSshCmd);
+                    RunCommand(runSshCmd);
                     return true;
                 }
             });

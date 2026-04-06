@@ -276,16 +276,69 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         }
 
         [Fact]
-        public void BuildFullSshCommand_RunAndCopyUseSameBuilder()
+        public void BuildFullSshCommand_CopyCommandIsCleanSsh()
         {
-            // Both "Run remote setup command" and "Copy remote setup command"
-            // must use BuildFullSshCommand — verify they produce identical output
-            // when called with the same inputs.
+            // The COPY command must be a clean SSH command without any local
+            // shell wrapper (no trailing || or &&).
             var pubKey = "ssh-ed25519 AAAA user@host";
             var bootstrap = RemoteKeyInstallBuilder.BuildBootstrapCommand(pubKey);
-            var full1 = RemoteKeyInstallBuilder.BuildFullSshCommand("admin@server", bootstrap);
-            var full2 = RemoteKeyInstallBuilder.BuildFullSshCommand("admin@server", bootstrap);
-            Assert.Equal(full1, full2);
+            var copyCmd = RemoteKeyInstallBuilder.BuildFullSshCommand("admin@server", bootstrap);
+            Assert.StartsWith("ssh admin@server \"", copyCmd);
+            Assert.EndsWith("\"", copyCmd);
+            // Must NOT contain a local failure guard after the closing quote.
+            var afterLastQuote = copyCmd.Substring(copyCmd.LastIndexOf('"') + 1);
+            Assert.Empty(afterLastQuote);
+        }
+
+        // ── BuildRunCommand ───────────────────────────────────────────────────────
+
+        [Fact]
+        public void BuildRunCommand_ContainsLocalFailureWrapper()
+        {
+            // The RUN command must contain a local || echo guard that fires
+            // when the SSH connection itself fails.
+            var pubKey = "ssh-ed25519 AAAA user@host";
+            var bootstrap = RemoteKeyInstallBuilder.BuildBootstrapCommand(pubKey);
+            var runCmd = RemoteKeyInstallBuilder.BuildRunCommand("admin@server", bootstrap);
+            Assert.Contains("|| echo " + RemoteKeyInstallBuilder.FailureMessage, runCmd);
+        }
+
+        [Fact]
+        public void BuildRunCommand_ContainsSshCommand()
+        {
+            // The RUN command must still contain the full SSH invocation
+            // so the success path (remote bootstrap) works.
+            var pubKey = "ssh-ed25519 AAAA user@host";
+            var bootstrap = RemoteKeyInstallBuilder.BuildBootstrapCommand(pubKey);
+            var copyCmd = RemoteKeyInstallBuilder.BuildFullSshCommand("admin@server", bootstrap);
+            var runCmd = RemoteKeyInstallBuilder.BuildRunCommand("admin@server", bootstrap);
+            Assert.StartsWith(copyCmd, runCmd);
+        }
+
+        [Fact]
+        public void BuildRunCommand_FailureGuardIsAfterSshCommand()
+        {
+            // The local failure guard (|| echo ...) must appear AFTER the full
+            // SSH command so that it only triggers on SSH connection failure.
+            var pubKey = "ssh-ed25519 AAAA user@host";
+            var bootstrap = RemoteKeyInstallBuilder.BuildBootstrapCommand(pubKey);
+            var copyCmd = RemoteKeyInstallBuilder.BuildFullSshCommand("admin@server", bootstrap);
+            var runCmd = RemoteKeyInstallBuilder.BuildRunCommand("admin@server", bootstrap);
+            // The run command should be: copyCmd + " || echo FAILURE"
+            var suffix = runCmd.Substring(copyCmd.Length);
+            Assert.StartsWith(" || echo ", suffix);
+        }
+
+        [Fact]
+        public void BuildRunCommand_RunAndCopyAreDifferent()
+        {
+            // Run and Copy intentionally use different commands: Run has
+            // a local failure wrapper, Copy does not.
+            var pubKey = "ssh-ed25519 AAAA user@host";
+            var bootstrap = RemoteKeyInstallBuilder.BuildBootstrapCommand(pubKey);
+            var copyCmd = RemoteKeyInstallBuilder.BuildFullSshCommand("admin@server", bootstrap);
+            var runCmd = RemoteKeyInstallBuilder.BuildRunCommand("admin@server", bootstrap);
+            Assert.NotEqual(copyCmd, runCmd);
         }
 
         // ── IsValidUserAtHost ─────────────────────────────────────────────────────

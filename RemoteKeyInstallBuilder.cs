@@ -164,6 +164,31 @@ namespace Flow.Launcher.Plugin.QuickSSH
         }
 
         /// <summary>
+        /// Builds the command used by the <b>Run</b> action.  Wraps the full SSH
+        /// command with a local shell failure guard (<c>|| echo FAILURE</c>) so
+        /// that connection-level errors (refused, unreachable, auth failure) still
+        /// display <see cref="FailureMessage"/> in the terminal window.
+        /// <para>
+        /// When the SSH connection succeeds the remote bootstrap already prints
+        /// <see cref="SuccessMessage"/> or <see cref="FailureMessage"/> as
+        /// appropriate, so no local success echo is needed.  The local guard only
+        /// fires when <c>ssh</c> itself exits with a non-zero status.
+        /// </para>
+        /// </summary>
+        /// <param name="userAtHost"><c>user@host</c> destination string.</param>
+        /// <param name="bootstrapCommand">
+        /// The command returned by <see cref="BuildBootstrapCommand"/>.
+        /// </param>
+        /// <returns>
+        /// A string like <c>ssh user@host "…" || echo [QuickSSH] Failed …</c>.
+        /// </returns>
+        public static string BuildRunCommand(string userAtHost, string bootstrapCommand)
+        {
+            return BuildFullSshCommand(userAtHost, bootstrapCommand) +
+                   " || echo " + FailureMessage;
+        }
+
+        /// <summary>
         /// Returns <see langword="true"/> when <paramref name="input"/> looks like
         /// a valid <c>user@host</c> destination (contains exactly one <c>@</c> with
         /// non-empty parts on both sides).
