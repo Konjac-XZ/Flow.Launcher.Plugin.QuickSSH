@@ -134,7 +134,6 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
         {
             var cmd = RemoteKeyInstallBuilder.BuildBootstrapCommand("ssh-ed25519 AAAA user@host");
             Assert.Contains("printf '%s\\n'", cmd);
-            Assert.DoesNotContain("echo", cmd);
         }
 
         [Fact]
@@ -151,6 +150,70 @@ namespace Flow.Launcher.Plugin.QuickSSH.Tests
                 idx += pubKey.Length;
             }
             Assert.Equal(2, count);
+        }
+
+        [Fact]
+        public void BuildBootstrapCommand_ContainsSuccessMessage()
+        {
+            var cmd = RemoteKeyInstallBuilder.BuildBootstrapCommand("ssh-ed25519 AAAA user@host");
+            Assert.Contains(RemoteKeyInstallBuilder.SuccessMessage, cmd);
+        }
+
+        [Fact]
+        public void BuildBootstrapCommand_ContainsFailureMessage()
+        {
+            var cmd = RemoteKeyInstallBuilder.BuildBootstrapCommand("ssh-ed25519 AAAA user@host");
+            Assert.Contains(RemoteKeyInstallBuilder.FailureMessage, cmd);
+        }
+
+        [Fact]
+        public void BuildBootstrapCommand_SuccessAfterBootstrapSuccess()
+        {
+            // The success echo must be guarded by && so it only fires on success.
+            var cmd = RemoteKeyInstallBuilder.BuildBootstrapCommand("ssh-ed25519 AAAA user@host");
+            var successIdx = cmd.IndexOf(RemoteKeyInstallBuilder.SuccessMessage);
+            Assert.True(successIdx > 0, "success message must be present");
+
+            // Find the "&&" that precedes the success echo
+            var beforeSuccess = cmd.Substring(0, successIdx);
+            Assert.Contains("&& echo", beforeSuccess.Substring(beforeSuccess.LastIndexOf(';')));
+        }
+
+        [Fact]
+        public void BuildBootstrapCommand_FailureAfterBootstrapFailure()
+        {
+            // The failure echo must be guarded by || so it only fires on failure.
+            var cmd = RemoteKeyInstallBuilder.BuildBootstrapCommand("ssh-ed25519 AAAA user@host");
+            var failureIdx = cmd.IndexOf(RemoteKeyInstallBuilder.FailureMessage);
+            Assert.True(failureIdx > 0, "failure message must be present");
+
+            // Find the "||" that precedes the failure echo
+            var beforeFailure = cmd.Substring(0, failureIdx);
+            Assert.Contains("|| echo", beforeFailure.Substring(beforeFailure.LastIndexOf("&&")));
+        }
+
+        [Fact]
+        public void BuildBootstrapCommand_IdempotencyLogicPreserved()
+        {
+            // The grep || printf pattern must still be present, ensuring
+            // the key is only appended when not already present.
+            var pubKey = "ssh-ed25519 AAAA user@host";
+            var cmd = RemoteKeyInstallBuilder.BuildBootstrapCommand(pubKey);
+            Assert.Contains("grep -qxF '" + pubKey + "' ~/.ssh/authorized_keys || " +
+                "printf '%s\\n' '" + pubKey + "' >> ~/.ssh/authorized_keys", cmd);
+        }
+
+        [Fact]
+        public void BuildBootstrapCommand_MessagingDoesNotContainDoubleQuotes()
+        {
+            // Success/failure messages use single quotes to stay safe inside
+            // the double-quoted outer wrapper of BuildFullSshCommand.
+            var cmd = RemoteKeyInstallBuilder.BuildBootstrapCommand("ssh-ed25519 AAAA user@host");
+            // Extract just the messaging tail (after the last "; }")
+            var messagingStart = cmd.LastIndexOf("; }");
+            Assert.True(messagingStart > 0);
+            var tail = cmd.Substring(messagingStart);
+            Assert.DoesNotContain("\"", tail);
         }
 
         // ── BuildFullSshCommand ───────────────────────────────────────────────────

@@ -82,9 +82,28 @@ namespace Flow.Launcher.Plugin.QuickSSH
         }
 
         /// <summary>
+        /// Success message printed to the terminal when the remote bootstrap
+        /// command completes without error.
+        /// </summary>
+        public const string SuccessMessage =
+            "[QuickSSH] Public key is now present in ~/.ssh/authorized_keys.";
+
+        /// <summary>
+        /// Failure message printed to the terminal when the remote bootstrap
+        /// command fails.
+        /// </summary>
+        public const string FailureMessage =
+            "[QuickSSH] Failed to install public key on remote server.";
+
+        /// <summary>
         /// Builds the idempotent remote bootstrap shell command that creates
         /// <c>~/.ssh</c> and appends the public key to <c>authorized_keys</c>
         /// only if it is not already present.
+        /// <para>
+        /// On success (including when the key is already present), prints
+        /// <see cref="SuccessMessage"/> to the terminal.  On failure, prints
+        /// <see cref="FailureMessage"/>.
+        /// </para>
         /// </summary>
         /// <param name="publicKeyLine">
         /// The full public key line (e.g. <c>ssh-ed25519 AAAA... user@host</c>).
@@ -95,14 +114,26 @@ namespace Flow.Launcher.Plugin.QuickSSH
         {
             // The public key is embedded inside single quotes.  ValidatePublicKeyLine
             // guarantees no single quotes, newlines, or null bytes are present.
+            //
+            // Structure:
+            //   { setup && { grep || printf ; } ; } && echo SUCCESS || echo FAILURE
+            //
+            // The inner { grep || printf ; } groups the idempotent "add if missing"
+            // logic so its exit code reflects whether the key is now present.
+            // The outer { ; } groups the entire bootstrap so the final && / ||
+            // chain reflects overall success or failure.
             return
+                "{ " +
                 "umask 077 && " +
                 "mkdir -p ~/.ssh && " +
                 "touch ~/.ssh/authorized_keys && " +
                 "chmod 700 ~/.ssh && " +
                 "chmod 600 ~/.ssh/authorized_keys && " +
-                "grep -qxF '" + publicKeyLine + "' ~/.ssh/authorized_keys || " +
-                "printf '%s\\n' '" + publicKeyLine + "' >> ~/.ssh/authorized_keys";
+                "{ grep -qxF '" + publicKeyLine + "' ~/.ssh/authorized_keys || " +
+                "printf '%s\\n' '" + publicKeyLine + "' >> ~/.ssh/authorized_keys ; }" +
+                " ; } && " +
+                "echo '" + SuccessMessage + "' || " +
+                "echo '" + FailureMessage + "'";
         }
 
         /// <summary>
