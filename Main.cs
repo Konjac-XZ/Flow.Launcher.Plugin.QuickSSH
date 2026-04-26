@@ -41,18 +41,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private const string ProfilesSubExport = "export";
         private const string ProfilesSubImport = "import";
 
-        private static readonly string[] ProfilesSubCommands = new[]
-        {
-            ProfilesSubAdd, ProfilesSubRemove, ProfilesSubRename,
-            ProfilesSubCopy, ProfilesSubExport, ProfilesSubImport
-        };
-
-        // Sub-commands of "shell"
-        private static readonly string[] ShellSubCommands = new[]
-        {
-            "add", "remove"
-        };
-
         // Sub-commands of "keys"
         private const string KeysSubAdd      = "add";
         private const string KeysSubGenerate = "generate";
@@ -62,11 +50,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
         private const string KeysSubCopyPath = "copy-path";
         private const string KeysSubCopyPub  = "copy-pub";
         private const string KeysSubScan     = "scan";
-
-        private static readonly string[] KeysSubCommands = new[]
-        {
-            KeysSubAdd, KeysSubGenerate, KeysSubInstall, KeysSubRemove, KeysSubRename, KeysSubCopyPath, KeysSubCopyPub, KeysSubScan
-        };
 
         private const string AppIconPath = "Images\\app.png";
         private const string AppIconGreenPath = "Images\\app-green.png";
@@ -182,11 +165,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
 
             if (string.IsNullOrEmpty(input))
             {
-                // Show all command suggestions for TAB auto-completion
-                results.AddRange(AutoCompleter.GetSuggestions(
-                    query.ActionKeyword, "",
-                    _profileManager?.UserData, AppIconPath,
-                    _pluginContext?.API));
                 return results;
             }
 
@@ -231,14 +209,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     {
                         results.AddRange(HandleDirectConnect(query, input));
                     }
-                    else
-                    {
-                        // Show auto-complete suggestions for partial command names.
-                        results.AddRange(AutoCompleter.GetSuggestions(
-                            query.ActionKeyword, input,
-                            _profileManager?.UserData, AppIconPath,
-                            _pluginContext?.API));
-                    }
                     break;
             }
 
@@ -262,18 +232,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 case ProfilesSubExport: return HandleProfilesExport(query);
                 case ProfilesSubImport: return HandleProfilesImport(query, subRest);
                 default:
-                    // Mirror the top-level matching pattern: when the partial input
-                    // is a prefix of one or more sub-commands, delegate to the
-                    // autocompleter so that "profiles a" suggests "add" the same way
-                    // "ssh p" suggests "profiles" at the top level.
-                    if (!string.IsNullOrEmpty(subCmd) &&
-                        ProfilesSubCommands.Any(s => s.StartsWith(subCmd)))
-                    {
-                        return new List<Result>(AutoCompleter.GetSuggestions(
-                            query.ActionKeyword, "profiles " + rest,
-                            _profileManager?.UserData, AppIconPath,
-                            _pluginContext?.API));
-                    }
                     return HandleProfilesList(query, rest);
             }
         }
@@ -285,52 +243,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             var results = new List<Result>();
             var profiles = _profileManager.UserData.Profiles;
 
-            // 1. Management/usage hint — always pinned at the top.
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_title_commandprofiles"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandprofiles"),
-                IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " profiles ",
-                Score = ScoreSubMenuManagement
-            });
-
-            // 2. Back-navigation row — returns to top-level command list.
-            results.Add(MakeBackNavResult(query, query.ActionKeyword + " ", query.ActionKeyword));
-
-            // 3. Action rows — always above saved profiles.
-            //    Only shown when no search text is active (user is browsing, not filtering).
-            if (string.IsNullOrEmpty(search))
-            {
-                var profileSubCmds = new[]
-                {
-                    ("add",    GetTranslation("plugin_quickssh_title_commandprofiles_add"),    GetTranslation("plugin_quickssh_subtitle_commandprofiles_add"),          ScoreProfilesActionAdd),
-                    ("remove", GetTranslation("plugin_quickssh_title_commandprofiles_remove"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_remove"),       ScoreProfilesActionRemove),
-                    ("rename", GetTranslation("plugin_quickssh_title_commandprofiles_rename"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_rename"),       ScoreProfilesActionRename),
-                    ("copy",   GetTranslation("plugin_quickssh_title_commandprofiles_copy"),   GetTranslation("plugin_quickssh_subtitle_commandprofiles_copy_usage"),   ScoreProfilesActionCopy),
-                    ("export", GetTranslation("plugin_quickssh_title_commandprofiles_export"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_export_usage"), ScoreProfilesActionExport),
-                    ("import", GetTranslation("plugin_quickssh_title_commandprofiles_import"), GetTranslation("plugin_quickssh_subtitle_commandprofiles_import_usage"), ScoreProfilesActionImport),
-                };
-                foreach (var (scName, scTitle, scSubTitle, scScore) in profileSubCmds)
-                {
-                    var autoText = query.ActionKeyword + " profiles " + scName + " ";
-                    results.Add(new Result
-                    {
-                        Title = scTitle,
-                        SubTitle = scSubTitle,
-                        IcoPath = AppIconPath,
-                        AutoCompleteText = autoText,
-                        Score = scScore,
-                        Action = _ =>
-                        {
-                            _pluginContext?.API?.ChangeQuery(autoText, true);
-                            return false;
-                        }
-                    });
-                }
-            }
-
-            // 4. Saved profiles — always below action rows.
+            // Saved profiles.
             //    Use a decremented score (starting from ScoreProfilesSavedItem) so each
             //    profile has a distinct, explicit value — mirroring how the shell submenu
             //    uses ScoreShellOtherStart--. This prevents Flow Launcher's fuzzy-match
@@ -1080,66 +993,18 @@ namespace Flow.Launcher.Plugin.QuickSSH
                     break;
 
                 default:
-                    // Mirror the top-level matching pattern: when the partial input
-                    // is a prefix of one or more sub-commands, delegate to the
-                    // autocompleter so that "shell a" suggests "add" the same way
-                    // "ssh p" suggests "profiles" at the top level.
-                    if (!string.IsNullOrEmpty(subCmd) &&
-                        ShellSubCommands.Any(s => s.StartsWith(subCmd)))
-                    {
-                        return new List<Result>(AutoCompleter.GetSuggestions(
-                            query.ActionKeyword, "shell " + rest,
-                            _profileManager?.UserData, AppIconPath,
-                            _pluginContext?.API));
-                    }
-
-                    // Always show "Shell management" hint at the top.
-                    results.Add(new Result
-                    {
-                        Title = GetTranslation("plugin_quickssh_title_commandshell"),
-                        SubTitle = GetTranslation("plugin_quickssh_subtitle_commandshell_help"),
-                        IcoPath = AppIconPath,
-                        AutoCompleteText = query.ActionKeyword + " shell ",
-                        Score = ScoreSubMenuManagement
-                    });
-
-                    // Back-navigation row — returns to top-level command list.
-                    results.Add(MakeBackNavResult(query, query.ActionKeyword + " ", query.ActionKeyword));
-
-                    // List shells in deterministic order:
-                    //   1. management row     (ScoreSubMenuManagement = int.MaxValue)
-                    //   2. back-nav row       (ScoreBackNavigation = int.MaxValue - 1)
-                    //   3. action rows        (ScoreShellActionAdd = 1100, ScoreShellActionRemove = 1050)
-                    //   4. selected shell     (ScoreShellSelected = 1000)
-                    //   5. other shells       (decreasing from ScoreShellOtherStart = 500)
+                    // List shells.
                     var allShells = _profileManager.UserData.CustomShell;
                     var selected = _profileManager.UserData.SelectedCustomShell;
-
-                    // Sub-command action rows (add / remove) — always above saved shell entries.
-                    var shellSubCmds = new[]
+                    if (allShells.Count == 0)
                     {
-                        ("add",    GetTranslation("plugin_quickssh_title_commandshell_add"),    GetTranslation("plugin_quickssh_subtitle_commandshell_add_usage"),    ScoreShellActionAdd),
-                        ("remove", GetTranslation("plugin_quickssh_title_commandshell_remove"), GetTranslation("plugin_quickssh_subtitle_commandshell_remove"),        ScoreShellActionRemove),
-                    };
-                    foreach (var (scName, scTitle, scSubTitle, scScore) in shellSubCmds)
-                    {
-                        if (string.IsNullOrEmpty(subCmd) || scName.StartsWith(subCmd))
+                        results.Add(new Result
                         {
-                            var autoText = query.ActionKeyword + " shell " + scName + " ";
-                            results.Add(new Result
-                            {
-                                Title = scTitle,
-                                SubTitle = scSubTitle,
-                                IcoPath = AppIconPath,
-                                AutoCompleteText = autoText,
-                                Score = scScore,
-                                Action = _ =>
-                                {
-                                    _pluginContext?.API?.ChangeQuery(autoText, true);
-                                    return false;
-                                }
-                            });
-                        }
+                            Title = GetTranslation("plugin_quickssh_title_commandshell"),
+                            SubTitle = GetTranslation("plugin_quickssh_noshells"),
+                            IcoPath = AppIconPath
+                        });
+                        break;
                     }
 
                     // Selected shell (if any) — pinned just below the action rows.
@@ -1210,15 +1075,6 @@ namespace Flow.Launcher.Plugin.QuickSSH
                 case KeysSubCopyPub:  return HandleKeysCopyPub(query, subRest);
                 case KeysSubScan:     return HandleKeysScan(query);
                 default:
-                    // Partial sub-command matching (mirrors profiles/shell pattern).
-                    if (!string.IsNullOrEmpty(subCmd) &&
-                        KeysSubCommands.Any(s => s.StartsWith(subCmd)))
-                    {
-                        return new List<Result>(AutoCompleter.GetSuggestions(
-                            query.ActionKeyword, "keys " + rest,
-                            _profileManager?.UserData, AppIconPath,
-                            _pluginContext?.API));
-                    }
                     return HandleKeysList(query, rest);
             }
         }
@@ -1228,53 +1084,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
             var results = new List<Result>();
             var keys = _profileManager.UserData.SshKeys;
 
-            // 1. Management/usage hint — always pinned at the top.
-            results.Add(new Result
-            {
-                Title = GetTranslation("plugin_quickssh_title_commandkeys"),
-                SubTitle = GetTranslation("plugin_quickssh_subtitle_commandkeys"),
-                IcoPath = AppIconPath,
-                AutoCompleteText = query.ActionKeyword + " keys ",
-                Score = ScoreSubMenuManagement
-            });
-
-            // 2. Back-navigation row — returns to top-level command list.
-            results.Add(MakeBackNavResult(query, query.ActionKeyword + " ", query.ActionKeyword));
-
-            // 3. Action rows — only shown when no search text is active.
-            if (string.IsNullOrEmpty(search))
-            {
-                var keysSubCmds = new[]
-                {
-                    ("install",   GetTranslation("plugin_quickssh_title_commandkeys_install"),   GetTranslation("plugin_quickssh_subtitle_commandkeys_install"),   ScoreKeysActionInstall),
-                    ("add",       GetTranslation("plugin_quickssh_title_commandkeys_add"),       GetTranslation("plugin_quickssh_subtitle_commandkeys_add"),       ScoreKeysActionAdd),
-                    ("generate",  GetTranslation("plugin_quickssh_title_commandkeys_generate"),  GetTranslation("plugin_quickssh_subtitle_commandkeys_generate"),  ScoreKeysActionGenerate),
-                    ("remove",    GetTranslation("plugin_quickssh_title_commandkeys_remove"),    GetTranslation("plugin_quickssh_subtitle_commandkeys_remove"),    ScoreKeysActionRemove),
-                    ("rename",    GetTranslation("plugin_quickssh_title_commandkeys_rename"),    GetTranslation("plugin_quickssh_subtitle_commandkeys_rename"),    ScoreKeysActionRename),
-                    ("copy-path", GetTranslation("plugin_quickssh_title_commandkeys_copypath"),  GetTranslation("plugin_quickssh_subtitle_commandkeys_copypath"),  ScoreKeysActionCopyPath),
-                    ("copy-pub",  GetTranslation("plugin_quickssh_title_commandkeys_copypub"),   GetTranslation("plugin_quickssh_subtitle_commandkeys_copypub"),   ScoreKeysActionCopyPub),
-                    ("scan",      GetTranslation("plugin_quickssh_title_commandkeys_scan"),      GetTranslation("plugin_quickssh_subtitle_commandkeys_scan"),      ScoreKeysActionScan),
-                };
-                foreach (var (scName, scTitle, scSubTitle, scScore) in keysSubCmds)
-                {
-                    var autoText = query.ActionKeyword + " keys " + scName + " ";
-                    results.Add(new Result
-                    {
-                        Title = scTitle,
-                        SubTitle = scSubTitle,
-                        IcoPath = AppIconPath,
-                        AutoCompleteText = autoText,
-                        Score = scScore,
-                        Action = _ =>
-                        {
-                            _pluginContext?.API?.ChangeQuery(autoText, true);
-                            return false;
-                        }
-                    });
-                }
-            }
-
-            // 4. Saved keys.
+            // Saved keys.
             if (keys.Count == 0)
             {
                 results.Add(new Result
