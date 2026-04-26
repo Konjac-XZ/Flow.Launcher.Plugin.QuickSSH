@@ -1,6 +1,6 @@
 # QuickSSH — Flow Launcher Plugin
 
-Enhanced SSH/SCP connection plugin for [Flow Launcher](https://www.flowlauncher.com/) with query autocomplete, structured profile management, SSH key registry, SSH config import, human-readable profile export/import, custom shell support, and fuzzy search.
+Enhanced SSH/SCP connection plugin for [Flow Launcher](https://www.flowlauncher.com/) with structured profile management, SSH key registry, SSH config import, human-readable profile export/import, custom shell support, and fuzzy search.
 
 Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Flow.Launcher.Plugin.easyssh).
 
@@ -30,17 +30,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 | `ssh -i <key> <destination>` | Direct connect with key autocomplete from registered keys |
 | `ssh <destination>` | **Implicit direct connect** — type a destination or SSH options directly |
 
-> **Suggestion order:** Typing bare `ssh` (with no arguments) shows top-level suggestions in this order: **profiles**, **keys**, **shell**, **config**, **help**.
-
-> **Partial subcommand matching:** Under `ssh profiles`, subcommand matching reacts from the first matching character, consistently with top-level command matching.
-> Examples: `ssh profiles a` → **add**; `ssh profiles r` → **remove**, **rename**; `ssh profiles rem` → **remove**; `ssh profiles ren` → **rename**.
-> Single-letter prefixes that match only one subcommand show just that suggestion (e.g. `a` → **add**, `e` → **export**, `i` → **import**, `c` → **copy**).
-
-> **Shell subcommand matching:** Under `ssh shell`, partial subcommand matching works the same way.
-> Examples: `ssh shell a` → **add**; `ssh shell r` → **remove**; `ssh shell rem` → **remove**.
-
-> **Keys subcommand matching:** Under `ssh keys`, partial subcommand matching works the same way.
-> Examples: `ssh keys a` → **add**; `ssh keys g` → **generate**; `ssh keys i` → **install**; `ssh keys r` → **remove**, **rename**; `ssh keys c` → **copy-path**, **copy-pub**; `ssh keys s` → **scan**.
+> **Prompting behavior:** QuickSSH no longer injects command suggestion rows into normal query results. Type full commands explicitly (for example `ssh profiles add ...`, `ssh keys remove ...`, `ssh shell add ...`).
 
 > **Note for v1 users:** The top-level `add` command (v1: `ssh add <name> <cmd>`) has been moved to `ssh profiles add <name> <cmd>`.
 > Typing `ssh add ...` shows an explicit redirect hint in the UI — it will not silently do something unexpected.
@@ -50,7 +40,7 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 - **Structured profile model** — profiles are stored as typed, structured objects (not raw strings); supports SSH, RemoteCommand, port-forwards, SCP, ProxyJump, and more
 - **Human-readable export/import** — profiles are exported and imported in an SSH-config-like text format (`.sshconfig` files)
 - **Legacy migration** — v1 raw-command profiles (JSON) are automatically migrated to the structured format on first load
-- **Query autocomplete** — type partial commands or profile names to see matching suggestions; select a result to expand the query
+- **No forced command prompts** — normal query results focus on actionable targets instead of injected command suggestion rows
 - **SSH key registry** — register local SSH keys by alias; registered keys are offered in autocomplete when typing `ssh -i`
 - **SSH key generation** — generate new SSH keypairs (ed25519 or RSA 4096) locally via row-driven wizard; supports custom output path or default `~/.ssh/` location; generated keys are auto-registered after verifying both private and public key files
 - **SSH key installation** — deploy a registered public key to a remote Linux host's `~/.ssh/authorized_keys` via an idempotent bootstrap command; supports run, copy command, and copy public key actions
@@ -71,21 +61,13 @@ Inspired by [Melv1no/Flow.Launcher.Plugin.easyssh](https://github.com/Melv1no/Fl
 ### Browse and connect to saved profiles
 
 ```
-ssh profiles           → profile management view: action rows + saved profiles
+ssh profiles           → list saved profiles and connect
 ssh profiles prod      → filter saved profiles containing "prod"
 ```
 
 Press Enter on a profile row to launch the connection.
 
 > **Stay-open behaviour:** All non-launch actions (add, remove, rename, copy, export, import, generate, scan, config import, help) keep Flow Launcher open and navigate back to the parent menu. Only actions that actually launch an SSH/SCP connection close the plugin.
-
-> **Display order** — `ssh profiles` always shows results in a fixed, stable order regardless of fuzzy-match scoring:
-> 1. **Profile management** (usage hint, always pinned at the top)
-> 2. **← Back to ssh** (back-navigation row — press Enter to return to the top-level command list)
-> 3. **Action rows** as one continuous block: Add profile → Remove profile → Rename profile → Copy SSH command → Export profiles → Import profiles
-> 4. **Saved profiles** (filtered / sorted by relevance when a search term is given)
-
-Sub-command views (e.g. `ssh profiles add`, `ssh shell remove`) and single-action views (`ssh config`, `ssh help`) also show a back-navigation row immediately below their usage hint so you can press Enter to return to the parent level.
 
 ### Add a profile
 
@@ -164,13 +146,11 @@ ssh profiles copy myserver      → filter by "myserver", then click to copy
 Register SSH keys by alias so you can quickly reference them in direct connect or profile creation:
 
 ```
-ssh keys                                     → key management view: action rows + registered keys
+ssh keys                                     → list registered key aliases
 ssh keys add prod ~/.ssh/id_ed25519          → register key alias "prod"
 ssh keys add dev "C:\Users\me\.ssh\dev_key"  → register key alias "dev" (quoted path)
 ssh keys remove prod                         → remove key alias "prod" (registry only — files on disk are kept)
 ```
-
-> **Display order** — `ssh keys` always shows action rows in a fixed, stable order: **install** → **add** → **generate** → **remove** → **rename** → **copy-path** → **copy-pub** → **scan**, followed by registered key entries.
 
 > **Security note:** QuickSSH stores only the alias and the file path — **never** the private key content. The key file is accessed by SSH at connection time, not by the plugin.
 
@@ -486,7 +466,7 @@ Legacy SCP commands with `user@host:path` positionals are automatically normalis
 ### Custom shell management
 
 ```
-ssh shell                                             → shell management view: action rows + saved shells
+ssh shell                                             → list saved shell profiles and select one
 ssh shell add PowerShell                              → add PowerShell (found via PATH)
 ssh shell add GitBash "C:\Program Files\Git\bin\bash.exe" --login -i -c
 ssh shell add WSL wsl.exe --
