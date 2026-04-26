@@ -1004,7 +1004,7 @@ namespace Flow.Launcher.Plugin.QuickSSH
                             SubTitle = GetTranslation("plugin_quickssh_noshells"),
                             IcoPath = AppIconPath
                         });
-                        break;
+                        return results;
                     }
 
                     // Selected shell (if any) — pinned just below the action rows.
